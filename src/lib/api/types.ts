@@ -1,0 +1,257 @@
+// Hand-written types mirroring Django models — regenerate from OpenAPI schema with:
+// npx openapi-typescript http://localhost:8000/api/v1/schema/ -o src/lib/api/schema.d.ts
+
+// ── Auth ──
+
+export interface User {
+  id: string; // UUID
+  email: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  role: "ADMIN" | "COMPLIANCE_OFFICER" | "VIEWER" | "SUPPLIER_CONTACT";
+  organization_id: string | null;
+  is_staff: boolean;
+}
+
+export interface TokenPair {
+  access: string;
+  refresh: string;
+}
+
+// ── Organization ──
+
+export interface Organization {
+  id: string;
+  name: string;
+  organization_type: "OPERATOR" | "TRADER" | "DOWNSTREAM_OPERATOR" | "SUPPLIER";
+  country: string;
+  vat_number: string;
+  eori_number: string;
+  traces_actor_id: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Suppliers ──
+
+export type KYCStatus = "PENDING" | "VERIFIED" | "REJECTED" | "EXPIRED";
+export type RiskRating = "LOW" | "STANDARD" | "HIGH";
+
+export interface Supplier {
+  id: string;
+  name: string;
+  country_of_origin: string;
+  kyc_status: KYCStatus;
+  risk_rating: RiskRating;
+  external_id: string;
+  managed_by_id: string;
+  supplier_organization_id: string | null;
+  kyc_verified_at: string | null;
+  created_at: string;
+  updated_at: string;
+  certifications?: SupplierCertification[];
+}
+
+export interface SupplierCertification {
+  id: string;
+  certification_type: string;
+  certificate_number: string;
+  issuing_body: string;
+  valid_from: string;
+  valid_until: string;
+  document_id: string | null;
+  is_valid: boolean;
+  created_at: string;
+}
+
+// ── Geolocation ──
+
+export type GeometrySource = "GPS_DEVICE" | "SATELLITE_IMAGERY" | "MANUAL_ENTRY" | "THIRD_PARTY" | "DATA_IMPORT";
+export type ValidationStatus = "PENDING" | "PASSED" | "FAILED" | "REQUIRES_REVIEW";
+
+export interface GeoJsonGeometry {
+  type: "Point" | "Polygon" | "MultiPolygon";
+  coordinates: unknown;
+}
+
+export interface LandPlot {
+  id: string;
+  supplier_id: string;
+  organization_id: string;
+  country: string;
+  region: string;
+  area_hectares: number;
+  geometry: GeoJsonGeometry | null;
+  geometry_source: GeometrySource;
+  accuracy_meters: number | null;
+  collection_date: string | null;
+  validation_status: ValidationStatus;
+  validated_at: string | null;
+  external_id: string;
+  created_at: string;
+  updated_at: string;
+  validation_results?: PlotValidationResult[];
+}
+
+export type Validator = "GLAD_ALERTS" | "RADD_ALERTS" | "PRODES" | "JRC_TMF" | "MANUAL";
+
+export interface PlotValidationResult {
+  id: string;
+  validator: Validator;
+  deforestation_detected: boolean;
+  alert_date: string | null;
+  confidence_score: number | null;
+  notes: string;
+  validated_at: string;
+}
+
+// ── Commodities ──
+
+export interface Commodity {
+  id: string;
+  name: string;
+  code: string;
+  cn_codes: string[];
+  hs_codes: string[];
+  requires_species: boolean;
+}
+
+export interface Product {
+  id: string;
+  commodity_id: string;
+  commodity_name?: string;
+  species_id: string | null;
+  description: string;
+  internal_product_code: string;
+  cn_code: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Supply Chain (Batches) ──
+
+export type BatchUnit = "KG" | "TONNES" | "M3" | "PIECES";
+export type BatchStatus = "DRAFT" | "CONFIRMED" | "IN_DDS";
+
+export interface Batch {
+  id: string;
+  seller_id: string;
+  buyer_id: string;
+  organization_id: string;
+  commodity_id: string;
+  quantity: number;
+  unit: BatchUnit;
+  transaction_date: string;
+  country_of_harvest: string;
+  land_plot_ids: string[];
+  reference_number: string;
+  status: BatchStatus;
+  external_id: string;
+  created_at: string;
+  updated_at: string;
+  parent_links?: BatchChainLink[];
+  child_links?: BatchChainLink[];
+}
+
+export interface BatchChainLink {
+  id: string;
+  parent_batch: string;
+  child_batch: string;
+  volume_ratio: number;
+  created_at: string;
+}
+
+// ── Due Diligence ──
+
+export type DDSStatus = "DRAFT" | "UNDER_REVIEW" | "APPROVED" | "SUBMITTED" | "REJECTED" | "WITHDRAWN";
+export type StatementType = "OPERATOR" | "REFERENCE";
+export type RiskConclusion = "NEGLIGIBLE" | "NOT_NEGLIGIBLE";
+
+export interface DueDiligenceStatement {
+  id: string;
+  reference_number: string;
+  traces_reference: string;
+  status: DDSStatus;
+  statement_type: StatementType;
+  batch_ids: string[];
+  risk_conclusion: RiskConclusion | null;
+  conclusion_justification: string;
+  operator_id: string;
+  created_by_id: string;
+  reviewed_by_id: string | null;
+  submitted_at: string | null;
+  valid_until: string | null;
+  archived_until: string | null;
+  created_at: string;
+  updated_at: string;
+  risk_assessments?: RiskAssessment[];
+}
+
+export interface RiskAssessment {
+  id: string;
+  country_risk: string;
+  deforestation_risk_score: number;
+  legality_risk_score: number;
+  traceability_completeness: number;
+  mitigation_measures: string;
+  overall_conclusion: string;
+  notes: string;
+  assessed_by_id: string;
+  assessed_at: string;
+}
+
+// ── Documents ──
+
+export type DocumentType =
+  | "SUPPLIER_DECLARATION"
+  | "LAND_TITLE"
+  | "CERTIFICATION"
+  | "AUDIT_REPORT"
+  | "SATELLITE_IMAGE"
+  | "DDS_EXPORT"
+  | "KYC_DOCUMENT"
+  | "TRANSPORT_DOCUMENT"
+  | "OTHER";
+
+export interface Document {
+  id: string;
+  organization_id: string;
+  document_type: DocumentType;
+  title: string;
+  description: string;
+  storage_key: string;
+  storage_bucket: string;
+  file_size_bytes: number | null;
+  mime_type: string;
+  checksum_sha256: string;
+  uploaded_at: string;
+  archival_deadline: string | null;
+  is_archived: boolean;
+  archived_at: string | null;
+  is_confidential: boolean;
+  uploaded_by_id: string;
+  versions?: DocumentVersion[];
+}
+
+export interface DocumentVersion {
+  id: string;
+  version_number: number;
+  storage_key: string;
+  file_size_bytes: number | null;
+  checksum_sha256: string;
+  uploaded_at: string;
+  uploaded_by_id: string;
+  change_notes: string;
+}
+
+// ── Shared ──
+
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
