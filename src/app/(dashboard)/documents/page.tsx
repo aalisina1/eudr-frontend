@@ -143,6 +143,7 @@ export default function DocumentsPage() {
         columns={columns}
         filters={filters}
         searchPlaceholder="Search documents..."
+        exportable
         rowKey={(doc) => doc.id}
         onRowClick={(doc) => router.push(`/documents/${doc.id}`)}
         emptyIcon={<FileQuestion className="w-5 h-5 text-muted-foreground" />}

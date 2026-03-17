@@ -133,6 +133,7 @@ export default function SuppliersPage() {
         columns={columns}
         filters={filters}
         searchPlaceholder="Search suppliers..."
+        exportable
         rowKey={(s) => s.id}
         onRowClick={(s) => router.push(`/suppliers/${s.id}`)}
         emptyIcon={<Users className="w-5 h-5 text-muted-foreground" />}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
@@ -9,7 +10,11 @@ import {
   Link2,
   FileText,
   FolderOpen,
+  Cable,
+  Settings,
   LogOut,
+  Moon,
+  Sun,
   TreePine,
 } from "lucide-react";
 import {
@@ -37,11 +42,24 @@ const navCompliance = [
   { href: "/supply-chains", label: "Supply Chains", icon: Link2 },
   { href: "/due-diligence", label: "Due Diligence", icon: FileText },
   { href: "/documents", label: "Documents", icon: FolderOpen },
+  { href: "/integrations", label: "Integrations", icon: Cable },
 ];
 
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    setDark(document.documentElement.classList.contains("dark"));
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem("theme", next ? "dark" : "light");
+  }, [dark]);
 
   function handleLogout() {
     auth.clearTokens();
@@ -80,7 +98,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={href}>
                   <SidebarMenuButton
                     render={<Link href={href} />}
-                    isActive={pathname === href}
+                    isActive={pathname === href || pathname.startsWith(href + "/")}
                     className="rounded-xl h-9"
                   >
                     <Icon className="size-[15px]" />
@@ -104,7 +122,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={href}>
                   <SidebarMenuButton
                     render={<Link href={href} />}
-                    isActive={pathname === href}
+                    isActive={pathname === href || pathname.startsWith(href + "/")}
                     className="rounded-xl h-9"
                   >
                     <Icon className="size-[15px]" />
@@ -120,6 +138,25 @@ export function AppSidebar() {
       <SidebarFooter className="px-2 pb-4">
         <SidebarSeparator className="mx-3 mb-2 opacity-50" />
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              render={<Link href="/settings" />}
+              isActive={pathname === "/settings"}
+              className="rounded-xl h-9 text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
+            >
+              <Settings className="size-[15px]" />
+              <span className="text-[13px]">Settings</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={toggleTheme}
+              className="rounded-xl h-9 text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
+            >
+              {dark ? <Sun className="size-[15px]" /> : <Moon className="size-[15px]" />}
+              <span className="text-[13px]">{dark ? "Light mode" : "Dark mode"}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleLogout}

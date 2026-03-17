@@ -150,6 +150,7 @@ export default function DueDiligencePage() {
         columns={columns}
         filters={filters}
         searchPlaceholder="Search by reference number..."
+        exportable
         rowKey={(stmt) => stmt.id}
         onRowClick={(stmt) => router.push(`/due-diligence/${stmt.id}`)}
         emptyIcon={<FileQuestion className="w-5 h-5 text-muted-foreground" />}

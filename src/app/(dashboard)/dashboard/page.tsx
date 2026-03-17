@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +18,7 @@ import {
   TreePine,
 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
+import type { PaginatedResponse, DueDiligenceStatement, LandPlot } from "@/lib/api/types";
 
 async function fetchCount(path: string) {
   const res = await authFetch(`${path}?limit=1`);
@@ -113,6 +115,163 @@ function StatCard({
   );
 }
 
+// ── Charts ──
+
+const ddsStatusColors: Record<string, string> = {
+  DRAFT: "#94a3b8",
+  UNDER_REVIEW: "#f59e0b",
+  APPROVED: "#34d399",
+  SUBMITTED: "#3b82f6",
+  REJECTED: "#ef4444",
+  WITHDRAWN: "#a78bfa",
+};
+
+function DDSStatusChart() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["dds-all"],
+    queryFn: async () => {
+      const res = await authFetch("/api/v1/due-diligence/statements/?limit=200");
+      if (!res.ok) throw new Error("Failed");
+      return res.json() as Promise<PaginatedResponse<DueDiligenceStatement>>;
+    },
+  });
+
+  const segments = useMemo(() => {
+    if (!data?.results) return [];
+    const counts: Record<string, number> = {};
+    for (const d of data.results) {
+      counts[d.status] = (counts[d.status] || 0) + 1;
+    }
+    const total = data.results.length;
+    if (total === 0) return [];
+    let offset = 0;
+    return Object.entries(counts).map(([status, count]) => {
+      const pct = count / total;
+      const seg = { status, count, pct, offset };
+      offset += pct;
+      return seg;
+    });
+  }, [data]);
+
+  const total = data?.results?.length ?? 0;
+  const r = 60;
+  const circ = 2 * Math.PI * r;
+
+  return (
+    <Card className="border-border/50">
+      <CardContent className="p-5">
+        <h3 className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground mb-4">
+          Due Diligence by Status
+        </h3>
+        {isLoading ? (
+          <Skeleton className="h-40 w-full" />
+        ) : total === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-8">No statements yet</p>
+        ) : (
+          <div className="flex items-center gap-6">
+            <svg viewBox="0 0 160 160" className="w-36 h-36 shrink-0">
+              {segments.map((seg) => (
+                <circle
+                  key={seg.status}
+                  cx="80" cy="80" r={r}
+                  fill="none"
+                  stroke={ddsStatusColors[seg.status] ?? "#94a3b8"}
+                  strokeWidth="18"
+                  strokeDasharray={`${seg.pct * circ} ${circ}`}
+                  strokeDashoffset={-seg.offset * circ}
+                  transform="rotate(-90 80 80)"
+                />
+              ))}
+              <text x="80" y="76" textAnchor="middle" className="fill-foreground text-2xl font-light" style={{ fontFamily: "inherit" }}>
+                {total}
+              </text>
+              <text x="80" y="94" textAnchor="middle" className="fill-muted-foreground text-[10px]">
+                total
+              </text>
+            </svg>
+            <div className="space-y-1.5 flex-1">
+              {segments.map((seg) => (
+                <div key={seg.status} className="flex items-center gap-2 text-sm">
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: ddsStatusColors[seg.status] }} />
+                  <span className="text-muted-foreground text-xs flex-1">{seg.status.replace("_", " ")}</span>
+                  <span className="font-medium tabular-nums text-xs">{seg.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+const validationColors: Record<string, string> = {
+  PENDING: "#94a3b8",
+  PASSED: "#34d399",
+  FAILED: "#ef4444",
+  REQUIRES_REVIEW: "#f59e0b",
+};
+
+function PlotValidationChart() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["plots-all"],
+    queryFn: async () => {
+      const res = await authFetch("/api/v1/geolocation/plots/?limit=200");
+      if (!res.ok) throw new Error("Failed");
+      return res.json() as Promise<PaginatedResponse<LandPlot>>;
+    },
+  });
+
+  const bars = useMemo(() => {
+    if (!data?.results) return [];
+    const counts: Record<string, number> = {};
+    for (const p of data.results) {
+      counts[p.validation_status] = (counts[p.validation_status] || 0) + 1;
+    }
+    const max = Math.max(...Object.values(counts), 1);
+    return Object.entries(counts).map(([status, count]) => ({
+      status,
+      count,
+      pct: count / max,
+    }));
+  }, [data]);
+
+  return (
+    <Card className="border-border/50">
+      <CardContent className="p-5">
+        <h3 className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground mb-4">
+          Plot Validation Status
+        </h3>
+        {isLoading ? (
+          <Skeleton className="h-40 w-full" />
+        ) : bars.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-8">No plots yet</p>
+        ) : (
+          <div className="space-y-3">
+            {bars.map((bar) => (
+              <div key={bar.status}>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-muted-foreground">{bar.status.replace("_", " ")}</span>
+                  <span className="text-xs font-medium tabular-nums">{bar.count}</span>
+                </div>
+                <div className="h-6 rounded-lg bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-lg transition-all duration-500"
+                    style={{
+                      width: `${bar.pct * 100}%`,
+                      backgroundColor: validationColors[bar.status] ?? "#94a3b8",
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function DashboardPage() {
   return (
     <div className="space-y-8 max-w-6xl">
@@ -183,6 +342,12 @@ export default function DashboardPage() {
             </Link>
           ))}
         </div>
+      </div>
+
+      {/* Charts */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <DDSStatusChart />
+        <PlotValidationChart />
       </div>
     </div>
   );

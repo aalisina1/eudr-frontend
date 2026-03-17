@@ -123,6 +123,7 @@ export default function SupplyChainsPage() {
         columns={columns}
         filters={filters}
         searchPlaceholder="Search by reference or country..."
+        exportable
         rowKey={(b) => b.id}
         onRowClick={(b) => router.push(`/supply-chains/${b.id}`)}
         emptyIcon={<PackageOpen className="w-5 h-5 text-muted-foreground" />}

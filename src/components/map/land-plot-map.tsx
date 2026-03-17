@@ -17,14 +17,15 @@ interface LandPlotMapProps {
 
 export function LandPlotMap({ plots, selectedPlotId }: LandPlotMapProps) {
   const mapRef = useRef<import("leaflet").Map | null>(null);
+  const leafletRef = useRef<typeof import("leaflet") | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const layerMapRef = useRef<Map<string, import("leaflet").GeoJSON>>(new Map());
 
-  // Initialize map and render plot layers
+  // Initialize map once (not on every plots change)
   useEffect(() => {
     let cancelled = false;
 
-    async function init() {
+    async function initMap() {
       const leaflet = await import("leaflet");
       const L = leaflet.default ?? leaflet;
 
@@ -38,17 +39,12 @@ export function LandPlotMap({ plots, selectedPlotId }: LandPlotMapProps) {
         shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
       });
 
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-
       const map = L.map(containerRef.current, {
         zoomControl: false,
       }).setView([0, 20], 3);
 
       mapRef.current = map;
-      layerMapRef.current = new Map();
+      leafletRef.current = L;
 
       L.control.zoom({ position: "bottomright" }).addTo(map);
 
@@ -61,71 +57,15 @@ export function LandPlotMap({ plots, selectedPlotId }: LandPlotMapProps) {
         },
       ).addTo(map);
 
-      const allLayers: import("leaflet").Layer[] = [];
-
-      for (const plot of plots) {
-        if (!plot.geometry) continue;
-
-        const color = STATUS_COLORS[plot.validation_status] ?? STATUS_COLORS.PENDING;
-
-        const layer = L.geoJSON(
-          { type: "Feature", geometry: plot.geometry, properties: {} } as GeoJSON.Feature,
-          {
-            style: {
-              color,
-              weight: 2,
-              fillOpacity: 0.2,
-              fillColor: color,
-              dashArray: plot.validation_status === "FAILED" ? "6 3" : undefined,
-            },
-            pointToLayer: (_, latlng) =>
-              L.circleMarker(latlng, {
-                radius: 7,
-                color,
-                fillColor: color,
-                fillOpacity: 0.5,
-                weight: 2,
-              }),
-          },
-        );
-
-        const label = `${plot.country}${plot.region ? `, ${plot.region}` : ""}`;
-
-        layer
-          .bindPopup(
-            `<div style="font-family: var(--font-sans); min-width: 160px;">
-              <p style="font-weight: 600; font-size: 13px; margin: 0 0 6px 0; color: var(--card-foreground);">${label}</p>
-              <div style="display: grid; gap: 3px; font-size: 12px; color: var(--muted-foreground);">
-                <span>Area: ${plot.area_hectares} ha</span>
-                <span>Source: ${plot.geometry_source}</span>
-                ${plot.external_id ? `<span>ID: <span style="font-family: monospace; font-size: 11px;">${plot.external_id}</span></span>` : ""}
-                <span style="display: inline-flex; align-items: center; gap: 5px;">
-                  Status: <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${color};"></span>
-                  <span style="text-transform: capitalize; color: ${color}; font-weight: 500;">${plot.validation_status.toLowerCase()}</span>
-                </span>
-              </div>
-            </div>`,
-          )
-          .addTo(map);
-
-        layerMapRef.current.set(plot.id, layer);
-        allLayers.push(layer);
-      }
-
-      if (allLayers.length > 0) {
-        const group = L.featureGroup(allLayers);
-        map.fitBounds(group.getBounds(), { padding: [50, 50] });
-      }
-
       // Ensure map tiles render correctly after container layout settles
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         if (!cancelled && mapRef.current) {
           mapRef.current.invalidateSize();
         }
-      }, 200);
+      });
     }
 
-    init();
+    initMap();
 
     return () => {
       cancelled = true;
@@ -133,7 +73,78 @@ export function LandPlotMap({ plots, selectedPlotId }: LandPlotMapProps) {
         mapRef.current.remove();
         mapRef.current = null;
       }
+      leafletRef.current = null;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Update plot layers when data changes (without recreating the map)
+  useEffect(() => {
+    const map = mapRef.current;
+    const L = leafletRef.current;
+    if (!map || !L) return;
+
+    // Clear existing plot layers
+    for (const layer of layerMapRef.current.values()) {
+      map.removeLayer(layer);
+    }
+    layerMapRef.current = new Map();
+
+    const allLayers: import("leaflet").Layer[] = [];
+
+    for (const plot of plots) {
+      if (!plot.geometry) continue;
+
+      const color = STATUS_COLORS[plot.validation_status] ?? STATUS_COLORS.PENDING;
+
+      const layer = L.geoJSON(
+        { type: "Feature", geometry: plot.geometry, properties: {} } as GeoJSON.Feature,
+        {
+          style: {
+            color,
+            weight: 2,
+            fillOpacity: 0.2,
+            fillColor: color,
+            dashArray: plot.validation_status === "FAILED" ? "6 3" : undefined,
+          },
+          pointToLayer: (_, latlng) =>
+            L.circleMarker(latlng, {
+              radius: 7,
+              color,
+              fillColor: color,
+              fillOpacity: 0.5,
+              weight: 2,
+            }),
+        },
+      );
+
+      const label = `${plot.country}${plot.region ? `, ${plot.region}` : ""}`;
+
+      layer
+        .bindPopup(
+          `<div style="font-family: var(--font-sans); min-width: 160px;">
+            <p style="font-weight: 600; font-size: 13px; margin: 0 0 6px 0; color: var(--card-foreground);">${label}</p>
+            <div style="display: grid; gap: 3px; font-size: 12px; color: var(--muted-foreground);">
+              <span>Area: ${plot.area_hectares} ha</span>
+              <span>Source: ${plot.geometry_source}</span>
+              ${plot.external_id ? `<span>ID: <span style="font-family: monospace; font-size: 11px;">${plot.external_id}</span></span>` : ""}
+              <span style="display: inline-flex; align-items: center; gap: 5px;">
+                Status: <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${color};"></span>
+                <span style="text-transform: capitalize; color: ${color}; font-weight: 500;">${plot.validation_status.toLowerCase()}</span>
+              </span>
+            </div>
+          </div>`,
+        )
+        .addTo(map);
+
+      layerMapRef.current.set(plot.id, layer);
+      allLayers.push(layer);
+    }
+
+    if (allLayers.length > 0) {
+      const group = L.featureGroup(allLayers);
+      map.fitBounds(group.getBounds(), { padding: [50, 50] });
+    }
   }, [plots]);
 
   // Fly to the selected plot and open its popup

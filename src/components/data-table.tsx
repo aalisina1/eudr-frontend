@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Download } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import type { PaginatedResponse } from "@/lib/api/types";
 
@@ -37,6 +37,13 @@ export interface FilterDef {
   options: FilterOption[];
 }
 
+export interface ExportColumnDef {
+  key: string;
+  header: string;
+  /** Extract a plain string/number value for CSV export */
+  exportValue?: (item: unknown) => string | number;
+}
+
 interface DataTableProps<T> {
   /** React Query cache key prefix, e.g. "suppliers" */
   queryKey: string;
@@ -56,6 +63,10 @@ interface DataTableProps<T> {
   rowKey: (item: T) => string;
   /** Callback when a row is clicked */
   onRowClick?: (item: T) => void;
+  /** Enable CSV export button */
+  exportable?: boolean;
+  /** Filename prefix for CSV export (default: queryKey) */
+  exportFilename?: string;
   /** Empty state content */
   emptyIcon?: React.ReactNode;
   emptyTitle?: string;
@@ -85,6 +96,8 @@ export function DataTable<T>({
   pageSize = 20,
   rowKey,
   onRowClick,
+  exportable = false,
+  exportFilename,
   emptyIcon,
   emptyTitle = "No results",
   emptyDescription = "Try adjusting your search or filters",
@@ -137,6 +150,42 @@ export function DataTable<T>({
     setActiveFilters((prev) => ({ ...prev, [key]: value }));
   }, []);
 
+  const handleExportCSV = useCallback(async () => {
+    // Fetch all records (up to 1000) for export
+    const exportParams = new URLSearchParams();
+    if (debouncedSearch) exportParams.set("search", debouncedSearch);
+    if (ordering) exportParams.set("ordering", ordering);
+    exportParams.set("limit", "1000");
+    exportParams.set("offset", "0");
+    for (const [key, value] of Object.entries(activeFilters)) {
+      if (value) exportParams.set(key, value);
+    }
+    const res = await authFetch(`${endpoint}?${exportParams.toString()}`);
+    if (!res.ok) return;
+    const result: PaginatedResponse<T> = await res.json();
+
+    // Build CSV
+    const headers = columns.map((c) => c.header);
+    const rows = result.results.map((item) =>
+      columns.map((col) => {
+        const val = (item as Record<string, unknown>)[col.key];
+        const str = val == null ? "" : String(val);
+        return str.includes(",") || str.includes('"') || str.includes("\n")
+          ? `"${str.replace(/"/g, '""')}"`
+          : str;
+      })
+    );
+
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${exportFilename ?? queryKey}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [columns, debouncedSearch, ordering, activeFilters, endpoint, queryKey, exportFilename]);
+
   const SortIcon = ({ columnKey }: { columnKey: string }) => {
     if (ordering === columnKey) return <ArrowUp className="size-3" />;
     if (ordering === `-${columnKey}`) return <ArrowDown className="size-3" />;
@@ -176,6 +225,17 @@ export function DataTable<T>({
               ))}
             </select>
           ))}
+          {exportable && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCSV}
+              className="h-9 gap-1.5 text-xs rounded-xl border-border/60 ml-auto"
+            >
+              <Download className="size-3.5" />
+              Export CSV
+            </Button>
+          )}
           {(search || Object.values(activeFilters).some(Boolean)) && (
             <Button
               variant="ghost"

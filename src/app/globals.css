@@ -166,6 +166,15 @@
   background-size: 256px 256px;
 }
 
+/* ───── Leaflet z-index isolation ───── */
+/* Leaflet internally uses z-index up to 1000 for popups/controls.
+   Keep the container in a low stacking context so that portalled
+   overlays (sheets, dialogs) always paint above. */
+.leaflet-container {
+  z-index: 0 !important;
+  isolation: isolate;
+}
+
 /* ───── Custom Leaflet popups ───── */
 .leaflet-popup-content-wrapper {
   border-radius: 0.875rem !important;

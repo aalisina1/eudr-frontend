@@ -247,6 +247,104 @@ export interface DocumentVersion {
   change_notes: string;
 }
 
+// ── Data Integration / Integrations ──
+
+export type SourceType = "SQL_SERVER" | "FARMFORCE" | "AS400" | "CSV_UPLOAD" | "WEBHOOK" | "REST_API" | "SFTP";
+export type ConnectionStatus = "UNTESTED" | "CONNECTED" | "FAILED";
+export type SchemaObjectType = "TABLE" | "VIEW" | "FILE" | "ENDPOINT";
+
+export interface DataSource {
+  id: string;
+  name: string;
+  source_type: SourceType;
+  transform_mode: "FIELD_MAPPER" | "DBT";
+  connection_config?: Record<string, unknown>;
+  connection_status: ConnectionStatus;
+  last_connected_at: string | null;
+  is_active: boolean;
+  schema_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DataSourceSchema {
+  id: string;
+  object_name: string;
+  object_type: SchemaObjectType;
+  is_selected: boolean;
+  version: number;
+  schema: { columns: SchemaColumn[] };
+  sample_record: Record<string, unknown>;
+  row_count: number | null;
+  discovered_at: string;
+}
+
+export interface SchemaColumn {
+  name: string;
+  type: string;
+  nullable: boolean;
+  max_length: number | null;
+  is_primary_key: boolean;
+}
+
+export interface IngestJob {
+  id: string;
+  source: string;
+  source_name: string;
+  status: "RUNNING" | "COMPLETED" | "FAILED";
+  records_ingested: number;
+  records_failed: number;
+  started_at: string;
+  completed_at: string | null;
+  error_message: string;
+}
+
+export interface RawRecord {
+  id: string;
+  source: string;
+  ingest_job: string;
+  external_id: string;
+  raw_data?: Record<string, unknown>;
+  processing_status: "PENDING" | "STAGED" | "PROMOTED" | "FAILED" | "SKIPPED";
+  received_at: string;
+}
+
+export interface StagingRecord {
+  id: string;
+  target_object_type: "LAND_PLOT" | "BATCH" | "SUPPLIER" | "DDS_HEADER" | "PRODUCT";
+  status: "PENDING_REVIEW" | "VALIDATED" | "PROMOTED" | "REJECTED";
+  transformed_data: Record<string, unknown>;
+  validation_errors: string[];
+  promoted_object_id: string | null;
+  review_notes: string;
+  created_at: string;
+}
+
+export interface MappingTemplate {
+  id: string;
+  name: string;
+  source: string;
+  source_name: string;
+  target_object_type: string;
+  transform_mode: string;
+  is_active: boolean;
+  version: number;
+  field_mappings?: FieldMapping[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FieldMapping {
+  id: string;
+  source_path: string;
+  target_field: string;
+  transformation_type: string;
+  transformation_params: Record<string, unknown>;
+  is_required: boolean;
+  default_value: string;
+  order: number;
+}
+
 // ── Shared ──
 
 export interface PaginatedResponse<T> {
