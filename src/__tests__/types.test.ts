@@ -10,13 +10,16 @@ import type {
   DataSourceSchema,
   IngestJob,
   RawRecord,
-  StagingRecord,
-  MappingTemplate,
+  SyncRecord,
+  MappingConfig,
   FieldMapping,
   PaginatedResponse,
   SourceType,
   ConnectionStatus,
   SchemaObjectType,
+  Transformation,
+  SyncConfig,
+  SyncJob,
 } from "@/lib/api/types";
 
 /**
@@ -62,7 +65,6 @@ describe("Type definitions", () => {
       id: "ds1",
       name: "Test SQL",
       source_type: "SQL_SERVER",
-      transform_mode: "FIELD_MAPPER",
       connection_status: "UNTESTED",
       last_connected_at: null,
       is_active: true,
@@ -106,17 +108,52 @@ describe("Type definitions", () => {
     expect(types).toHaveLength(4);
   });
 
-  it("StagingRecord has validation_errors array", () => {
-    const record: StagingRecord = {
+  it("SyncRecord has status and target fields", () => {
+    const record: SyncRecord = {
       id: "sr1",
-      target_object_type: "LAND_PLOT",
+      sync_job: "job1",
+      source_data: { name: "test" },
+      transformed_data: { name: "TEST" },
       status: "PENDING_REVIEW",
-      transformed_data: {},
-      validation_errors: ["field missing"],
-      promoted_object_id: null,
+      target_object_type: "LAND_PLOT",
+      target_object_id: null,
+      error_message: "",
       review_notes: "",
+      reviewed_by_id: null,
+      reviewed_at: null,
       created_at: "",
     };
-    expect(record.validation_errors).toHaveLength(1);
+    expect(record.status).toBe("PENDING_REVIEW");
+  });
+
+  it("Transformation interface has query fields", () => {
+    const t: Transformation = {
+      id: "t1",
+      name: "Test query",
+      description: "",
+      query_text: "SELECT 1",
+      output_columns: [{ name: "col1", type: "varchar" }],
+      is_validated: false,
+      created_at: "",
+      updated_at: "",
+    };
+    expect(t.output_columns).toHaveLength(1);
+  });
+
+  it("MappingConfig interface has source_type", () => {
+    const m: MappingConfig = {
+      id: "m1",
+      name: "Test mapping",
+      source: "src1",
+      source_type: "SOURCE_OBJECT",
+      source_object: null,
+      transformation: null,
+      target_object_type: "SUPPLIER",
+      is_active: true,
+      version: 1,
+      created_at: "",
+      updated_at: "",
+    };
+    expect(m.source_type).toBe("SOURCE_OBJECT");
   });
 });

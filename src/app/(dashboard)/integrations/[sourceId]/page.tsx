@@ -22,8 +22,6 @@ import {
   Search,
   CheckSquare,
   ArrowDownToLine,
-  Shuffle,
-  ClipboardCheck,
   ChevronRight,
   Columns3,
   Rows3,
@@ -64,15 +62,9 @@ const SOURCE_COLORS: Record<SourceType, string> = {
   WEBHOOK: "#ec4899",
 };
 
-// ── Pipeline steps ──
+// ── Pipeline steps (ingestion only) ──
 
-type PipelineStep =
-  | "configure"
-  | "discover"
-  | "select"
-  | "raw"
-  | "transform"
-  | "staging";
+type PipelineStep = "configure" | "discover" | "select" | "ingest";
 
 const PIPELINE_STEPS: {
   id: PipelineStep;
@@ -82,9 +74,7 @@ const PIPELINE_STEPS: {
   { id: "configure", label: "Configure", icon: Plug },
   { id: "discover", label: "Discover", icon: Search },
   { id: "select", label: "Select", icon: CheckSquare },
-  { id: "raw", label: "Raw Data", icon: ArrowDownToLine },
-  { id: "transform", label: "Transform", icon: Shuffle },
-  { id: "staging", label: "Staging", icon: ClipboardCheck },
+  { id: "ingest", label: "Ingest", icon: ArrowDownToLine },
 ];
 
 export default function SourceDetailPage() {
@@ -134,7 +124,7 @@ export default function SourceDetailPage() {
   // ── Fetch raw records ──
   const { data: rawData } = useQuery({
     queryKey: ["source-raw", sourceId],
-    enabled: activeStep === "raw" || activeStep === "transform",
+    enabled: activeStep === "ingest",
     queryFn: async () => {
       const res = await authFetch(
         `/api/v1/data-integration/sources/${sourceId}/raw-records/?limit=50`
@@ -192,7 +182,6 @@ export default function SourceDetailPage() {
     new Set()
   );
 
-  // Sync pending selection with server state
   const effectiveSelection = useMemo(() => {
     if (pendingSelection.size > 0) return pendingSelection;
     return new Set(selectedSchemas.map((s) => s.id));
@@ -237,7 +226,7 @@ export default function SourceDetailPage() {
       queryClient.invalidateQueries({
         queryKey: ["source-raw", sourceId],
       });
-      setActiveStep("raw");
+      setActiveStep("ingest");
     },
   });
 
@@ -417,7 +406,7 @@ export default function SourceDetailPage() {
         />
       )}
 
-      {activeStep === "raw" && (
+      {activeStep === "ingest" && (
         <RawStep
           schemas={selectedSchemas}
           jobs={jobs}
@@ -431,12 +420,6 @@ export default function SourceDetailPage() {
           }
         />
       )}
-
-      {activeStep === "transform" && (
-        <TransformStep rawRecords={rawRecords} sourceId={sourceId} />
-      )}
-
-      {activeStep === "staging" && <StagingStep sourceId={sourceId} />}
     </div>
   );
 }
@@ -504,8 +487,8 @@ function ConfigureStep({
                   </span>
                   <span className="font-mono text-xs truncate">
                     {key.toLowerCase().includes("password")
-                      ? "••••••••"
-                      : String(val ?? "—")}
+                      ? "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+                      : String(val ?? "\u2014")}
                   </span>
                 </div>
               ))}
@@ -627,7 +610,7 @@ function DiscoverStep({
                         {s.schema?.columns?.length ?? 0}
                       </td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-muted-foreground">
-                        {s.row_count?.toLocaleString() ?? "—"}
+                        {s.row_count?.toLocaleString() ?? "\u2014"}
                       </td>
                     </tr>
                   ))}
@@ -904,350 +887,5 @@ function JobStatusBadge({ status }: { status: string }) {
     >
       {status}
     </Badge>
-  );
-}
-
-// ── Step 5: Transform ──
-
-function TransformStep({
-  rawRecords,
-  sourceId,
-}: {
-  rawRecords: RawRecord[];
-  sourceId: string;
-}) {
-  const queryClient = useQueryClient();
-  const [selectedTemplate, setSelectedTemplate] = useState("");
-
-  const { data: templatesData } = useQuery({
-    queryKey: ["templates", sourceId],
-    queryFn: async () => {
-      const res = await authFetch(
-        `/api/v1/data-integration/templates/?source=${sourceId}`
-      );
-      if (!res.ok) throw new Error("Failed");
-      return res.json() as Promise<
-        PaginatedResponse<{ id: string; name: string; target_object_type: string }>
-      >;
-    },
-  });
-
-  const previewMutation = useMutation({
-    mutationFn: async () => {
-      const sampleIds = rawRecords.slice(0, 5).map((r) => r.id);
-      const res = await authFetch(
-        `/api/v1/data-integration/sources/${sourceId}/transform-preview/`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            raw_record_ids: sampleIds,
-            template_id: selectedTemplate,
-          }),
-        }
-      );
-      if (!res.ok) throw new Error("Transform preview failed");
-      return res.json();
-    },
-  });
-
-  const templates = templatesData?.results ?? [];
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <h3 className="text-sm font-medium">Transform Raw → Staging</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Apply a mapping template to transform raw records into staging
-          records.
-        </p>
-      </div>
-
-      {templates.length === 0 ? (
-        <Card className="border-border/50 border-dashed">
-          <CardContent className="py-12 text-center">
-            <p className="text-sm text-muted-foreground">
-              No mapping templates configured for this source. Create one in the
-              Templates section.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          <div className="flex items-center gap-3">
-            <select
-              value={selectedTemplate}
-              onChange={(e) => setSelectedTemplate(e.target.value)}
-              className="rounded-lg border px-3 py-2 text-sm bg-background flex-1"
-            >
-              <option value="">Select a mapping template...</option>
-              {templates.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} → {t.target_object_type.replace("_", " ")}
-                </option>
-              ))}
-            </select>
-            <Button
-              onClick={() => previewMutation.mutate()}
-              disabled={
-                !selectedTemplate ||
-                rawRecords.length === 0 ||
-                previewMutation.isPending
-              }
-              variant="outline"
-              className="gap-1.5"
-            >
-              {previewMutation.isPending ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Shuffle className="size-4" />
-              )}
-              Preview
-            </Button>
-          </div>
-
-          {previewMutation.data && (
-            <Card className="border-border/50">
-              <CardContent className="p-0">
-                <div className="px-4 py-3 border-b">
-                  <h4 className="text-xs font-medium text-muted-foreground">
-                    Transform Preview
-                  </h4>
-                </div>
-                <div className="divide-y">
-                  {(
-                    previewMutation.data as {
-                      results: {
-                        raw_record_id: string;
-                        transformed_data: Record<string, unknown>;
-                        errors: string[];
-                      }[];
-                    }
-                  ).results.map(
-                    (
-                      r: {
-                        raw_record_id: string;
-                        transformed_data: Record<string, unknown>;
-                        errors: string[];
-                      },
-                      i: number
-                    ) => (
-                      <div key={i} className="px-4 py-3">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className="font-mono text-[10px] text-muted-foreground">
-                            {r.raw_record_id.slice(0, 8)}...
-                          </span>
-                          {r.errors.length > 0 && (
-                            <Badge
-                              variant="secondary"
-                              className="border-0 rounded text-[9px] px-1.5 py-0 bg-red-100 text-red-700"
-                            >
-                              {r.errors.length} error
-                              {r.errors.length !== 1 ? "s" : ""}
-                            </Badge>
-                          )}
-                        </div>
-                        <pre className="text-xs font-mono text-muted-foreground bg-muted rounded-lg p-3 overflow-x-auto">
-                          {JSON.stringify(r.transformed_data, null, 2)}
-                        </pre>
-                        {r.errors.length > 0 && (
-                          <div className="mt-2 space-y-1">
-                            {r.errors.map((err: string, j: number) => (
-                              <p key={j} className="text-xs text-red-600">
-                                {err}
-                              </p>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
-
-// ── Step 6: Staging ──
-
-function StagingStep({ sourceId }: { sourceId: string }) {
-  const queryClient = useQueryClient();
-
-  const { data: stagingData } = useQuery({
-    queryKey: ["staging-records-source"],
-    queryFn: async () => {
-      const res = await authFetch(
-        `/api/v1/data-integration/staging/?status=PENDING_REVIEW&limit=50`
-      );
-      if (!res.ok) throw new Error("Failed");
-      return res.json() as Promise<
-        PaginatedResponse<{
-          id: string;
-          target_object_type: string;
-          status: string;
-          created_at: string;
-        }>
-      >;
-    },
-  });
-
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  const bulkMutation = useMutation({
-    mutationFn: async (action: "approve" | "reject") => {
-      const res = await authFetch(
-        `/api/v1/data-integration/staging/bulk-action/`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ids: Array.from(selectedIds), action }),
-        }
-      );
-      if (!res.ok) throw new Error("Bulk action failed");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["staging-records-source"],
-      });
-      setSelectedIds(new Set());
-    },
-  });
-
-  const records = stagingData?.results ?? [];
-
-  function toggleId(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-medium">Staging Review</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Review transformed records before promoting to core models.
-          </p>
-        </div>
-        {selectedIds.size > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">
-              {selectedIds.size} selected
-            </span>
-            <Button
-              size="sm"
-              onClick={() => bulkMutation.mutate("approve")}
-              disabled={bulkMutation.isPending}
-              className="gap-1"
-            >
-              <CheckCircle2 className="size-3.5" />
-              Approve
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => bulkMutation.mutate("reject")}
-              disabled={bulkMutation.isPending}
-              className="gap-1 text-red-600 hover:text-red-700"
-            >
-              <XCircle className="size-3.5" />
-              Reject
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {records.length === 0 ? (
-        <Card className="border-border/50 border-dashed">
-          <CardContent className="py-12 text-center">
-            <p className="text-sm text-muted-foreground">
-              No records pending review.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="border-border/50">
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-muted-foreground">
-                    <th className="px-4 py-2.5 w-8">
-                      <input
-                        type="checkbox"
-                        checked={
-                          selectedIds.size === records.length &&
-                          records.length > 0
-                        }
-                        onChange={() => {
-                          if (selectedIds.size === records.length) {
-                            setSelectedIds(new Set());
-                          } else {
-                            setSelectedIds(new Set(records.map((r) => r.id)));
-                          }
-                        }}
-                        className="rounded"
-                      />
-                    </th>
-                    <th className="px-4 py-2.5 font-medium text-xs">
-                      Target Type
-                    </th>
-                    <th className="px-4 py-2.5 font-medium text-xs">Status</th>
-                    <th className="px-4 py-2.5 font-medium text-xs">
-                      Created
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {records.map((rec) => (
-                    <tr
-                      key={rec.id}
-                      className="border-b last:border-0 hover:bg-muted/50"
-                    >
-                      <td className="px-4 py-2.5">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(rec.id)}
-                          onChange={() => toggleId(rec.id)}
-                          className="rounded"
-                        />
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <Badge
-                          variant="secondary"
-                          className="border-0 rounded text-[10px] px-2 py-0.5 bg-muted text-muted-foreground"
-                        >
-                          {rec.target_object_type.replace("_", " ")}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <Badge
-                          variant="secondary"
-                          className="border-0 rounded text-[10px] px-2 py-0.5 bg-amber-100 text-amber-700"
-                        >
-                          {rec.status.replace("_", " ")}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground">
-                        {new Date(rec.created_at).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
   );
 }

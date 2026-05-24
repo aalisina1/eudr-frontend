@@ -253,11 +253,13 @@ export type SourceType = "SQL_SERVER" | "FARMFORCE" | "AS400" | "CSV_UPLOAD" | "
 export type ConnectionStatus = "UNTESTED" | "CONNECTED" | "FAILED";
 export type SchemaObjectType = "TABLE" | "VIEW" | "FILE" | "ENDPOINT";
 
+export type TargetObjectType = "LAND_PLOT" | "BATCH" | "SUPPLIER" | "DDS_HEADER" | "PRODUCT";
+export type MappingSourceType = "SOURCE_OBJECT" | "TRANSFORMATION";
+
 export interface DataSource {
   id: string;
   name: string;
   source_type: SourceType;
-  transform_mode: "FIELD_MAPPER" | "DBT";
   connection_config?: Record<string, unknown>;
   connection_status: ConnectionStatus;
   last_connected_at: string | null;
@@ -304,29 +306,38 @@ export interface RawRecord {
   source: string;
   ingest_job: string;
   external_id: string;
+  source_object: string;
   raw_data?: Record<string, unknown>;
   processing_status: "PENDING" | "STAGED" | "PROMOTED" | "FAILED" | "SKIPPED";
   received_at: string;
 }
 
-export interface StagingRecord {
-  id: string;
-  target_object_type: "LAND_PLOT" | "BATCH" | "SUPPLIER" | "DDS_HEADER" | "PRODUCT";
-  status: "PENDING_REVIEW" | "VALIDATED" | "PROMOTED" | "REJECTED";
-  transformed_data: Record<string, unknown>;
-  validation_errors: string[];
-  promoted_object_id: string | null;
-  review_notes: string;
-  created_at: string;
-}
+// ── Transformation ──
 
-export interface MappingTemplate {
+export interface Transformation {
   id: string;
   name: string;
-  source: string;
-  source_name: string;
-  target_object_type: string;
-  transform_mode: string;
+  description: string;
+  query_text: string;
+  output_columns: { name: string; type: string }[];
+  is_validated: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Mapping Config ──
+
+export interface MappingConfig {
+  id: string;
+  name: string;
+  source: string | null;
+  source_name?: string;
+  source_type: MappingSourceType;
+  source_object: string | null;
+  source_object_name?: string;
+  transformation: string | null;
+  transformation_name?: string;
+  target_object_type: TargetObjectType;
   is_active: boolean;
   version: number;
   field_mappings?: FieldMapping[];
@@ -343,6 +354,100 @@ export interface FieldMapping {
   is_required: boolean;
   default_value: string;
   order: number;
+}
+
+// ── Sync Config ──
+
+export interface SyncConfig {
+  id: string;
+  name: string;
+  mapping: string;
+  mapping_name?: string;
+  schedule_cron: string;
+  is_enabled: boolean;
+  requires_review: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Sync Job ──
+
+export type SyncJobStatus = "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+export type SyncTriggerType = "MANUAL" | "SCHEDULE";
+
+export interface SyncJob {
+  id: string;
+  sync_config: string;
+  sync_config_name?: string;
+  status: SyncJobStatus;
+  triggered_by: SyncTriggerType;
+  records_processed: number;
+  records_succeeded: number;
+  records_failed: number;
+  started_at: string | null;
+  completed_at: string | null;
+  error_message: string;
+  created_at: string;
+}
+
+// ── Sync Record ──
+
+export type SyncRecordStatus = "PENDING_REVIEW" | "SUCCESS" | "FAILED" | "SKIPPED" | "REJECTED";
+
+export interface SyncRecord {
+  id: string;
+  sync_job: string;
+  source_data: Record<string, unknown>;
+  transformed_data: Record<string, unknown>;
+  status: SyncRecordStatus;
+  target_object_type: TargetObjectType;
+  target_object_id: string | null;
+  error_message: string;
+  review_notes: string;
+  reviewed_by_id: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+}
+
+// ── Ingestion Schedule ──
+
+export interface IngestionSchedule {
+  id: string;
+  source: string;
+  schedule_type: "CRON" | "INTERVAL";
+  cron_expression: string;
+  interval_seconds: number | null;
+  is_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── SQL Schema (for editor autocomplete) ──
+
+export interface SQLViewSchema {
+  view_name: string;
+  object_name: string;
+  source_name?: string;
+  columns: { name: string; type: string; nullable: boolean }[];
+}
+
+// ── Auto-map suggestion ──
+
+export interface AutoMapSuggestion {
+  source_path: string;
+  target_field: string;
+  transformation_type: string;
+  confidence: number;
+  source_type?: string;
+  target_type?: string;
+}
+
+// ── Target field info ──
+
+export interface TargetFieldInfo {
+  name: string;
+  type: string;
+  required: boolean;
 }
 
 // ── Shared ──
