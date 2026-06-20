@@ -7,8 +7,13 @@ Next.js 16 (App Router) + React 19 for the EUDR compliance platform.
 Read these before non-trivial work:
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — routing, data fetching (`authFetch`), 4-tab integrations, component patterns
-- [docs/OBJECTIVES.md](docs/OBJECTIVES.md) — UX goals, role-aware UI direction, quality bars, non-objectives
 - [docs/ROADMAP.md](docs/ROADMAP.md) — shipped + planned (role scoping, draw-on-map, notifications dropdown, audit viewer)
+
+Project-wide context is single-sourced in the Obsidian vault (see also the
+umbrella `../CLAUDE.md`, which auto-loads here):
+
+- `../eudr-vault/00-Index/Objectives.md` — EUDR compliance requirements, target users, quality bars, non-objectives
+- `../eudr-vault/00-Index/Workflow.md` — how work ships (issues, branches, PRs, releases)
 
 ## Commands
 
