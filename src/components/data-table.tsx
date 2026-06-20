@@ -111,6 +111,7 @@ export function DataTable<T>({
 
   // Reset to page 1 when search/filters change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
   }, [debouncedSearch, activeFilters]);
 

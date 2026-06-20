@@ -51,6 +51,8 @@ export function AppSidebar() {
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
+    // One-time sync of the initial theme from the pre-hydration <html> class.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDark(document.documentElement.classList.contains("dark"));
   }, []);
 

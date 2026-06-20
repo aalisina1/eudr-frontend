@@ -237,6 +237,8 @@ function TransformationEditor({
   // Auto-select all sources when they first load
   useEffect(() => {
     if (sources.length > 0 && selectedSourceIds.length === 0) {
+      // Default-select all sources once they load (guarded so it runs once).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedSourceIds(sources.map((s) => s.id));
     }
   }, [sources, selectedSourceIds.length]);
