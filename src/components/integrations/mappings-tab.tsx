@@ -482,6 +482,8 @@ function EditMappingForm({
   // Load existing values once
   useEffect(() => {
     if (mapping && !loaded) {
+      // One-time hydration of form state from the fetched mapping (guarded by !loaded).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(mapping.name);
       setTargetType(mapping.target_object_type);
       setSourceType(mapping.source_type);
@@ -885,6 +887,8 @@ function FieldMappingEditor({
         };
       });
 
+    // One-time seed of field rows from the loaded mapping (guarded by `initialized`).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFieldRows(rows.length > 0 ? rows : [makeEmptyRow()]);
     setInitialized(true);
   }, [targetFields, sourceColumns, saved, mapping, transformation, sourceObjectSchema, initialized]);

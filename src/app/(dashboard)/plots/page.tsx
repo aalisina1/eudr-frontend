@@ -70,6 +70,7 @@ export default function PlotsPage() {
   }, [search]);
 
   // Client-side filter (plots are all loaded for the map anyway)
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const filteredPlots = useMemo(() => {
     if (!data?.results) return [];
     let plots = data.results;

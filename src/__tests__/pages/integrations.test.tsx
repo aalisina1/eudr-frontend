@@ -50,7 +50,7 @@ describe("IntegrationsPage", () => {
     renderWithProviders(<IntegrationsPage />);
     expect(screen.getByText("Integrations")).toBeInTheDocument();
     expect(
-      screen.getByText(/Connect external sources/)
+      screen.getByText(/Connect sources, transform data/)
     ).toBeInTheDocument();
   });
 
