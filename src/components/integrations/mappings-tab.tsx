@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ import {
   GitMerge,
 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
+import { getErrorMessage } from "@/lib/api/errors";
 import type {
   MappingConfig,
   DataSource,
@@ -252,7 +254,6 @@ function CreateMappingForm({
   const [selectedSourceId, setSelectedSourceId] = useState("");
   const [selectedSourceObjectId, setSelectedSourceObjectId] = useState("");
   const [selectedTransformationId, setSelectedTransformationId] = useState("");
-  const [createError, setCreateError] = useState("");
 
   // Fetch sources
   const { data: sourcesData } = useQuery({
@@ -312,14 +313,15 @@ function CreateMappingForm({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(
-          Object.values(err).flat().join(", ") || "Failed to create mapping"
-        );
+        throw new Error(getErrorMessage(err));
       }
       return res.json() as Promise<MappingConfig>;
     },
-    onSuccess: (data) => onCreated(data.id),
-    onError: (err) => setCreateError(err.message),
+    onSuccess: (data) => {
+      toast.success("Mapping created");
+      onCreated(data.id);
+    },
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 
   return (
@@ -428,8 +430,6 @@ function CreateMappingForm({
             </div>
           )}
 
-          {createError && <p className="text-xs text-red-600">{createError}</p>}
-
           <div className="flex justify-end gap-2">
             <Button variant="outline" size="sm" onClick={onBack}>
               Cancel
@@ -467,7 +467,6 @@ function EditMappingForm({
   const [selectedSourceObjectId, setSelectedSourceObjectId] = useState("");
   const [selectedTransformationId, setSelectedTransformationId] = useState("");
   const [loaded, setLoaded] = useState(false);
-  const [saveError, setSaveError] = useState("");
 
   // Fetch existing mapping
   const { data: mapping } = useQuery({
@@ -552,14 +551,15 @@ function EditMappingForm({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(
-          Object.values(err).flat().join(", ") || "Failed to update mapping"
-        );
+        throw new Error(getErrorMessage(err));
       }
       return res.json();
     },
-    onSuccess: () => onBack(),
-    onError: (err) => setSaveError(err.message),
+    onSuccess: () => {
+      toast.success("Mapping updated");
+      onBack();
+    },
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 
   const deleteMutation = useMutation({
@@ -567,9 +567,16 @@ function EditMappingForm({
       const res = await authFetch(`/api/v1/data-integration/mappings/${mappingId}/`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Failed to delete");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(getErrorMessage(err));
+      }
     },
-    onSuccess: () => onBack(),
+    onSuccess: () => {
+      toast.success("Mapping deleted");
+      onBack();
+    },
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 
   return (
@@ -676,8 +683,6 @@ function EditMappingForm({
               </select>
             </div>
           )}
-
-          {saveError && <p className="text-xs text-red-600">{saveError}</p>}
 
           <div className="flex justify-between">
             <Button
@@ -915,20 +920,20 @@ function FieldMappingEditor({
         );
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          throw new Error(
-            Object.values(err).flat().join(", ") || "Failed to save field mapping"
-          );
+          throw new Error(getErrorMessage(err));
         }
         results.push(await res.json());
       }
       return results;
     },
-    onSuccess: () => {
+    onSuccess: (results) => {
       queryClient.invalidateQueries({ queryKey: ["mapping-fields", mappingId] });
       // Reset rows — re-initialization will pick up the new saved state
       setInitialized(false);
       setFieldRows([]);
+      toast.success(`Saved ${results.length} field mapping${results.length !== 1 ? "s" : ""}`);
     },
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 
   // Delete field
@@ -938,14 +943,19 @@ function FieldMappingEditor({
         `/api/v1/data-integration/mappings/${mappingId}/fields/${fieldId}/`,
         { method: "DELETE" }
       );
-      if (!res.ok) throw new Error("Failed to delete");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(getErrorMessage(err));
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["mapping-fields", mappingId] });
       // Allow re-initialization to add the freed target field back
       setInitialized(false);
       setFieldRows([]);
+      toast.success("Field mapping deleted");
     },
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 
   function updateRow(id: string, field: keyof FieldMappingRow, value: string) {
@@ -1131,12 +1141,6 @@ function FieldMappingEditor({
           </div>
         </CardContent>
       </Card>
-
-      {saveFieldsMutation.error && (
-        <p className="text-xs text-red-600">
-          {(saveFieldsMutation.error as Error).message}
-        </p>
-      )}
 
       <div className="flex justify-end gap-2">
         <Button variant="outline" size="sm" onClick={onBack}>

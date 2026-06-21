@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,20 +13,19 @@ import {
   Plus,
   Play,
   ArrowLeft,
-  CheckCircle2,
   Code2,
   ChevronRight,
   ChevronDown,
   Table2,
   Columns3,
   Save,
-  Trash2,
   Pencil,
 } from "lucide-react";
 import Editor from "react-simple-code-editor";
 import Prism from "prismjs";
 import "prismjs/components/prism-sql";
 import { authFetch } from "@/lib/api/client";
+import { getErrorMessage } from "@/lib/api/errors";
 import type {
   Transformation,
   PaginatedResponse,
@@ -277,7 +277,7 @@ function TransformationEditor({
       );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || err.error || "Query execution failed");
+        throw new Error(getErrorMessage(err));
       }
       return res.json() as Promise<{
         rows: Record<string, unknown>[];
@@ -288,6 +288,7 @@ function TransformationEditor({
       setPreviewRows(data.rows);
       setPreviewColumns(data.columns);
     },
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 
   // Save transformation
@@ -307,13 +308,15 @@ function TransformationEditor({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(
-          Object.values(err).flat().join(", ") || "Failed to save"
-        );
+        throw new Error(getErrorMessage(err));
       }
       return res.json();
     },
-    onSuccess: () => onSaved(),
+    onSuccess: () => {
+      toast.success(transformationId ? "Transformation updated" : "Transformation created");
+      onSaved();
+    },
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 
   // Validate transformation
@@ -324,9 +327,14 @@ function TransformationEditor({
         `/api/v1/data-integration/transformations/${transformationId}/validate/`,
         { method: "POST" }
       );
-      if (!res.ok) throw new Error("Validation failed");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(getErrorMessage(err));
+      }
       return res.json();
     },
+    onSuccess: () => toast.success("Transformation validated"),
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 
   const highlight = useCallback((code: string) => {
@@ -493,14 +501,6 @@ function TransformationEditor({
                   SQL Query
                 </span>
                 <div className="flex items-center gap-1.5">
-                  {saveMutation.isError && (
-                    <span className="text-[10px] text-red-600 max-w-[200px] truncate">
-                      {(saveMutation.error as Error).message}
-                    </span>
-                  )}
-                  {saveMutation.isSuccess && (
-                    <span className="text-[10px] text-emerald-600">Saved!</span>
-                  )}
                   {!name.trim() && (
                     <span className="text-[10px] text-muted-foreground">Enter a name to save</span>
                   )}
@@ -551,18 +551,6 @@ function TransformationEditor({
               </div>
             </CardContent>
           </Card>
-
-          {/* Errors */}
-          {runMutation.isError && (
-            <div className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">
-              {(runMutation.error as Error).message}
-            </div>
-          )}
-          {saveMutation.isError && (
-            <div className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">
-              {(saveMutation.error as Error).message}
-            </div>
-          )}
 
           {/* Results table */}
           {previewRows && (

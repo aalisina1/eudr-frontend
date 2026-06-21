@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   Sheet,
   SheetContent,
@@ -17,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { authFetch } from "@/lib/api/client";
+import { getErrorMessage } from "@/lib/api/errors";
 import type { DataSource, SourceType } from "@/lib/api/types";
 
 const SOURCE_TYPES: { value: SourceType; label: string }[] = [
@@ -142,7 +144,7 @@ export function SourceForm({ open, onOpenChange, source }: SourceFormProps) {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || (isEditing ? "Failed to update source" : "Failed to create source"));
+        throw new Error(getErrorMessage(err));
       }
       return res.json();
     },
@@ -151,9 +153,11 @@ export function SourceForm({ open, onOpenChange, source }: SourceFormProps) {
       if (isEditing) {
         queryClient.invalidateQueries({ queryKey: ["source", source!.id] });
       }
+      toast.success(isEditing ? "Source updated" : "Source created");
       reset();
       onOpenChange(false);
     },
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 
   useEffect(() => {
