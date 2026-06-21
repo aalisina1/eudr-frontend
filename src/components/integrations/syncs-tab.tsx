@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,7 @@ import {
   Clock,
 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
+import { getErrorMessage } from "@/lib/api/errors";
 import type {
   SyncConfig,
   SyncJob,
@@ -191,13 +193,15 @@ function SyncConfigCard({
       );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Failed to trigger sync");
+        throw new Error(getErrorMessage(err));
       }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sync-configs"] });
+      toast.success("Sync triggered");
     },
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 
   return (
@@ -283,7 +287,6 @@ function CreateSyncForm({
   const [mappingId, setMappingId] = useState("");
   const [scheduleCron, setScheduleCron] = useState("");
   const [requiresReview, setRequiresReview] = useState(true);
-  const [createError, setCreateError] = useState("");
 
   // Fetch mappings for selector
   const { data: mappingsData } = useQuery({
@@ -312,14 +315,15 @@ function CreateSyncForm({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(
-          Object.values(err).flat().join(", ") || "Failed to create sync"
-        );
+        throw new Error(getErrorMessage(err));
       }
       return res.json();
     },
-    onSuccess: () => onCreated(),
-    onError: (err) => setCreateError(err.message),
+    onSuccess: () => {
+      toast.success("Sync created");
+      onCreated();
+    },
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 
   return (
@@ -383,8 +387,6 @@ function CreateSyncForm({
             </Label>
           </div>
 
-          {createError && <p className="text-xs text-red-600">{createError}</p>}
-
           <div className="flex justify-end gap-2">
             <Button variant="outline" size="sm" onClick={onBack}>
               Cancel
@@ -436,12 +438,17 @@ function SyncJobsView({
         `/api/v1/data-integration/syncs/${configId}/run/`,
         { method: "POST" }
       );
-      if (!res.ok) throw new Error("Failed to trigger sync");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(getErrorMessage(err));
+      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sync-jobs", configId] });
+      toast.success("Sync triggered");
     },
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 
   const jobs = jobsData?.results ?? [];
@@ -608,13 +615,18 @@ function SyncRecordsView({
           body: JSON.stringify({ ids: Array.from(selectedIds), action }),
         }
       );
-      if (!res.ok) throw new Error("Bulk action failed");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(getErrorMessage(err));
+      }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_data, action) => {
       queryClient.invalidateQueries({ queryKey: ["sync-records", jobId] });
       setSelectedIds(new Set());
+      toast.success(action === "approve" ? "Records approved" : "Records rejected");
     },
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 
   // Promote approved records
@@ -632,14 +644,20 @@ function SyncRecordsView({
       );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || err.error || "Promotion failed");
+        throw new Error(getErrorMessage(err));
       }
       return res.json() as Promise<{ promoted: number; failed: number; errors?: string[] }>;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["sync-records", jobId] });
       setSelectedIds(new Set());
+      if (data.failed > 0) {
+        toast.warning(`Promoted ${data.promoted} records (${data.failed} failed)`);
+      } else {
+        toast.success(`Promoted ${data.promoted} records`);
+      }
     },
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 
   const records = recordsData?.results ?? [];
@@ -730,24 +748,6 @@ function SyncRecordsView({
               Promote to Core
             </Button>
           )}
-        </div>
-      )}
-
-      {/* Promote result feedback */}
-      {promoteMutation.isSuccess && (
-        <div className="text-xs bg-emerald-50 text-emerald-700 rounded-lg px-3 py-2 flex items-center gap-1.5">
-          <CheckCircle2 className="size-3.5" />
-          Promoted {promoteMutation.data.promoted} records
-          {promoteMutation.data.failed > 0 && (
-            <span className="text-red-600 ml-2">
-              ({promoteMutation.data.failed} failed)
-            </span>
-          )}
-        </div>
-      )}
-      {promoteMutation.isError && (
-        <div className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">
-          {(promoteMutation.error as Error).message}
         </div>
       )}
 
