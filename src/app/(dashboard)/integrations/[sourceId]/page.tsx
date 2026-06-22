@@ -22,6 +22,7 @@ import {
   Search,
   CheckSquare,
   ArrowDownToLine,
+  CalendarClock,
   ChevronRight,
   Columns3,
   Rows3,
@@ -30,6 +31,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { SourceForm } from "@/components/forms/source-form";
+import { ScheduleSection } from "@/components/integrations/schedule-section";
 import { authFetch } from "@/lib/api/client";
 import type {
   DataSource,
@@ -64,7 +66,7 @@ const SOURCE_COLORS: Record<SourceType, string> = {
 
 // ── Pipeline steps (ingestion only) ──
 
-type PipelineStep = "configure" | "discover" | "select" | "ingest";
+type PipelineStep = "configure" | "discover" | "select" | "ingest" | "schedule";
 
 const PIPELINE_STEPS: {
   id: PipelineStep;
@@ -75,6 +77,7 @@ const PIPELINE_STEPS: {
   { id: "discover", label: "Discover", icon: Search },
   { id: "select", label: "Select", icon: CheckSquare },
   { id: "ingest", label: "Ingest", icon: ArrowDownToLine },
+  { id: "schedule", label: "Schedule", icon: CalendarClock },
 ];
 
 export default function SourceDetailPage() {
@@ -420,6 +423,8 @@ export default function SourceDetailPage() {
           }
         />
       )}
+
+      {activeStep === "schedule" && <ScheduleSection sourceId={sourceId} />}
     </div>
   );
 }

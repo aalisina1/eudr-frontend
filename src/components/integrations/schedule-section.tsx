@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -63,6 +63,7 @@ export function ScheduleSection({ sourceId }: { sourceId: string }) {
   const [timezone, setTimezone] = useState("UTC");
   const [enabled, setEnabled] = useState(false);
   const [lastRunAt, setLastRunAt] = useState<string | null>(null);
+  const [hydratedId, setHydratedId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["source-schedule", sourceId],
@@ -79,15 +80,17 @@ export function ScheduleSection({ sourceId }: { sourceId: string }) {
     },
   });
 
-  // Hydrate the local form once the existing schedule loads.
-  useEffect(() => {
-    if (data) {
-      setCron(data.cron_expression ?? "");
-      setTimezone(data.timezone ?? "UTC");
-      setEnabled(data.is_enabled);
-      setLastRunAt(data.last_run_at);
-    }
-  }, [data]);
+  // Seed the editable form from the loaded schedule exactly once, during render
+  // (React's "adjust state when data changes" pattern — avoids a cascading
+  // setState-in-effect). A later refetch keeps the same id, so user edits aren't
+  // clobbered.
+  if (data && data.id !== hydratedId) {
+    setHydratedId(data.id);
+    setCron(data.cron_expression ?? "");
+    setTimezone(data.timezone ?? "UTC");
+    setEnabled(data.is_enabled);
+    setLastRunAt(data.last_run_at);
+  }
 
   const saveMutation = useMutation({
     mutationFn: async () => {
