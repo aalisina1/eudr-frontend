@@ -1,0 +1,59 @@
+# the name by which the project can be referenced within Serena
+project_name: "eudr-frontend"
+
+# list of languages for which language servers are started.
+# For JavaScript, use typescript. The TS language server covers .ts/.tsx/.js/.jsx.
+# Full list: https://github.com/oraios/serena/blob/main/src/solidlsp/ls_config.py
+languages:
+- typescript
+
+# the encoding used by text files in the project
+encoding: "utf-8"
+
+# line ending convention to use when writing source files.
+line_ending:
+
+# The language backend to use for this project (LSP or JetBrains). Unset = global default.
+language_backend:
+
+# whether to use project's .gitignore files to ignore files (skips node_modules, .next, etc.)
+ignore_all_files_in_gitignore: true
+
+# language server-specific options, keyed by language.
+ls_specific_settings: {}
+
+# additional workspace folder paths for cross-package reference support (TypeScript monorepos).
+additional_workspace_folders: []
+
+# additional gitignore-style paths to ignore in this project.
+ignored_paths: []
+
+# whether the project is in read-only mode (disables editing tools)
+read_only: false
+
+# tools to exclude (extends global exclusions)
+excluded_tools: []
+
+# optional tools to include that would otherwise be disabled
+included_optional_tools: []
+
+# fixed base tool set (replaces Serena's default set if non-empty)
+fixed_tools: []
+
+# modes activated by default for this project (overrides global default_modes)
+default_modes:
+
+# modes activated additionally for this project
+added_modes:
+
+# initial prompt always given to the LLM upon activating the project
+initial_prompt: ""
+
+# time budget (seconds) per tool call for retrieving extra symbol info (null = global default)
+symbol_info_budget:
+
+# regex patterns marking memories read-only (extends global)
+read_only_memory_patterns: []
+
+# regex patterns for memories to completely ignore (extends global)
+ignored_memory_patterns: []

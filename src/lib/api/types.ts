@@ -413,11 +413,14 @@ export interface SyncRecord {
 
 export interface IngestionSchedule {
   id: string;
-  source: string;
+  source_id: string;
+  source_name: string;
   schedule_type: "CRON" | "INTERVAL";
   cron_expression: string;
+  timezone: string;
   interval_seconds: number | null;
   is_enabled: boolean;
+  last_run_at: string | null;
   created_at: string;
   updated_at: string;
 }
