@@ -6,7 +6,7 @@ allowed-tools: Read, Edit, Grep, Glob
 
 Compare backend serializers with frontend types and update as needed:
 
-1. Read all serializer classes in `apps/*/serializers.py` (backend repo at `/Users/alisinaahmadi/Documents/Projects/EUDR/EUDR App`)
+1. Read all serializer classes in `apps/*/serializers.py` (backend repo at `/Users/alisinaahmadi/Documents/Projects/EUDR/eudr-backend`)
 2. Read `src/lib/api/types.ts` (frontend)
 3. For each serializer, check the matching TypeScript interface:
    - Missing fields? Add them.
