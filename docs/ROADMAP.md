@@ -54,8 +54,13 @@ Tracks what's shipped versus what's planned. The integrations 4-tab restructure 
 - Mappings tab now preloads target fields as rows, auto-matches by name, and lists source columns from the configured source object.
 - Field mapping sends `default_value: ""` (not null) to satisfy the backend serializer.
 
+### Production Ingestion surface (v0.1.0 frontend trio, merged 2026-06-21)
+- **Shared error toasts** (#8) — single root `sonner` Toaster + `getErrorMessage` helper; success/error toasts on CRUD + sync/ingest triggers across the integrations tabs. `authFetch`'s contract is unchanged; the helper is called at call sites.
+- **Schedule editor** (#7) — a Schedule step on the source detail page: presets dropdown + editable raw cron (`src/lib/cron.ts` via cronstrue + cron-parser, enforcing the backend's 5-field rule), live validation + human-readable preview, timezone, last/next run, pause/resume. `PUT sources/<id>/schedule/`.
+- **Run-now + run status** (#9) — `SourceCard` shows each source's latest ingestion run as a badge (Running/Completed/Failed), polled every 3s while RUNNING, plus a Run-now button (`POST sources/<id>/ingest/`).
+
 ### Testing
-- 13 Vitest suites: API client, auth, types, utils, DataTable, AppSidebar, and page-level smoke tests for the major routes.
+- 18 Vitest suites: API client, auth, types, utils, DataTable, AppSidebar, cron helpers, integrations (syncs/schedule/source-card), and page-level smoke tests for the major routes.
 
 ### CI + Docker
 - `.github/workflows/ci.yml` runs lint + build (build includes type-check).
@@ -64,10 +69,8 @@ Tracks what's shipped versus what's planned. The integrations 4-tab restructure 
 ## Planned
 
 ### Near-term
-- **Role-aware UI** — hide/disable actions based on `user.role` (ADMIN / COMPLIANCE_OFFICER / VIEWER / SUPPLIER_CONTACT). Today every role sees every button.
+- **Role-aware UI** — hide/disable actions based on `user.role` (ADMIN / COMPLIANCE_OFFICER / VIEWER / SUPPLIER_CONTACT). Today every role sees every button. (The schedule editor and run-now already rely on the backend's admin-only checks; a 403 surfaces via the new error toast, but the actions aren't yet hidden for non-admins.)
 - **`SUPPLIER_CONTACT` portal scope** — once the backend ships object-level permissions, surface only the supplier's own plots / batches / docs.
-- **Sync schedules UI** — `IngestionSchedule` exists on the backend; surface a cron editor in the Sources tab.
-- **Inline error toasts** — currently most errors render in-place. A consistent toast/snackbar pattern would unify the feedback.
 
 ### Medium-term
 - **Draw-on-map plot creation** — today plots are created via GeoJSON paste. Adding draw tools (Leaflet.draw) would close the loop for non-technical users.
