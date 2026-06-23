@@ -1,9 +1,14 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { toast } from "sonner";
 import { renderWithProviders, mockPaginatedResponse } from "../helpers";
 import { SourceCard } from "@/components/integrations/source-card";
 import type { DataSource, IngestJob } from "@/lib/api/types";
+
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
 
 const SOURCE: DataSource = {
   id: "src-1",
@@ -31,11 +36,15 @@ function job(status: IngestJob["status"]): IngestJob {
   };
 }
 
-function mockFetch(latest: IngestJob | null, ingestStatus = 200) {
+function mockFetch(
+  latest: IngestJob | null,
+  ingestStatus = 200,
+  ingestBody: unknown = {},
+) {
   return vi.fn(async (input: string | URL | Request) => {
     const url = typeof input === "string" ? input : input.toString();
     if (url.includes("/ingest/")) {
-      return new Response(JSON.stringify({}), { status: ingestStatus });
+      return new Response(JSON.stringify(ingestBody), { status: ingestStatus });
     }
     return new Response(
       JSON.stringify(mockPaginatedResponse(latest ? [latest] : [])),
@@ -83,5 +92,29 @@ describe("SourceCard", () => {
       expect(postCall).toBeTruthy();
     });
     expect(onNavigate).not.toHaveBeenCalled();
+  });
+
+  it("surfaces the backend's 409 (run already in progress) as an error toast and re-enables the button", async () => {
+    // Cross-repo integration point with backend #25 (atomic overlap guard):
+    // IngestSelectedObjectsView returns 409 + {"detail": "..."} when a run is
+    // already in progress for the source. The run-now mutation must surface
+    // that message via the shared #8 toast pattern, not a generic fallback,
+    // and must not leave the button stuck in a disabled/pending state since
+    // no job was actually created.
+    globalThis.fetch = mockFetch(null, 409, {
+      detail: "An ingestion run is already in progress for this source.",
+    });
+    const user = userEvent.setup();
+
+    renderWithProviders(<SourceCard source={SOURCE} onNavigate={vi.fn()} />);
+    const runBtn = await screen.findByRole("button", { name: /run now/i });
+    await user.click(runBtn);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        "An ingestion run is already in progress for this source.",
+      );
+    });
+    expect(runBtn).not.toBeDisabled();
   });
 });

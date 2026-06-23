@@ -19,6 +19,20 @@ const SCHEDULE: IngestionSchedule = {
   updated_at: "2026-06-20T00:00:00Z",
 };
 
+const INTERVAL_SCHEDULE: IngestionSchedule = {
+  id: "sched-2",
+  source_id: "src-1",
+  source_name: "Postgres Prod",
+  schedule_type: "INTERVAL",
+  cron_expression: "",
+  timezone: "UTC",
+  interval_seconds: 600,
+  is_enabled: true,
+  last_run_at: "2026-06-21T02:00:00Z",
+  created_at: "2026-06-01T00:00:00Z",
+  updated_at: "2026-06-20T00:00:00Z",
+};
+
 const origFetch = globalThis.fetch;
 afterEach(() => {
   globalThis.fetch = origFetch;
@@ -86,6 +100,45 @@ describe("ScheduleSection", () => {
         (c) => (c[1] as RequestInit | undefined)?.method === "PUT",
       );
       expect(putCall).toBeTruthy();
+    });
+  });
+
+  it("preserves an existing INTERVAL schedule on pause/resume (no silent CRON rewrite)", async () => {
+    // The editor only authors CRON schedules, but it must not destroy an
+    // existing INTERVAL schedule when an operator just pauses/resumes it: the
+    // save must keep schedule_type INTERVAL and interval_seconds, never forcing
+    // CRON with an empty cron_expression.
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(INTERVAL_SCHEDULE), { status: 200 }),
+      )
+      .mockResolvedValue(
+        new Response(JSON.stringify(INTERVAL_SCHEDULE), { status: 200 }),
+      );
+    globalThis.fetch = fetchMock;
+    const user = userEvent.setup();
+
+    renderWithProviders(<ScheduleSection sourceId="src-1" />);
+
+    // INTERVAL schedules show a notice, not a cron field.
+    expect(await screen.findByText(/runs every/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/cron expression/i)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /pause/i }));
+    await user.click(screen.getByRole("button", { name: /save/i }));
+
+    await waitFor(() => {
+      const putCall = fetchMock.mock.calls.find(
+        (c) => (c[1] as RequestInit | undefined)?.method === "PUT",
+      );
+      expect(putCall).toBeTruthy();
+      const body = JSON.parse((putCall![1] as RequestInit).body as string);
+      // The interval schedule is preserved — only is_enabled changed.
+      expect(body.schedule_type).toBe("INTERVAL");
+      expect(body.interval_seconds).toBe(600);
+      expect(body.is_enabled).toBe(false);
+      expect(body.cron_expression).toBeUndefined();
     });
   });
 });
