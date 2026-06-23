@@ -64,6 +64,12 @@ export function ScheduleSection({ sourceId }: { sourceId: string }) {
   const [enabled, setEnabled] = useState(false);
   const [lastRunAt, setLastRunAt] = useState<string | null>(null);
   const [hydratedId, setHydratedId] = useState<string | null>(null);
+  // The editor only authors CRON schedules. We still load INTERVAL schedules
+  // (backend-supported) so they can be paused/resumed without being silently
+  // rewritten — these preserve the original type/interval on save.
+  const [scheduleType, setScheduleType] =
+    useState<IngestionSchedule["schedule_type"]>("CRON");
+  const [intervalSeconds, setIntervalSeconds] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["source-schedule", sourceId],
@@ -90,7 +96,11 @@ export function ScheduleSection({ sourceId }: { sourceId: string }) {
     setTimezone(data.timezone ?? "UTC");
     setEnabled(data.is_enabled);
     setLastRunAt(data.last_run_at);
+    setScheduleType(data.schedule_type);
+    setIntervalSeconds(data.interval_seconds);
   }
+
+  const isInterval = scheduleType === "INTERVAL";
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -99,12 +109,22 @@ export function ScheduleSection({ sourceId }: { sourceId: string }) {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            schedule_type: "CRON",
-            cron_expression: cron,
-            timezone,
-            is_enabled: enabled,
-          }),
+          // Preserve an INTERVAL schedule's type + interval (the editor can
+          // only pause/resume it) rather than silently rewriting it to CRON.
+          body: JSON.stringify(
+            isInterval
+              ? {
+                  schedule_type: "INTERVAL",
+                  interval_seconds: intervalSeconds,
+                  is_enabled: enabled,
+                }
+              : {
+                  schedule_type: "CRON",
+                  cron_expression: cron,
+                  timezone,
+                  is_enabled: enabled,
+                },
+          ),
         },
       );
       if (!res.ok) {
@@ -123,8 +143,11 @@ export function ScheduleSection({ sourceId }: { sourceId: string }) {
   const cronValid = isValidCron(cron);
   const description = describeCron(cron);
   const nextRun = enabled && cronValid ? getNextRun(cron, timezone) : null;
-  // Mirror the backend: an enabled schedule must carry a valid 5-field cron.
-  const saveDisabled = saveMutation.isPending || (enabled && !cronValid);
+  // Mirror the backend: an enabled CRON schedule must carry a valid 5-field
+  // cron. INTERVAL schedules are pause/resume-only here, so cron validity
+  // doesn't gate their save.
+  const saveDisabled =
+    saveMutation.isPending || (enabled && !isInterval && !cronValid);
 
   const activePreset =
     PRESETS.find((p) => p.cron === cron && p.cron !== "")?.cron ?? "";
@@ -157,6 +180,19 @@ export function ScheduleSection({ sourceId }: { sourceId: string }) {
           </span>
         </div>
 
+        {isInterval ? (
+          <div className="rounded-lg border border-border/60 bg-muted/40 px-3.5 py-3 text-xs text-muted-foreground">
+            This source uses an{" "}
+            <span className="font-medium text-foreground">interval</span>{" "}
+            schedule — runs every{" "}
+            <span className="font-medium text-foreground">
+              {intervalSeconds ?? "?"}s
+            </span>
+            . You can pause or resume it here; editing the interval isn&apos;t
+            supported in this editor yet.
+          </div>
+        ) : (
+          <>
         {/* Preset + cron */}
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
@@ -221,6 +257,8 @@ export function ScheduleSection({ sourceId }: { sourceId: string }) {
             ))}
           </select>
         </div>
+          </>
+        )}
 
         {/* Run timestamps */}
         <div className="grid gap-3 sm:grid-cols-2 text-xs">
