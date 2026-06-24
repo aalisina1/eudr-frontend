@@ -18,7 +18,8 @@ umbrella `../CLAUDE.md`, which auto-loads here):
 ## Commands
 
 - `npm run dev` — dev server (port 3000, expects backend on :8000)
-- `npm test` — Vitest (74 tests, jsdom)
+- `npm test` — Vitest (jsdom unit/component tests)
+- `npm run test:e2e` — Playwright E2E journeys (needs a running stack; see `e2e/README.md`)
 - `npm run lint` — ESLint
 - `npm run build` — production build (standalone output)
 
