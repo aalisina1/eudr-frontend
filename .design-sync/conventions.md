@@ -19,30 +19,28 @@ Tokens are global CSS variables (no ThemeProvider needed — they live in
 Dark mode: add the class `dark` to a root ancestor (`<html class="dark">`). There is
 no theme context — the `.dark` selector reassigns the same CSS variables.
 
-## Styling idiom (read this — the stylesheet is partial)
+## Styling idiom — Tailwind v4 with brand tokens
 
-`styles.css` ships the app's **compiled** Tailwind v4 output, so it is NOT a full
-utility set — only classes the app already used are present. Consequences:
+`styles.css` ships a **complete Tailwind v4 utility set** (spacing, layout, type,
+color, radius, shadow, ring, position, effects) plus the brand tokens — write normal
+Tailwind and it applies.
 
-1. **Color & brand: use the CSS-variable tokens, not invented color utilities.** These
-   `:root` variables are always defined: `--background --foreground --primary
-   --primary-foreground --secondary --secondary-foreground --muted --muted-foreground
-   --accent --accent-foreground --destructive --card --card-foreground --popover
-   --popover-foreground --border --input --ring --radius --font-sans --font-display`
-   plus `--sidebar*`. Apply them inline for your own glue, e.g.
-   `style={{ background: "var(--card)", color: "var(--muted-foreground)" }}`. Color
-   utilities like `bg-accent`, `font-display`, `shadow-sm`, `grid-cols-3` are NOT in
-   the shipped CSS — they will render unstyled. (These DO ship and are safe:
-   `bg-primary`, `bg-secondary`, `bg-muted`, `bg-card`, `bg-background`,
-   `bg-destructive`, `text-foreground`, `text-muted-foreground`,
-   `text-primary-foreground`, `border-border`, `border-input`.)
-2. **Layout utilities that ARE shipped and safe**: `flex grid gap-2 gap-4 gap-6 p-4 p-6
-   px-3 w-full items-center justify-between justify-center text-xs text-sm font-medium
-   border rounded-md rounded-lg rounded-xl grid-cols-2`. For anything beyond these,
-   prefer inline `style` so you never depend on a utility that wasn't compiled.
-3. **Let the components carry the design.** They already encode spacing, radius, focus
-   rings, and variants — pass their props (`variant`, `size`, `side`, `disabled`,
-   `aria-invalid`) instead of re-styling.
+1. **Brand color is token-driven.** The palette lives in these `:root` CSS variables,
+   exposed as color utilities across `bg-`/`text-`/`border-`/`ring-`: `--background
+   --foreground --primary --primary-foreground --secondary --secondary-foreground
+   --muted --muted-foreground --accent --accent-foreground --destructive --card
+   --card-foreground --popover --popover-foreground --border --input --ring --radius
+   --font-sans --font-display` plus `--sidebar*`. So `bg-primary text-primary-foreground`,
+   `bg-muted`, `text-muted-foreground`, `border-border`, `bg-accent`, and opacity
+   variants like `bg-primary/10` all work. Prefer these token utilities over hard-coded
+   palette colors (`bg-emerald-600`) so designs stay on-brand and theme with dark mode.
+2. **Layout/spacing/type utilities are fully available** — `flex grid grid-cols-{1..12}
+   gap-* p-* m-* w-* max-w-* items-* justify-* text-{xs..6xl} font-{medium,semibold,bold}
+   rounded-* shadow-* ring-* line-clamp-* truncate` etc. Use `font-display` for Fraunces
+   display headings, `font-sans` for DM Sans body.
+3. **Let the components carry their own design.** They already encode spacing, radius,
+   focus rings, and variants — pass props (`variant`, `size`, `side`, `disabled`,
+   `aria-invalid`) rather than re-styling them.
 
 ## Where the truth lives
 

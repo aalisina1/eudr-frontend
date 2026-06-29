@@ -8,6 +8,7 @@
   "cssEntry": "_compiled.css",
   "buildCmd": "npm run build",
   "readmeHeader": ".design-sync/conventions.md",
+  "extraEntries": ["../../.design-sync/preview-rq.ts"],
   "libOverrides": {
     "bundle.mjs": "browser process shim banner — Next.js app internals (next/navigation, api client) read process.* at eval and crash the IIFE"
   },
@@ -16,6 +17,13 @@
     "Sheet": { "cardMode": "single", "viewport": "460x460", "primaryStory": "SupplierForm" },
     "Tooltip": { "cardMode": "single", "viewport": "380x200", "primaryStory": "OnButton" },
     "Select": { "cardMode": "single", "primaryStory": "Triggers" },
+    "DataTable": { "cardMode": "single", "viewport": "880x560" },
+    "SupplierForm": { "cardMode": "single", "viewport": "480x620" },
+    "PlotForm": { "cardMode": "single", "viewport": "480x620" },
+    "BatchForm": { "cardMode": "single", "viewport": "480x620" },
+    "DDSForm": { "cardMode": "single", "viewport": "480x620" },
+    "DocumentForm": { "cardMode": "single", "viewport": "480x620" },
+    "SourceForm": { "cardMode": "single", "viewport": "480x620" },
     "Card": { "cardMode": "column" },
     "Skeleton": { "cardMode": "column" },
     "Table": { "cardMode": "column" },
