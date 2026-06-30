@@ -103,4 +103,13 @@ describe("DueDiligencePage", () => {
       expect(matches.length).toBeGreaterThanOrEqual(2);
     });
   });
+
+  it("renders an Under Review status badge for an UNDER_REVIEW DDS", async () => {
+    globalThis.fetch = makeMockFetch("UNDER_REVIEW");
+    renderWithProviders(<DueDiligencePage />);
+    await waitFor(() => {
+      const matches = screen.getAllByText("Under Review");
+      expect(matches.length).toBeGreaterThanOrEqual(2);
+    });
+  });
 });
