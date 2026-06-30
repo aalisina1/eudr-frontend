@@ -207,8 +207,8 @@ export interface RiskAssessment {
 
 // ── TRACES Submissions ──
 
-export type TracesSubmissionStatus = "DRAFT" | "SUBMITTED" | "FAILED" | "WITHDRAWN";
-export type SubmissionType = "OPERATOR" | "REFERENCE";
+export type TracesSubmissionStatus = "QUEUED" | "PROCESSING" | "SUBMITTED" | "FAILED" | "RETRYING";
+export type SubmissionType = "CREATE" | "UPDATE" | "WITHDRAW";
 export type TracesStatus = "SUBMITTED" | "AVAILABLE" | "REJECTED" | "WITHDRAWN" | "GROUPED" | "ARCHIVED";
 
 export interface TracesSubmission {
@@ -225,6 +225,8 @@ export interface TracesSubmission {
   next_retry_at: string | null;
   submitted_at: string | null;
   submitted_by_id: string;
+  soap_request_payload: string;
+  soap_response_payload: string;
   created_at: string;
 }
 

@@ -158,12 +158,12 @@ describe("Type definitions", () => {
     expect(m.source_type).toBe("SOURCE_OBJECT");
   });
 
-  it("TracesSubmission interface has traces_status, verification_number, and traces_reference_number", () => {
+  it("TracesSubmission interface has traces_status, verification_number, soap payloads, and corrected enums", () => {
     const submission: TracesSubmission = {
       id: "ts1",
       dds_id: "dds1",
-      submission_type: "OPERATOR",
-      status: "SUBMITTED",
+      submission_type: "CREATE",
+      status: "QUEUED",
       traces_status: "AVAILABLE",
       verification_number: "VER-123",
       traces_reference_number: "TR-456",
@@ -173,11 +173,17 @@ describe("Type definitions", () => {
       next_retry_at: null,
       submitted_at: "2025-06-30T00:00:00Z",
       submitted_by_id: "user1",
+      soap_request_payload: "<soap:Envelope>...</soap:Envelope>",
+      soap_response_payload: "<soap:Envelope>...</soap:Envelope>",
       created_at: "2025-06-30T00:00:00Z",
     };
     expect(submission.traces_status).toBe("AVAILABLE");
     expect(submission.verification_number).toBe("VER-123");
     expect(submission.traces_reference_number).toBe("TR-456");
+    expect(submission.soap_request_payload).toBeDefined();
+    expect(submission.soap_response_payload).toBeDefined();
+    expect(submission.status).toBe("QUEUED");
+    expect(submission.submission_type).toBe("CREATE");
   });
 
   it("DueDiligenceStatement interface has activity_type field", () => {
