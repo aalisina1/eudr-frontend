@@ -33,10 +33,8 @@ test.describe("Due Diligence Statements (E1/E2)", () => {
     });
     // Lifecycle is reflected: a status-appropriate action control OR the status itself
     // (actions like Submit/Approve/Reject/Withdraw/Edit are intentionally state-gated).
-    // Use locator.first() on the combined or() to avoid strict-mode violations when
-    // multiple matches exist (e.g., TRACES panel also has a "Submit to TRACES" button).
-    const action = page.getByRole("button", { name: /approve|reject|withdraw|edit|delete/i });
-    const status = page.getByText(/\b(draft|submitted|approved|rejected|withdrawn)\b/i).first();
-    await expect(action.first().or(status)).toBeVisible({ timeout: 15_000 });
+    const action = page.getByRole("button", { name: /submit|approve|reject|withdraw|edit|delete/i });
+    const status = page.getByText(/draft|submitted|approved|rejected|withdrawn/i);
+    await expect(action.first().or(status.first())).toBeVisible({ timeout: 15_000 });
   });
 });

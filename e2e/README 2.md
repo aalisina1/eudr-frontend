@@ -37,19 +37,3 @@ First run only: `npx playwright install chromium`.
   never an infinite spinner (a quality bar from Objectives.md).
 - DDS lifecycle controls are intentionally state-gated; the spec asserts the
   detail renders and its lifecycle state is reflected (action button or status).
-
-## TRACES stubs (`page.route`)
-
-`10-submissions.spec.ts` covers the Submissions hub + TRACES panel + credentials
-screen. Because the live TRACES endpoint is offline (no credentials, issue #29),
-all `/api/v1/traces/**` routes are intercepted with `page.route` stubs:
-
-- **Register stubs BEFORE `page.goto()`** so they catch the initial fetch.
-- **Stateful stubs**: a closure counter tracks call order so the first GET returns
-  the pre-submit state (empty or pending) and subsequent GETs return post-submit
-  state (AVAILABLE), mimicking the real polling behaviour without timers.
-- **POST interception**: `page.waitForRequest` captures the outbound submit call
-  to assert it fired; the stub returns a queued state that the next GET resolves.
-- **Locator strictness**: `getByText(label, { exact: true }).first()` is needed
-  when the same word appears in multiple elements (e.g., "Reference Number" in
-  both the CopyChip label and the AmendWindow paragraph).

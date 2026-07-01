@@ -169,6 +169,7 @@ export interface BatchChainLink {
 export type DDSStatus = "DRAFT" | "UNDER_REVIEW" | "APPROVED" | "SUBMITTED" | "REJECTED" | "WITHDRAWN";
 export type StatementType = "OPERATOR" | "REFERENCE";
 export type RiskConclusion = "NEGLIGIBLE" | "NOT_NEGLIGIBLE";
+export type ActivityType = "DOMESTIC" | "IMPORT" | "EXPORT";
 
 export interface DueDiligenceStatement {
   id: string;
@@ -176,6 +177,7 @@ export interface DueDiligenceStatement {
   traces_reference: string;
   status: DDSStatus;
   statement_type: StatementType;
+  activity_type: ActivityType;
   batch_ids: string[];
   risk_conclusion: RiskConclusion | null;
   conclusion_justification: string;
@@ -201,6 +203,45 @@ export interface RiskAssessment {
   notes: string;
   assessed_by_id: string;
   assessed_at: string;
+}
+
+// ── TRACES Credentials ──
+
+export type TracesEnvironment = "ACCEPTANCE" | "PRODUCTION";
+
+export interface TracesCredential {
+  id: string;
+  environment: TracesEnvironment;
+  username: string;
+  web_service_client_id: string;
+  is_active: boolean;
+  created_at: string;
+  // password is NEVER returned by the API — write-only
+}
+
+// ── TRACES Submissions ──
+
+export type TracesSubmissionStatus = "QUEUED" | "PROCESSING" | "SUBMITTED" | "FAILED" | "RETRYING";
+export type SubmissionType = "CREATE" | "UPDATE" | "WITHDRAW";
+export type TracesStatus = "SUBMITTED" | "AVAILABLE" | "REJECTED" | "WITHDRAWN" | "GROUPED" | "ARCHIVED";
+
+export interface TracesSubmission {
+  id: string;
+  dds_id: string;
+  submission_type: SubmissionType;
+  status: TracesSubmissionStatus;
+  traces_status: TracesStatus;
+  verification_number: string;
+  traces_reference_number: string;
+  error_message: string;
+  attempt_count: number;
+  last_attempted_at: string | null;
+  next_retry_at: string | null;
+  submitted_at: string | null;
+  submitted_by_id: string;
+  soap_request_payload: string;
+  soap_response_payload: string;
+  created_at: string;
 }
 
 // ── Documents ──

@@ -57,9 +57,18 @@ describe("AppSidebar", () => {
   it("renders all compliance navigation items", () => {
     renderWithProviders(<AppSidebar />);
     expect(screen.getByText("Supply Chains")).toBeInTheDocument();
-    expect(screen.getByText("Due Diligence")).toBeInTheDocument();
+    expect(screen.getByText("Submissions")).toBeInTheDocument();
     expect(screen.getByText("Documents")).toBeInTheDocument();
     expect(screen.getByText("Integrations")).toBeInTheDocument();
+  });
+
+  it("nav item for /due-diligence route is labelled Submissions (not Due Diligence)", () => {
+    renderWithProviders(<AppSidebar />);
+    // The link to /due-diligence must exist and its visible text must be "Submissions"
+    const ddLink = screen.getAllByRole("link").find((l) => l.getAttribute("href") === "/due-diligence");
+    expect(ddLink).toBeTruthy();
+    expect(ddLink?.textContent).toContain("Submissions");
+    expect(screen.queryByText("Due Diligence")).toBeNull();
   });
 
   it("renders footer items (Settings, theme toggle, sign out)", () => {

@@ -20,6 +20,7 @@ import type {
   Transformation,
   SyncConfig,
   SyncJob,
+  TracesSubmission,
 } from "@/lib/api/types";
 
 /**
@@ -155,5 +156,56 @@ describe("Type definitions", () => {
       updated_at: "",
     };
     expect(m.source_type).toBe("SOURCE_OBJECT");
+  });
+
+  it("TracesSubmission interface has traces_status, verification_number, soap payloads, and corrected enums", () => {
+    const submission: TracesSubmission = {
+      id: "ts1",
+      dds_id: "dds1",
+      submission_type: "CREATE",
+      status: "QUEUED",
+      traces_status: "AVAILABLE",
+      verification_number: "VER-123",
+      traces_reference_number: "TR-456",
+      error_message: "",
+      attempt_count: 1,
+      last_attempted_at: null,
+      next_retry_at: null,
+      submitted_at: "2025-06-30T00:00:00Z",
+      submitted_by_id: "user1",
+      soap_request_payload: "<soap:Envelope>...</soap:Envelope>",
+      soap_response_payload: "<soap:Envelope>...</soap:Envelope>",
+      created_at: "2025-06-30T00:00:00Z",
+    };
+    expect(submission.traces_status).toBe("AVAILABLE");
+    expect(submission.verification_number).toBe("VER-123");
+    expect(submission.traces_reference_number).toBe("TR-456");
+    expect(submission.soap_request_payload).toBeDefined();
+    expect(submission.soap_response_payload).toBeDefined();
+    expect(submission.status).toBe("QUEUED");
+    expect(submission.submission_type).toBe("CREATE");
+  });
+
+  it("DueDiligenceStatement interface has activity_type field", () => {
+    const dds: DueDiligenceStatement = {
+      id: "dds1",
+      reference_number: "DDS-001",
+      traces_reference: "TR-001",
+      status: "DRAFT",
+      statement_type: "OPERATOR",
+      activity_type: "DOMESTIC",
+      batch_ids: [],
+      risk_conclusion: null,
+      conclusion_justification: "",
+      operator_id: "op1",
+      created_by_id: "user1",
+      reviewed_by_id: null,
+      submitted_at: null,
+      valid_until: null,
+      archived_until: null,
+      created_at: "2025-06-30T00:00:00Z",
+      updated_at: "2025-06-30T00:00:00Z",
+    };
+    expect(dds.activity_type).toBe("DOMESTIC");
   });
 });
