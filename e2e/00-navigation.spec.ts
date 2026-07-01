@@ -6,7 +6,7 @@ const NAV = [
   { name: "Suppliers", path: /\/suppliers/ },
   { name: "Land Plots", path: /\/plots/ },
   { name: "Supply Chains", path: /\/supply-chains/ },
-  { name: "Due Diligence", path: /\/due-diligence/ },
+  { name: "Submissions", path: /\/due-diligence/ },
   { name: "Documents", path: /\/documents/ },
   { name: "Integrations", path: /\/integrations/ },
 ];
