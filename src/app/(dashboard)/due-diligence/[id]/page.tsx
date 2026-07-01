@@ -19,6 +19,7 @@ import { authFetch } from "@/lib/api/client";
 import { DDSForm } from "@/components/forms/dds-form";
 import type { DueDiligenceStatement } from "@/lib/api/types";
 import { DDS_STATUS_STYLE } from "@/lib/dds-status";
+import { TracesPanel } from "@/components/traces/traces-panel";
 
 const TH = "text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
 
@@ -153,6 +154,9 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
           </div>
         )}
       </div>
+
+      {/* TRACES submission */}
+      <TracesPanel ddsId={id} activityType={stmt.activity_type} />
 
       {/* State Actions */}
       <div className="flex flex-wrap gap-2">
