@@ -16,11 +16,33 @@ const mockUser = {
 
 const originalFetch = globalThis.fetch;
 
+/**
+ * Create a fresh Response per call so the body is never double-consumed.
+ * The settings page now issues multiple fetches (profile + TRACES credentials),
+ * so we route by URL and always build a new Response object.
+ */
+function makeFetchMock(userOk = true) {
+  return vi.fn().mockImplementation((url: string) => {
+    const u = typeof url === "string" ? url : (url as Request).url ?? "";
+    if (u.includes("/traces/credentials/")) {
+      // Return an empty list so the CredentialsCard renders the empty state quietly
+      return Promise.resolve(
+        new Response(JSON.stringify({ count: 0, results: [] }), { status: 200 }),
+      );
+    }
+    // Default: user profile endpoint
+    return Promise.resolve(
+      new Response(
+        JSON.stringify(userOk ? mockUser : {}),
+        { status: userOk ? 200 : 401 },
+      ),
+    );
+  });
+}
+
 describe("SettingsPage", () => {
   beforeEach(() => {
-    globalThis.fetch = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(mockUser), { status: 200 })
-    );
+    globalThis.fetch = makeFetchMock();
   });
 
   afterEach(() => {
@@ -63,9 +85,7 @@ describe("SettingsPage", () => {
   });
 
   it("shows fallback when profile fails to load", async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({}), { status: 401 })
-    );
+    globalThis.fetch = makeFetchMock(false);
 
     renderWithProviders(<SettingsPage />);
     await waitFor(() => {

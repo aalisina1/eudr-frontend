@@ -205,6 +205,20 @@ export interface RiskAssessment {
   assessed_at: string;
 }
 
+// ── TRACES Credentials ──
+
+export type TracesEnvironment = "ACCEPTANCE" | "PRODUCTION";
+
+export interface TracesCredential {
+  id: string;
+  environment: TracesEnvironment;
+  username: string;
+  web_service_client_id: string;
+  is_active: boolean;
+  created_at: string;
+  // password is NEVER returned by the API — write-only
+}
+
 // ── TRACES Submissions ──
 
 export type TracesSubmissionStatus = "QUEUED" | "PROCESSING" | "SUBMITTED" | "FAILED" | "RETRYING";

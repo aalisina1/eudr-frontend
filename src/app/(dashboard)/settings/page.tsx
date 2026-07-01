@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { User, Building2, Shield, Mail } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import type { User as UserType } from "@/lib/api/types";
+import { CredentialsCard } from "@/components/traces/credentials-card";
 
 export default function SettingsPage() {
   const { data: user, isLoading } = useQuery({
@@ -87,6 +88,9 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* TRACES Connection */}
+      <CredentialsCard />
 
       {/* App Info */}
       <Card className="border-border/50">
