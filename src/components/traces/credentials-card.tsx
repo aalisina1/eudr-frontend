@@ -217,6 +217,7 @@ export function CredentialsCard() {
 
       {/* Add / Edit sheet */}
       <CredentialsForm
+        key={editTarget?.id ?? "new"}
         open={formOpen}
         onOpenChange={(open) => {
           setFormOpen(open);
