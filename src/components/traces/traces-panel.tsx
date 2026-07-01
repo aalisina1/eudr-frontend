@@ -54,6 +54,32 @@ async function fetchHasCredentials(): Promise<boolean> {
   return list.length > 0;
 }
 
+/** Show the regulator's 72-hour amendment window on an AVAILABLE submission. */
+function AmendWindow({ submittedAt }: { submittedAt: string | null }) {
+  // Capture "now" once at mount (keeps render pure — no Date.now() in the render body).
+  const [now] = useState(() => Date.now());
+  if (!submittedAt) return null;
+  const msLeft = new Date(submittedAt).getTime() + 72 * 3_600_000 - now;
+  if (msLeft > 0) {
+    const hours = Math.floor(msLeft / 3_600_000);
+    const minutes = Math.floor((msLeft % 3_600_000) / 60_000);
+    return (
+      <p className="text-xs text-muted-foreground">
+        Amendment window:{" "}
+        <span className="font-medium text-foreground">
+          {hours}h {minutes}m
+        </span>{" "}
+        left to amend and keep the same reference number.
+      </p>
+    );
+  }
+  return (
+    <p className="text-xs text-muted-foreground">
+      Amendment window closed — a correction now files a new submission with a new reference number.
+    </p>
+  );
+}
+
 function CopyChip({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -140,9 +166,12 @@ export function TracesPanel({ ddsId, activityType }: { ddsId: string; activityTy
       {isLoading ? (
         <Skeleton className="h-10 w-full rounded-lg" />
       ) : status === "AVAILABLE" ? (
-        <div className="flex flex-wrap gap-6">
-          <CopyChip label="Reference Number" value={submission!.traces_reference_number} />
-          <CopyChip label="Verification Number" value={submission!.verification_number} />
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-6">
+            <CopyChip label="Reference Number" value={submission!.traces_reference_number} />
+            <CopyChip label="Verification Number" value={submission!.verification_number} />
+          </div>
+          <AmendWindow submittedAt={submission!.submitted_at} />
         </div>
       ) : status === "REJECTED" ? (
         <div className="space-y-3">
@@ -158,6 +187,17 @@ export function TracesPanel({ ddsId, activityType }: { ddsId: string; activityTy
         <p className="text-sm text-muted-foreground flex items-center gap-2">
           <Loader2 className="size-4 animate-spin" /> Submitting to TRACES — waiting for acceptance…
         </p>
+      ) : status === "WITHDRAWN" || status === "GROUPED" || status === "ARCHIVED" ? (
+        <p className="text-sm text-muted-foreground">
+          {status === "WITHDRAWN"
+            ? "This DDS was withdrawn from TRACES."
+            : status === "GROUPED"
+              ? "This DDS is grouped under another submission."
+              : "This DDS is archived in TRACES."}
+          {submission!.traces_reference_number && (
+            <span className="ml-1 font-mono">({submission!.traces_reference_number})</span>
+          )}
+        </p>
       ) : (
         <p className="text-sm text-muted-foreground">Not submitted to TRACES.</p>
       )}
@@ -166,14 +206,14 @@ export function TracesPanel({ ddsId, activityType }: { ddsId: string; activityTy
         <div className="mt-4">
           <Button
             size="sm"
-            disabled={!hasCreds}
+            disabled={hasCreds === false}
             onClick={() => setConfirmOpen(true)}
             className="gap-1.5"
           >
             <Send className="size-3.5" />
             {status === "REJECTED" ? "Resubmit to TRACES" : "Submit to TRACES"}
           </Button>
-          {!hasCreds && (
+          {hasCreds === false && (
             <p className="text-xs text-muted-foreground mt-1.5">
               Configure TRACES credentials first (Settings → TRACES connection).
             </p>
