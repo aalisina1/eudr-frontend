@@ -68,6 +68,15 @@ Tracks what's shipped versus what's planned. The integrations 4-tab restructure 
 
 ## Planned
 
+### v0.2.1 — Sourcing readiness pipeline & File DDS (next; hard-gated behind v0.2.0)
+The compliance-officer reframe's Sourcing/provenance/worklist screens, restructured around a **readiness pipeline** (derived per-PO stages), a **tonnes coverage funnel** (ordered→allocated→geolocated→filed→uncovered), a **deadline-driven worklist**, and the **File DDS** composition page. **No FE work starts until v0.2.0 ships and is demoed.** Design source of truth: `eudr-vault/10-Specs/UI-Workflows/sourcing-readiness.design-prompt.md`; specs `dds-readiness-pipeline.md` + `compliance-flow-reframe.md`. Tracker #27.
+- Sourcing list — readiness stages + coverage bars + deadline sort (#28, delivers reframe Phase 2).
+- PO Detail — coverage funnel + readiness blockers + gated File DDS CTA (#29, reframe Phase 2).
+- Dashboard worklist — Needs filing / Needs remediation / Awaiting data; retires the charts (#30, reframe Phase 3).
+- Supplier Detail — sourcing coverage + data-gaps additions (#31).
+- File DDS composition page — prefill, payload meter + split-by-shipment, 72h lock dialog (#26, re-scoped from the old "select batches" issue).
+- All consume the backend readiness endpoint (`eudr-app` #60) + shipment/deadline fields (`eudr-app` #61).
+
 ### Near-term
 - **Role-aware UI** — hide/disable actions based on `user.role` (ADMIN / COMPLIANCE_OFFICER / VIEWER / SUPPLIER_CONTACT). Today every role sees every button. (The schedule editor and run-now already rely on the backend's admin-only checks; a 403 surfaces via the new error toast, but the actions aren't yet hidden for non-admins.)
 - **`SUPPLIER_CONTACT` portal scope** — once the backend ships object-level permissions, surface only the supplier's own plots / batches / docs.
