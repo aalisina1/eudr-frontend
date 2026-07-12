@@ -171,6 +171,127 @@ describe("TracesPanel", () => {
     expect(screen.queryByText(/traces rejected/i)).not.toBeInTheDocument();
   });
 
+  it("a RETRYING submission renders 'Submitting…' (not 'Not submitted') and stays pending, not 'Resubmit' (ADR-0017)", async () => {
+    // RETRYING is a real TracesSubmission.Status member (backend dedup treats
+    // it as in-flight, per test_views.py) that IN_FLIGHT previously omitted —
+    // it fell through every deriveDisplay branch to "not_submitted", showing
+    // an active Submit button on a submission that's actively in flight, and
+    // silently stopping refetchInterval polling (isPending gates on the same
+    // derivation).
+    mockApi({
+      submission: baseSubmission({
+        status: "RETRYING",
+        traces_status: "" as TracesSubmission["traces_status"],
+      }),
+    });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="APPROVED" />);
+    await waitFor(() => expect(screen.getByText(/submitting to traces/i)).toBeInTheDocument());
+    expect(screen.queryByText("Not submitted to TRACES.")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /submit to traces/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /resubmit to traces/i })).not.toBeInTheDocument();
+  });
+
+  it("retries a FAILED submission via POST .../submissions/<id>/retry/ (re-queues the same row), not a new CREATE (ADR-0017)", async () => {
+    let retryCalled = false;
+    let createCalled = false;
+    mockAuthFetch.mockImplementation((url: string, init?: RequestInit) => {
+      if (url.includes("/traces/credentials/")) {
+        return Promise.resolve(jsonRes({ results: [{ id: "c1" }] }));
+      }
+      if (url.includes("/traces/submissions/?dds_id")) {
+        return Promise.resolve(jsonRes({ results: [{ id: "sub-failed-1" }] }));
+      }
+      if (url === "/api/v1/traces/submissions/sub-failed-1/retry/" && init?.method === "POST") {
+        retryCalled = true;
+        return Promise.resolve(
+          jsonRes(
+            baseSubmission({
+              id: "sub-failed-1",
+              status: "QUEUED",
+              traces_status: "" as TracesSubmission["traces_status"],
+            }),
+          ),
+        );
+      }
+      if (url === "/api/v1/traces/submissions/" && init?.method === "POST") {
+        createCalled = true;
+        return Promise.resolve(jsonRes({ id: "sub-new", status: "QUEUED" }, 201));
+      }
+      if (url === "/api/v1/traces/submissions/sub-failed-1/") {
+        return Promise.resolve(
+          jsonRes(
+            baseSubmission({
+              id: "sub-failed-1",
+              status: "FAILED",
+              traces_status: "" as TracesSubmission["traces_status"],
+              error_message: "Payload validation failed: 1 error.",
+              error_detail: [{ field: "batch[0].harvest_period", message: "harvest_period_start is required" }],
+            }),
+          ),
+        );
+      }
+      return Promise.resolve(jsonRes({}));
+    });
+
+    const user = userEvent.setup();
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="APPROVED" />);
+    await waitFor(() => expect(screen.getByRole("button", { name: /resubmit to traces/i })).toBeEnabled());
+    await user.click(screen.getByRole("button", { name: /resubmit to traces/i }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: /submit to traces/i }));
+    await waitFor(() => expect(retryCalled).toBe(true));
+    expect(createCalled).toBe(false);
+  });
+
+  it("still files a new CREATE (not retry) when resubmitting after a TRACES REJECTED — per ADR-0017's per-state split", async () => {
+    // The retry endpoint re-queues a specific TracesSubmission row; a
+    // REJECTED row was already processed by TRACES (traces_uuid consumed),
+    // so remediation after a business rejection is a new filing, not a
+    // re-queue of the old row. Locks in that this fix doesn't also reroute
+    // the REJECTED path (that stays a new CREATE per the ADR and the
+    // now-existing test above for FAILED).
+    let createCalled = false;
+    let retryCalled = false;
+    mockAuthFetch.mockImplementation((url: string, init?: RequestInit) => {
+      if (url.includes("/traces/credentials/")) {
+        return Promise.resolve(jsonRes({ results: [{ id: "c1" }] }));
+      }
+      if (url.includes("/traces/submissions/?dds_id")) {
+        return Promise.resolve(jsonRes({ results: [{ id: "sub-rejected-1" }] }));
+      }
+      if (url === "/api/v1/traces/submissions/sub-rejected-1/retry/") {
+        retryCalled = true;
+        return Promise.resolve(jsonRes({}));
+      }
+      if (url === "/api/v1/traces/submissions/" && init?.method === "POST") {
+        createCalled = true;
+        return Promise.resolve(jsonRes({ id: "sub-new", status: "QUEUED" }, 201));
+      }
+      if (url === "/api/v1/traces/submissions/sub-rejected-1/") {
+        return Promise.resolve(
+          jsonRes(
+            baseSubmission({
+              id: "sub-rejected-1",
+              status: "SUBMITTED",
+              traces_status: "REJECTED",
+              error_message: "Geolocation polygon invalid for plot P1",
+            }),
+          ),
+        );
+      }
+      return Promise.resolve(jsonRes({}));
+    });
+
+    const user = userEvent.setup();
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+    await waitFor(() => expect(screen.getByRole("button", { name: /resubmit to traces/i })).toBeEnabled());
+    await user.click(screen.getByRole("button", { name: /resubmit to traces/i }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: /submit to traces/i }));
+    await waitFor(() => expect(createCalled).toBe(true));
+    expect(retryCalled).toBe(false);
+  });
+
   it("shows the 72h amendment window on an AVAILABLE submission", async () => {
     mockApi({
       submission: baseSubmission({

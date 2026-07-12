@@ -61,7 +61,12 @@ const STATUS_META: Record<
   archived: { label: "Archived", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
 };
 
-const IN_FLIGHT = new Set(["QUEUED", "PROCESSING"]);
+// ADR-0017's FE derivation table: status ∈ {QUEUED, PROCESSING, RETRYING} → "Submitting…".
+// RETRYING is a real TracesSubmission.Status member (the backend's own dedup
+// check treats it as in-flight) — omitting it here both mis-renders a
+// retrying submission as "Not submitted" (with an active Submit button) and
+// silently stops refetchInterval polling, which gates on isPending().
+const IN_FLIGHT = new Set(["QUEUED", "PROCESSING", "RETRYING"]);
 
 /** Derive the single display state a submission (or its absence) maps to. */
 function deriveDisplay(sub: TracesSubmission | null): DisplayKey {
@@ -323,13 +328,31 @@ export function TracesPanel({
     queryFn: fetchHasCredentials,
   });
 
+  const sub = submission ?? null;
+  const display = deriveDisplay(sub);
+
   const submitMutation = useMutation({
     mutationFn: async () => {
-      const res = await authFetch(`/api/v1/traces/submissions/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dds_id: ddsId }),
-      });
+      // ADR-0017's per-state endpoint split: FAILED (our pipeline gave up
+      // before/without TRACES responding) re-queues the SAME row via the
+      // retry endpoint, preserving one row's honest attempt_count/audit
+      // history — a regulated submission's SOAP request/response trail.
+      // Everything else (no prior submission, or a new filing after a
+      // TRACES-side REJECTED — that row was already consumed by TRACES) is
+      // a new CREATE.
+      const retryTarget = display === "failed" && sub ? sub.id : null;
+      const res = await authFetch(
+        retryTarget
+          ? `/api/v1/traces/submissions/${retryTarget}/retry/`
+          : `/api/v1/traces/submissions/`,
+        retryTarget
+          ? { method: "POST" }
+          : {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ dds_id: ddsId }),
+            },
+      );
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         const err = new Error(getErrorMessage(body)) as Error & { fieldErrors?: TracesErrorDetail[] };
@@ -347,8 +370,6 @@ export function TracesPanel({
     onError: (err) => toast.error(getErrorMessage(err)),
   });
 
-  const sub = submission ?? null;
-  const display = deriveDisplay(sub);
   const style = STATUS_META[display];
   const pending = isPending(sub);
   const canResubmit = !sub || display === "rejected" || display === "failed";
