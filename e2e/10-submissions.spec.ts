@@ -115,6 +115,68 @@ test.describe("Submissions hub (TRACES T1)", () => {
       await expect(page.locator("table tbody td[colspan]").first()).toBeVisible();
     }
   });
+
+  test("badge derives from the latest TRACES submission (ADR-0017), not just the internal DDS status (#22)", async ({ page }) => {
+    // Phase 1 — no TRACES stubs yet: discover a real seeded DDS's id and
+    // reference number via the real backend, by clicking through to its
+    // detail URL (the list itself never exposes the raw UUID).
+    await page.goto("/due-diligence");
+    const rows = await expectListResponded(page);
+    test.skip((await rows.count()) === 0, "no seeded DDS — skipping badge derivation test");
+
+    const targetRow = rows.first();
+    const referenceText = (await targetRow.locator("td").first().innerText()).trim();
+    await targetRow.click();
+    await expect(page).toHaveURL(/\/due-diligence\/[^/]+$/);
+    const ddsId = page.url().split("/due-diligence/")[1]?.split(/[?#]/)[0];
+    expect(ddsId).toBeTruthy();
+
+    // Phase 2 — re-navigate with the bulk submissions endpoint
+    // (`GET /api/v1/traces/submissions/?ordering=...`, no `dds_id=` filter —
+    // the list page's single extra fetch, #22) stubbed so this DDS's latest
+    // submission is a TRACES business rejection. The badge must show
+    // "Rejected" — derived from `traces_status`, never the raw internal
+    // `dds.status` (which stays SUBMITTED forever post-transport-success,
+    // ADR-0017).
+    const SUB_ID = "sub-badge-e2e";
+    await page.route("**/api/v1/traces/submissions/**", async (route) => {
+      const req = route.request();
+      if (req.method() !== "GET") return route.fallback();
+      const url = req.url();
+      if (url.includes(`/submissions/${SUB_ID}/`)) {
+        await route.fulfill({
+          json: {
+            id: SUB_ID,
+            dds_id: ddsId,
+            submission_type: "CREATE",
+            status: "SUBMITTED",
+            traces_status: "REJECTED",
+            traces_reference_number: "REF-BADGE-E2E",
+            verification_number: "",
+            error_message: "Missing geolocation data.",
+            error_detail: [],
+            attempt_count: 1,
+            last_attempted_at: null,
+            next_retry_at: null,
+            submitted_at: new Date().toISOString(),
+            submitted_by_id: "u1",
+            soap_request_payload: "",
+            soap_response_payload: "",
+            created_at: new Date().toISOString(),
+          },
+        });
+        return;
+      }
+      if (url.includes("dds_id=")) return route.fallback(); // panel's per-DDS fetch — not this test's concern
+      // The list page's bulk (no `dds_id=`) fetch.
+      await route.fulfill({ json: { results: [{ id: SUB_ID, dds_id: ddsId, status: "SUBMITTED" }] } });
+    });
+
+    await page.goto("/due-diligence");
+    await expectListResponded(page);
+    const row = page.locator("tr.cursor-pointer", { hasText: referenceText });
+    await expect(row.locator('[data-slot="badge"]', { hasText: "Rejected" })).toBeVisible({ timeout: 10_000 });
+  });
 });
 
 // ---------------------------------------------------------------------------
