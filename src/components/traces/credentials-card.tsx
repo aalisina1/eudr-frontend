@@ -103,7 +103,7 @@ export function CredentialsCard() {
 
   return (
     <>
-      <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div>

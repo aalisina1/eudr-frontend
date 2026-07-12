@@ -27,16 +27,16 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-2xl">
+    <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Your profile and account information.
+        <h1 className="text-display text-4xl leading-[1.04] italic font-light">Settings</h1>
+        <p className="mt-2.5 text-[15px] text-muted-foreground">
+          Your account, TRACES credentials, and operator identity.
         </p>
       </div>
 
       {/* Profile Card */}
-      <Card className="border-border/50">
+      <Card className="border-border/50 shadow-card">
         <CardContent className="p-6">
           <h2 className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground mb-4">
             Profile
@@ -97,7 +97,7 @@ export default function SettingsPage() {
       <OperatorIdentityCard />
 
       {/* App Info */}
-      <Card className="border-border/50">
+      <Card className="border-border/50 shadow-card">
         <CardContent className="p-6">
           <h2 className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground mb-4">
             Application

@@ -181,9 +181,10 @@ export default function DueDiligencePage() {
           // wins whenever it has something to say.
           const derivedKey = deriveTracesDisplay(detailByDds.get(stmt.id) ?? latestByDds.get(stmt.id));
           const ss = derivedKey ? TRACES_DISPLAY_STYLE[derivedKey] : (DDS_STATUS_STYLE[stmt.status] ?? DDS_STATUS_STYLE.DRAFT);
+          const StatusIcon = ss.icon;
           return (
             <Badge variant="secondary" className={`${ss.bg} ${ss.text} border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${ss.dot}`} />
+              <StatusIcon className={`size-3 ${ss.spin ? "animate-spin" : ""}`} />
               {ss.label}
             </Badge>
           );
@@ -215,10 +216,10 @@ export default function DueDiligencePage() {
 
   return (
     <div className="space-y-6 max-w-6xl">
-      <div className="flex items-center justify-between">
+      <div className="flex items-end justify-between gap-6 flex-wrap">
         <div>
-          <h1 className="text-display text-2xl font-light italic mb-0.5">Submissions</h1>
-          <p className="text-sm text-muted-foreground">EUDR compliance declarations</p>
+          <h1 className="text-display text-4xl leading-[1.04] italic font-light">Submissions</h1>
+          <p className="mt-2.5 text-[15px] text-muted-foreground">Statements submitted to the EU TRACES registry.</p>
         </div>
         <Button onClick={() => setFormOpen(true)} className="gap-1.5">
           <Plus className="size-4" />

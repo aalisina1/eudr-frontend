@@ -30,7 +30,14 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 import { auth } from "@/lib/auth";
+
+/** Left accent bar shown on the active nav item — ported from the prototype
+ * shell's `NavBtn` (a 3px pill in `--sidebar-primary`, inset 10px top/bottom). */
+function ActiveAccentBar() {
+  return <span aria-hidden className="absolute left-0 top-2.5 bottom-2.5 w-[3px] rounded-full bg-sidebar-primary" />;
+}
 
 const navMain = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -70,13 +77,10 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      {/* Emerald accent line */}
-      <div className="h-[3px] bg-gradient-to-r from-[#34D399] via-[#34D399]/60 to-transparent" />
-
       <SidebarHeader className="px-5 pt-6 pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#34D399] flex items-center justify-center shadow-[0_0_20px_rgba(52,211,153,0.15)]">
-            <TreePine className="w-[18px] h-[18px] text-[#0B1D1C]" />
+          <div className="w-[34px] h-[34px] rounded-md bg-sidebar-primary flex items-center justify-center">
+            <TreePine className="w-[18px] h-[18px] text-sidebar" />
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="font-semibold text-[15px] tracking-tight text-sidebar-foreground leading-none">
@@ -96,18 +100,22 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navMain.map(({ href, label, icon: Icon }) => (
-                <SidebarMenuItem key={href}>
-                  <SidebarMenuButton
-                    render={<Link href={href} />}
-                    isActive={pathname === href || pathname.startsWith(href + "/")}
-                    className="rounded-xl h-9"
-                  >
-                    <Icon className="size-[15px]" />
-                    <span className="text-[13px]">{label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navMain.map(({ href, label, icon: Icon }) => {
+                const isActive = pathname === href || pathname.startsWith(href + "/");
+                return (
+                  <SidebarMenuItem key={href}>
+                    <SidebarMenuButton
+                      render={<Link href={href} />}
+                      isActive={isActive}
+                      className="relative rounded-md h-9"
+                    >
+                      {isActive && <ActiveAccentBar />}
+                      <Icon className={cn("size-[15px]", isActive && "text-sidebar-primary")} />
+                      <span className="text-[13px]">{label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -120,18 +128,22 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navCompliance.map(({ href, label, icon: Icon }) => (
-                <SidebarMenuItem key={href}>
-                  <SidebarMenuButton
-                    render={<Link href={href} />}
-                    isActive={pathname === href || pathname.startsWith(href + "/")}
-                    className="rounded-xl h-9"
-                  >
-                    <Icon className="size-[15px]" />
-                    <span className="text-[13px]">{label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navCompliance.map(({ href, label, icon: Icon }) => {
+                const isActive = pathname === href || pathname.startsWith(href + "/");
+                return (
+                  <SidebarMenuItem key={href}>
+                    <SidebarMenuButton
+                      render={<Link href={href} />}
+                      isActive={isActive}
+                      className="relative rounded-md h-9"
+                    >
+                      {isActive && <ActiveAccentBar />}
+                      <Icon className={cn("size-[15px]", isActive && "text-sidebar-primary")} />
+                      <span className="text-[13px]">{label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -144,16 +156,17 @@ export function AppSidebar() {
             <SidebarMenuButton
               render={<Link href="/settings" />}
               isActive={pathname === "/settings"}
-              className="rounded-xl h-9 text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
+              className="relative rounded-md h-9 text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
             >
-              <Settings className="size-[15px]" />
+              {pathname === "/settings" && <ActiveAccentBar />}
+              <Settings className={cn("size-[15px]", pathname === "/settings" && "text-sidebar-primary")} />
               <span className="text-[13px]">Settings</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={toggleTheme}
-              className="rounded-xl h-9 text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
+              className="rounded-md h-9 text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
             >
               {dark ? <Sun className="size-[15px]" /> : <Moon className="size-[15px]" />}
               <span className="text-[13px]">{dark ? "Light mode" : "Dark mode"}</span>
@@ -162,7 +175,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleLogout}
-              className="rounded-xl h-9 text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
+              className="rounded-md h-9 text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
             >
               <LogOut className="size-[15px]" />
               <span className="text-[13px]">Sign out</span>
