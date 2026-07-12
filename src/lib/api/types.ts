@@ -227,6 +227,12 @@ export type TracesSubmissionStatus = "QUEUED" | "PROCESSING" | "SUBMITTED" | "FA
 export type SubmissionType = "CREATE" | "UPDATE" | "WITHDRAW";
 export type TracesStatus = "SUBMITTED" | "AVAILABLE" | "REJECTED" | "WITHDRAWN" | "GROUPED" | "ARCHIVED";
 
+/** One field-level error, e.g. `{ field: "batch[0].harvest_period", message: "..." }`. */
+export interface TracesErrorDetail {
+  field: string;
+  message: string;
+}
+
 export interface TracesSubmission {
   id: string;
   dds_id: string;
@@ -236,6 +242,10 @@ export interface TracesSubmission {
   verification_number: string;
   traces_reference_number: string;
   error_message: string;
+  /** Structured per-field errors (#63 / eudr-app PR#67) — populated for
+   * deterministic payload-validation failures. Render these, not just the
+   * flattened `error_message`. */
+  error_detail: TracesErrorDetail[];
   attempt_count: number;
   last_attempted_at: string | null;
   next_retry_at: string | null;

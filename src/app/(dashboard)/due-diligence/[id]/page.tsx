@@ -156,7 +156,12 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
       </div>
 
       {/* TRACES submission */}
-      <TracesPanel ddsId={id} activityType={stmt.activity_type} />
+      <TracesPanel
+        ddsId={id}
+        ddsStatus={stmt.status}
+        activityType={stmt.activity_type}
+        ddsCreatedAt={stmt.created_at}
+      />
 
       {/* State Actions */}
       <div className="flex flex-wrap gap-2">
