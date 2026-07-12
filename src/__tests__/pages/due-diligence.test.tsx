@@ -232,4 +232,37 @@ describe("DueDiligencePage — TRACES-derived status badge (#22, ADR-0017)", () 
       expect(screen.getAllByText("Submitting").length).toBeGreaterThanOrEqual(1);
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // QA (PR #37 review): ADR-0017's FE derivation table has an explicit row —
+  // `status ∈ {QUEUED, PROCESSING, RETRYING}` → "Submitting…". This test
+  // validates that RETRYING is correctly included in IN_FLIGHT.
+  // ---------------------------------------------------------------------------
+  it("shows Submitting (not the raw internal Approved status) when the latest submission is RETRYING", async () => {
+    globalThis.fetch = createMockFetch({
+      // Pipeline RETRYING is already on the lightweight list serializer —
+      // per ADR-0017 no detail follow-up should be needed for this case.
+      "/api/v1/traces/submissions/": mockPaginatedResponse([{ id: "sub1", dds_id: "dds1", status: "RETRYING" }]),
+      "/api/v1/due-diligence/statements/": ddsListResponse({ status: "APPROVED" }),
+    });
+    renderWithProviders(<DueDiligencePage />);
+    await waitFor(() => {
+      expect(screen.getByText("DDS-2026-001")).toBeInTheDocument();
+    });
+
+    // ADR-0017: RETRYING is in-flight, same as QUEUED/PROCESSING.
+    const submittingMatches = screen.queryAllByText("Submitting");
+    expect(submittingMatches.length).toBeGreaterThanOrEqual(1);
+
+    // Must NOT silently echo the raw internal DDS status for a DDS that has
+    // an active (retrying) submission — that's exactly the row ADR-0017
+    // exists to prevent ("Approved" implies "ready to submit", not "a
+    // submission attempt is actively failing and retrying").
+    // The badge should show "Submitting", and the internal status table row
+    // should not render an "Approved" badge (only filter dropdowns have it).
+    const approvedBadges = screen.queryAllByText("Approved").filter(
+      (el) => el.closest('[role="cell"]') !== null
+    );
+    expect(approvedBadges.length).toBe(0);
+  });
 });

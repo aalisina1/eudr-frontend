@@ -30,11 +30,11 @@ export type TracesDisplayKey =
   | "grouped"
   | "archived";
 
-/** Pipeline states that mean "still in flight, no verdict yet". Mirrors the
- * detail panel's `IN_FLIGHT` set (QUEUED/PROCESSING only — RETRYING falls
- * through to `null` there too; kept identical here so the two surfaces don't
- * disagree on the same underlying data). */
-const IN_FLIGHT = new Set(["QUEUED", "PROCESSING"]);
+/** Pipeline states that mean "still in flight, no verdict yet" (ADR-0017:
+ * QUEUED/PROCESSING/RETRYING all map to "Submitting…", covering the entire
+ * time a submission attempt is active, including transient failures being
+ * retried — never falls back to raw dds.status during these states). */
+const IN_FLIGHT = new Set(["QUEUED", "PROCESSING", "RETRYING"]);
 
 export const TRACES_DISPLAY_STYLE: Record<
   TracesDisplayKey,
