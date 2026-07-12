@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, RefreshCw, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { authFetch } from "@/lib/api/client";
+import { getErrorMessage } from "@/lib/api/errors";
 import type { TracesCredential } from "@/lib/api/types";
 import { CredentialsForm } from "@/components/traces/credentials-form";
 
@@ -22,7 +24,10 @@ type TestState = "idle" | "testing" | "ok" | "err";
 
 async function fetchCredentials(): Promise<TracesCredential[]> {
   const res = await authFetch("/api/v1/traces/credentials/");
-  if (!res.ok) throw new Error("Failed to load TRACES credentials");
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(getErrorMessage(err));
+  }
   const data = await res.json();
   return (Array.isArray(data) ? data : (data.results ?? [])) as TracesCredential[];
 }
@@ -47,7 +52,7 @@ export function CredentialsCard() {
   const [deleteTarget, setDeleteTarget] = useState<TracesCredential | null>(null);
   const [testState, setTestState] = useState<TestState>("idle");
 
-  const { data: credentials, isLoading } = useQuery({
+  const { data: credentials, isLoading, isError } = useQuery({
     queryKey: ["traces-credentials"],
     queryFn: fetchCredentials,
   });
@@ -57,12 +62,17 @@ export function CredentialsCard() {
       const res = await authFetch(`/api/v1/traces/credentials/${id}/`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Failed to delete credential");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(getErrorMessage(err));
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["traces-credentials"] });
+      toast.success("Credentials deleted");
       setDeleteTarget(null);
     },
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 
   function openAdd() {
@@ -121,6 +131,10 @@ export function CredentialsCard() {
             <Skeleton className="h-16 w-full rounded-xl" />
             <Skeleton className="h-16 w-full rounded-xl" />
           </div>
+        ) : isError ? (
+          <p className="text-sm text-muted-foreground">
+            Unable to load TRACES credentials.
+          </p>
         ) : !credentials || credentials.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-8 text-center">
             <p className="text-sm text-muted-foreground">

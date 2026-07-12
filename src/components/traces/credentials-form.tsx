@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   Sheet,
   SheetContent,
@@ -16,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { authFetch } from "@/lib/api/client";
+import { getErrorMessage } from "@/lib/api/errors";
 import type { TracesCredential } from "@/lib/api/types";
 
 const credentialSchema = z.object({
@@ -82,17 +84,17 @@ export function CredentialsForm({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(
-          (err as { detail?: string }).detail || "Failed to save TRACES credentials",
-        );
+        throw new Error(getErrorMessage(err));
       }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["traces-credentials"] });
+      toast.success(isEditing ? "Credentials updated" : "Credentials added");
       onOpenChange(false);
       reset();
     },
+    onError: (err) => toast.error(getErrorMessage(err)),
   });
 
   return (

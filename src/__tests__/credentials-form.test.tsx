@@ -1,19 +1,28 @@
 /**
  * Task 13 — TRACES credentials management tests
+ * Issue #17 follow-up — 403 → toast parity with the schedule/run-now precedent.
  *
  * Covers:
  * 1. CredentialsCard — renders configured environments without exposing any secret
  * 2. CredentialsCard — empty state shows "Add credentials" button
- * 3. CredentialsForm — submits {environment, username, password, web_service_client_id} to POST endpoint
- * 4. CredentialsForm — edit mode sends PATCH; password field is blank (write-only, never pre-filled)
+ * 3. CredentialsCard — a load failure (e.g. 403 for a non-admin) shows a distinct
+ *    error state, not the misleading "no credentials yet, add one" empty state
+ * 4. CredentialsForm — submits {environment, username, password, web_service_client_id} to POST endpoint
+ * 5. CredentialsForm — edit mode sends PATCH; password field is blank (write-only, never pre-filled)
+ * 6. CredentialsForm — a save failure (e.g. 403) surfaces via the shared error-toast pattern
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { toast } from "sonner";
 import { renderWithProviders } from "./helpers";
 import { CredentialsCard } from "@/components/traces/credentials-card";
 import { CredentialsForm } from "@/components/traces/credentials-form";
 import type { TracesCredential } from "@/lib/api/types";
+
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
 
 vi.mock("@/lib/api/client", () => ({ authFetch: vi.fn() }));
 import { authFetch } from "@/lib/api/client";
@@ -78,6 +87,23 @@ describe("CredentialsCard", () => {
     // Both the header button and the empty-state CTA use "Add credentials" — at least one must be present
     const addButtons = screen.getAllByRole("button", { name: /add credentials/i });
     expect(addButtons.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows a distinct error state (not the empty 'add credentials' CTA) when the list fails to load, e.g. 403 for a non-admin", async () => {
+    mockAuthFetch.mockResolvedValue(
+      jsonRes({ detail: "You do not have permission to access this resource." }, 403),
+    );
+
+    renderWithProviders(<CredentialsCard />);
+
+    expect(
+      await screen.findByText(/unable to load traces credentials/i),
+    ).toBeInTheDocument();
+    // Must not render the "no credentials configured yet" CTA — that implies
+    // the viewer could just add one, which isn't true for a permission failure.
+    expect(
+      screen.queryByText(/no traces credentials configured/i),
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -159,6 +185,28 @@ describe("CredentialsForm", () => {
     // password omitted when blank in edit mode
     expect(body).not.toHaveProperty("password");
     expect(body.username).toBe("prod_user");
+  });
+
+  it("surfaces a save failure (e.g. 403 for a non-admin) as an error toast", async () => {
+    mockAuthFetch.mockResolvedValue(
+      jsonRes({ detail: "You do not have permission to perform this action." }, 403),
+    );
+    const user = userEvent.setup();
+
+    renderWithProviders(
+      <CredentialsForm open={true} onOpenChange={vi.fn()} />,
+    );
+
+    await user.type(screen.getByLabelText(/username/i), "traces_user");
+    await user.type(screen.getByLabelText(/password/i), "s3cr3t");
+    await user.type(screen.getByLabelText(/web service client id/i), "ws_client_123");
+    await user.click(screen.getByRole("button", { name: /create/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        "You do not have permission to perform this action.",
+      );
+    });
   });
 
   it("test connection button re-fetches the credential list as a save smoke", async () => {
