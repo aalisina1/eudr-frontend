@@ -8,8 +8,12 @@
  *
  * Patterns:
  * - Stubs are registered BEFORE navigation so they catch the initial fetch.
- * - `page.route` with `{ times: n }` allows the first call to be stubbed and
- *   subsequent calls (after mutation) to respond differently.
+ * - `TracesSubmissionListView` GET returns the lightweight list serializer
+ *   (id/dds_id/status/traces_reference_number/attempt_count/created_at only —
+ *   no `traces_status`/`verification_number`/`error_message`/`error_detail`).
+ *   The panel follows up with a detail GET by id to get the full row, so
+ *   stubs must distinguish `?dds_id=` (list) from `/submissions/{id}/`
+ *   (detail) rather than returning the same payload for both (#2).
  * - `page.waitForRequest` / `page.waitForResponse` verify network activity without
  *   arbitrary sleeps.
  */
@@ -21,24 +25,69 @@ import { expectListResponded } from "./helpers";
 // Shared stub payloads
 // ---------------------------------------------------------------------------
 
-const AVAILABLE_SUBMISSION = {
-  results: [
-    {
-      id: "sub-e2e-1",
-      dds: "dds-e2e-1",
-      traces_status: "AVAILABLE",
-      status: "COMPLETED",
-      traces_reference_number: "REF-E2E",
-      verification_number: "VER-E2E",
-      submitted_at: new Date(Date.now() - 3_600_000).toISOString(), // 1 hour ago
-      error_message: null,
-    },
-  ],
+const SUB_ID = "sub-e2e-1";
+
+/** The full `TracesSubmissionSerializer` detail shape (GET .../submissions/{id}/). */
+const AVAILABLE_SUBMISSION_DETAIL = {
+  id: SUB_ID,
+  dds_id: "dds-e2e-1",
+  submission_type: "CREATE",
+  traces_status: "AVAILABLE",
+  status: "SUBMITTED",
+  traces_reference_number: "REF-E2E",
+  verification_number: "VER-E2E",
+  submitted_at: new Date(Date.now() - 3_600_000).toISOString(), // 1 hour ago
+  error_message: "",
+  error_detail: [],
+  attempt_count: 1,
+  last_attempted_at: null,
+  next_retry_at: null,
+  submitted_by_id: "u1",
+  soap_request_payload: "",
+  soap_response_payload: "",
+  created_at: new Date(Date.now() - 3_600_000).toISOString(),
 };
 
-const EMPTY_SUBMISSIONS = { results: [] };
 const CREDS_PRESENT = { results: [{ id: "c1", environment: "ACCEPTANCE", username: "test_user", web_service_client_id: "ws_abc" }] };
 const CREDS_EMPTY = { results: [] };
+
+/** Route every `.../traces/submissions/**` call, branching on method/URL the
+ * way the real list-vs-detail split requires. `listResults` is what the
+ * `?dds_id=` list GET returns each call it's invoked (array, consumed in
+ * order — repeats the last entry once exhausted). */
+function routeSubmissions(
+  page: import("@playwright/test").Page,
+  opts: {
+    listResults: unknown[][];
+    detail?: unknown;
+    onPost?: (route: import("@playwright/test").Route) => Promise<void>;
+  },
+) {
+  let listCall = 0;
+  return page.route("**/api/v1/traces/submissions/**", async (route) => {
+    const req = route.request();
+    if (req.method() === "POST") {
+      if (opts.onPost) return opts.onPost(route);
+      await route.fulfill({ json: { id: SUB_ID, status: "QUEUED" } });
+      return;
+    }
+    if (req.url().includes("dds_id=")) {
+      const results = opts.listResults[Math.min(listCall, opts.listResults.length - 1)];
+      listCall += 1;
+      await route.fulfill({ json: { results } });
+      return;
+    }
+    // Detail GET by id — the full row.
+    await route.fulfill({ json: opts.detail ?? AVAILABLE_SUBMISSION_DETAIL });
+  });
+}
+
+/** Locate the seeded, always-APPROVED demo DDS row (rather than "first row",
+ * whose status/order isn't guaranteed) — the TRACES submit gate (#50) only
+ * enables Submit for an APPROVED DDS. */
+function gh001Row(page: import("@playwright/test").Page) {
+  return page.locator("tr.cursor-pointer", { hasText: "DDS-2025-GH-001" });
+}
 
 // ---------------------------------------------------------------------------
 // Journey 1: Submissions nav + list
@@ -78,15 +127,14 @@ test.describe("TRACES panel — AVAILABLE state (TRACES T2)", () => {
     await page.route("**/api/v1/traces/credentials/**", async (route) => {
       await route.fulfill({ json: CREDS_PRESENT });
     });
-    await page.route("**/api/v1/traces/submissions/**", async (route) => {
-      await route.fulfill({ json: AVAILABLE_SUBMISSION });
-    });
+    await routeSubmissions(page, { listResults: [[{ id: SUB_ID }]] });
 
     await page.goto("/due-diligence");
-    const rows = await expectListResponded(page);
-    test.skip((await rows.count()) === 0, "no seeded DDS — skipping panel test");
+    await expectListResponded(page);
+    const row = gh001Row(page);
+    test.skip((await row.count()) === 0, "seeded DDS-2025-GH-001 not found — skipping panel test");
 
-    await rows.first().click();
+    await row.click();
     await expect(page).toHaveURL(/\/due-diligence\/[^/]+$/);
 
     // Wait for the TRACES panel section to mount.
@@ -101,8 +149,11 @@ test.describe("TRACES panel — AVAILABLE state (TRACES T2)", () => {
     await expect(page.getByText("Verification Number", { exact: true }).first()).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText("VER-E2E")).toBeVisible({ timeout: 10_000 });
 
-    // The AVAILABLE status badge is visible.
-    await expect(page.getByText("Available")).toBeVisible({ timeout: 10_000 });
+    // The AVAILABLE status badge is visible (the TRACES timeline also has an
+    // "Available" step title, so scope to the badge specifically).
+    await expect(page.locator('[data-slot="badge"]', { hasText: "Available" })).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });
 
@@ -112,33 +163,21 @@ test.describe("TRACES panel — AVAILABLE state (TRACES T2)", () => {
 
 test.describe("TRACES panel — submit flow (TRACES T3)", () => {
   test("opens confirm dialog, fires POST, then shows AVAILABLE state", async ({ page }) => {
-    let submissionsCallCount = 0;
-
-    // First GET: no submission yet. Subsequent GET: AVAILABLE (post-submit poll).
-    await page.route("**/api/v1/traces/submissions/**", async (route) => {
-      const method = route.request().method();
-      if (method === "POST") {
-        await route.fulfill({ json: { id: "s1", status: "QUEUED", traces_status: "SUBMITTED" } });
-        return;
-      }
-      // GET — first call returns empty, subsequent return AVAILABLE.
-      submissionsCallCount += 1;
-      if (submissionsCallCount === 1) {
-        await route.fulfill({ json: EMPTY_SUBMISSIONS });
-      } else {
-        await route.fulfill({ json: AVAILABLE_SUBMISSION });
-      }
-    });
+    // First list GET: no submission yet. Second (post-invalidate) list GET:
+    // the new row exists — the panel then does a detail GET for its full
+    // AVAILABLE state (post-submit poll).
+    await routeSubmissions(page, { listResults: [[], [{ id: SUB_ID }]] });
 
     await page.route("**/api/v1/traces/credentials/**", async (route) => {
       await route.fulfill({ json: CREDS_PRESENT });
     });
 
     await page.goto("/due-diligence");
-    const rows = await expectListResponded(page);
-    test.skip((await rows.count()) === 0, "no seeded DDS — skipping submit-flow test");
+    await expectListResponded(page);
+    const row = gh001Row(page);
+    test.skip((await row.count()) === 0, "seeded DDS-2025-GH-001 not found — skipping submit-flow test");
 
-    await rows.first().click();
+    await row.click();
     await expect(page).toHaveURL(/\/due-diligence\/[^/]+$/);
 
     // Wait for the panel to render (no submission state).

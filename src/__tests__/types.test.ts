@@ -168,6 +168,7 @@ describe("Type definitions", () => {
       verification_number: "VER-123",
       traces_reference_number: "TR-456",
       error_message: "",
+      error_detail: [],
       attempt_count: 1,
       last_attempted_at: null,
       next_retry_at: null,
@@ -184,6 +185,31 @@ describe("Type definitions", () => {
     expect(submission.soap_response_payload).toBeDefined();
     expect(submission.status).toBe("QUEUED");
     expect(submission.submission_type).toBe("CREATE");
+  });
+
+  it("TracesSubmission.error_detail carries structured per-field errors (#63 / eudr-app PR#67)", () => {
+    const submission: TracesSubmission = {
+      id: "ts1",
+      dds_id: "dds1",
+      submission_type: "CREATE",
+      status: "FAILED",
+      traces_status: "" as TracesSubmission["traces_status"],
+      verification_number: "",
+      traces_reference_number: "",
+      error_message: "Payload validation failed: 1 error.",
+      error_detail: [{ field: "batch[0].harvest_period", message: "harvest_period_start is required" }],
+      attempt_count: 1,
+      last_attempted_at: null,
+      next_retry_at: null,
+      submitted_at: null,
+      submitted_by_id: "user1",
+      soap_request_payload: "",
+      soap_response_payload: "",
+      created_at: "2025-06-30T00:00:00Z",
+    };
+    expect(submission.error_detail).toHaveLength(1);
+    expect(submission.error_detail[0].field).toBe("batch[0].harvest_period");
+    expect(submission.error_detail[0].message).toBe("harvest_period_start is required");
   });
 
   it("Batch interface has harvest_period_start/end fields (nullable)", () => {
