@@ -59,6 +59,14 @@ Tracks what's shipped versus what's planned. The integrations 4-tab restructure 
 - **Schedule editor** (#7) — a Schedule step on the source detail page: presets dropdown + editable raw cron (`src/lib/cron.ts` via cronstrue + cron-parser, enforcing the backend's 5-field rule), live validation + human-readable preview, timezone, last/next run, pause/resume. `PUT sources/<id>/schedule/`.
 - **Run-now + run status** (#9) — `SourceCard` shows each source's latest ingestion run as a badge (Running/Completed/Failed), polled every 3s while RUNNING, plus a Run-now button (`POST sources/<id>/ingest/`).
 
+### TRACES Submission surface (v0.2.0 frontend, merged 2026-07-12)
+The frontend half of the TRACES round-trip. Ships the three v0.2.0 FE surfaces; the round-trip itself is code-complete pending live acceptance-environment verification + demo (see the backend roadmap's "TRACES round-trip (v0.2.0)").
+
+- **DDS-detail TRACES panel** (#2, PRs #35 + #40) — the round-trip demo surface: Submit-to-TRACES action + submission timeline across Not-submitted / Submitting / RETRYING / AVAILABLE / REJECTED / Locked states, derived from the detail serializer's `traces_status`. #40 aligned the in-flight state set with ADR-0017 (RETRYING is in-flight). Design: `dds-traces-submission.design-prompt.md`.
+- **TRACES Connection Settings** (#17, PR #34) — admin UI for `TracesCredential` + operator identity (EORI + authorised-representative), write-only secret. Design: `dds-traces-submission.design-prompt.md` (ADMIN credentials variant).
+- **Submissions-hub list** (#22, PR #37) — the shipped DDS list reframed to surface TRACES status; list badge derives from the latest submission's regulator state. Carries the **Due Diligence → Submissions** nav rename (Submissions half). Referenced-statements card deliberately OUT (v0.5.0 / ADR-0015).
+- Known follow-ups filed from this work (v0.2.0 demo-readiness / v0.2.1 cleanup): #36 (COMPLIANCE_OFFICER Submit disabled — credentials pre-check hits an admin-only endpoint; v0.2.0), #41 (single source of truth for in-flight states), #33 (types.ts `Batch` drift), #39 (e2e locator collision).
+
 ### Testing
 - 18 Vitest suites: API client, auth, types, utils, DataTable, AppSidebar, cron helpers, integrations (syncs/schedule/source-card), and page-level smoke tests for the major routes.
 
@@ -69,7 +77,7 @@ Tracks what's shipped versus what's planned. The integrations 4-tab restructure 
 ## Planned
 
 ### v0.2.1 — Sourcing readiness pipeline & File DDS (next; hard-gated behind v0.2.0)
-The compliance-officer reframe's Sourcing/provenance/worklist screens, restructured around a **readiness pipeline** (derived per-PO stages), a **tonnes coverage funnel** (ordered→allocated→geolocated→filed→uncovered), a **deadline-driven worklist**, and the **File DDS** composition page. **No FE work starts until v0.2.0 ships and is demoed.** Design source of truth: `eudr-vault/10-Specs/UI-Workflows/sourcing-readiness.design-prompt.md`; specs `dds-readiness-pipeline.md` + `compliance-flow-reframe.md`. Tracker #27.
+The compliance-officer reframe's Sourcing/provenance/worklist screens, restructured around a **readiness pipeline** (derived per-PO stages), a **tonnes coverage funnel** (ordered→allocated→geolocated→filed→uncovered), a **deadline-driven worklist**, and the **File DDS** composition page. **No FE work starts until v0.2.0 ships and is demoed** — the v0.2.0 FE surfaces have merged (see Shipped), so the gate now rests solely on the live acceptance-environment round-trip + demo. Design source of truth: `eudr-vault/10-Specs/UI-Workflows/sourcing-readiness.design-prompt.md`; specs `dds-readiness-pipeline.md` + `compliance-flow-reframe.md`. Tracker #27.
 - Sourcing list — readiness stages + coverage bars + deadline sort (#28, delivers reframe Phase 2).
 - PO Detail — coverage funnel + readiness blockers + gated File DDS CTA (#29, reframe Phase 2).
 - Dashboard worklist — Needs filing / Needs remediation / Awaiting data; retires the charts (#30, reframe Phase 3).
