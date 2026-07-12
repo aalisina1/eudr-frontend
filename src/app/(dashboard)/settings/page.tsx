@@ -7,6 +7,7 @@ import { User, Building2, Shield, Mail } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import type { User as UserType } from "@/lib/api/types";
 import { CredentialsCard } from "@/components/traces/credentials-card";
+import { OperatorIdentityCard } from "@/components/traces/operator-identity-card";
 
 export default function SettingsPage() {
   const { data: user, isLoading } = useQuery({
@@ -91,6 +92,9 @@ export default function SettingsPage() {
 
       {/* TRACES Connection */}
       <CredentialsCard />
+
+      {/* TRACES Operator Identity (EORI + actor ID) */}
+      <OperatorIdentityCard />
 
       {/* App Info */}
       <Card className="border-border/50">
