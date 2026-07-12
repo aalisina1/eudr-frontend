@@ -186,6 +186,34 @@ describe("Type definitions", () => {
     expect(submission.submission_type).toBe("CREATE");
   });
 
+  it("Batch interface has harvest_period_start/end fields (nullable)", () => {
+    const batch: Batch = {
+      id: "b1",
+      seller_id: "supplier1",
+      buyer_id: "org1",
+      organization_id: "org1",
+      commodity_id: "commodity1",
+      quantity: 100,
+      unit: "KG",
+      transaction_date: "2025-06-30",
+      country_of_harvest: "BR",
+      harvest_period_start: "2025-01-01",
+      harvest_period_end: "2025-03-31",
+      land_plot_ids: [],
+      reference_number: "BATCH-001",
+      status: "DRAFT",
+      external_id: "",
+      created_at: "2025-06-30T00:00:00Z",
+      updated_at: "2025-06-30T00:00:00Z",
+    };
+    expect(batch.harvest_period_start).toBe("2025-01-01");
+    expect(batch.harvest_period_end).toBe("2025-03-31");
+
+    const batchWithoutHarvestPeriod: Batch = { ...batch, harvest_period_start: null, harvest_period_end: null };
+    expect(batchWithoutHarvestPeriod.harvest_period_start).toBeNull();
+    expect(batchWithoutHarvestPeriod.harvest_period_end).toBeNull();
+  });
+
   it("DueDiligenceStatement interface has activity_type field", () => {
     const dds: DueDiligenceStatement = {
       id: "dds1",

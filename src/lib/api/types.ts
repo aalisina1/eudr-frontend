@@ -146,6 +146,8 @@ export interface Batch {
   unit: BatchUnit;
   transaction_date: string;
   country_of_harvest: string;
+  harvest_period_start: string | null;
+  harvest_period_end: string | null;
   land_plot_ids: string[];
   reference_number: string;
   status: BatchStatus;
