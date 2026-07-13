@@ -1,23 +1,14 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { User, Building2, Shield, Mail } from "lucide-react";
-import { authFetch } from "@/lib/api/client";
-import type { User as UserType } from "@/lib/api/types";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { CredentialsCard } from "@/components/traces/credentials-card";
 import { OperatorIdentityCard } from "@/components/traces/operator-identity-card";
 
 export default function SettingsPage() {
-  const { data: user, isLoading } = useQuery({
-    queryKey: ["me"],
-    queryFn: async () => {
-      const res = await authFetch("/api/v1/auth/users/me/");
-      if (!res.ok) throw new Error("Failed to fetch profile");
-      return res.json() as Promise<UserType>;
-    },
-  });
+  const { data: user, isLoading } = useCurrentUser();
 
   const roleLabels: Record<string, string> = {
     ADMIN: "Administrator",
@@ -79,6 +70,11 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex items-center gap-3 text-sm">
                   <Building2 className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-muted-foreground w-20">Organization</span>
+                  <span>{user.organization_name ?? "—"}</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <Building2 className="w-4 h-4 text-muted-foreground opacity-0" />
                   <span className="text-muted-foreground w-20">Org ID</span>
                   <span className="font-mono text-xs">{user.organization_id ?? "—"}</span>
                 </div>

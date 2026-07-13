@@ -19,7 +19,7 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { expectListResponded } from "./helpers";
+import { CREDENTIALS, expectListResponded, login } from "./helpers";
 
 // ---------------------------------------------------------------------------
 // Shared stub payloads
@@ -305,27 +305,57 @@ test.describe("Credentials screen (TRACES T4)", () => {
     ).toBeVisible({ timeout: 10_000 });
   });
 
-  test('"Add credentials" button opens the credentials form Sheet', async ({ page }) => {
-    // Stub credentials to empty so the "Add credentials" CTA in the empty state is shown.
+  // `GET/POST /api/v1/traces/credentials/` is IsAdmin-gated server-side (real
+  // backend, not stubbed here — only the credentials *list* payload above is
+  // stubbed). The default suite-wide login (auth.setup.ts) is the compliance
+  // officer, so this locks in the eudr-app #70 QA rider: a non-admin must
+  // never see a control that would just 403 on click.
+  test('hides the "Add credentials" button for the compliance officer (non-admin, #70)', async ({ page }) => {
     await page.route("**/api/v1/traces/credentials/**", async (route) => {
       await route.fulfill({ json: CREDS_EMPTY });
     });
 
     await page.goto("/settings");
-
-    // Wait for the card to load.
     await expect(page.getByText("TRACES Connection", { exact: false })).toBeVisible({
       timeout: 15_000,
     });
-
-    // The header "Add credentials" button (always present) or the empty-state one.
-    const addBtn = page.getByRole("button", { name: /Add credentials/i }).first();
-    await expect(addBtn).toBeVisible({ timeout: 10_000 });
-    await addBtn.click();
-
-    // The Sheet title is "Add TRACES Credentials"
     await expect(
-      page.getByRole("heading", { name: /Add TRACES Credentials/i }),
+      page.getByText("No TRACES credentials configured.", { exact: false }),
     ).toBeVisible({ timeout: 10_000 });
+
+    await expect(page.getByRole("button", { name: /Add credentials/i })).toHaveCount(0);
+  });
+
+  test.describe("as an admin", () => {
+    // Drop the suite-wide (compliance officer) storageState — this describe
+    // block logs in fresh as the admin so it can exercise the one surface
+    // (TRACES credentials) that's actually admin-only.
+    test.use({ storageState: { cookies: [], origins: [] } });
+
+    test('"Add credentials" button is visible and opens the credentials form Sheet', async ({ page }) => {
+      await login(page, CREDENTIALS.admin);
+
+      // Stub credentials to empty so the "Add credentials" CTA in the empty state is shown.
+      await page.route("**/api/v1/traces/credentials/**", async (route) => {
+        await route.fulfill({ json: CREDS_EMPTY });
+      });
+
+      await page.goto("/settings");
+
+      // Wait for the card to load.
+      await expect(page.getByText("TRACES Connection", { exact: false })).toBeVisible({
+        timeout: 15_000,
+      });
+
+      // The header "Add credentials" button (always present) or the empty-state one.
+      const addBtn = page.getByRole("button", { name: /Add credentials/i }).first();
+      await expect(addBtn).toBeVisible({ timeout: 10_000 });
+      await addBtn.click();
+
+      // The Sheet title is "Add TRACES Credentials"
+      await expect(
+        page.getByRole("heading", { name: /Add TRACES Credentials/i }),
+      ).toBeVisible({ timeout: 10_000 });
+    });
   });
 });

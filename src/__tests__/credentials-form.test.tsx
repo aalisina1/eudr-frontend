@@ -1,15 +1,18 @@
 /**
  * Task 13 — TRACES credentials management tests
  * Issue #17 follow-up — 403 → toast parity with the schedule/run-now precedent.
+ * eudr-app #70 QA rider — role-aware hiding of "Add credentials" for non-admins.
  *
  * Covers:
  * 1. CredentialsCard — renders configured environments without exposing any secret
- * 2. CredentialsCard — empty state shows "Add credentials" button
+ * 2. CredentialsCard — empty state shows "Add credentials" button for an ADMIN
  * 3. CredentialsCard — a load failure (e.g. 403 for a non-admin) shows a distinct
  *    error state, not the misleading "no credentials yet, add one" empty state
- * 4. CredentialsForm — submits {environment, username, password, web_service_client_id} to POST endpoint
- * 5. CredentialsForm — edit mode sends PATCH; password field is blank (write-only, never pre-filled)
- * 6. CredentialsForm — a save failure (e.g. 403) surfaces via the shared error-toast pattern
+ * 4. CredentialsCard — hides "Add credentials" (header + empty-state) for a
+ *    non-ADMIN role (VIEWER) — the endpoint is IsAdmin-gated server-side (#70)
+ * 5. CredentialsForm — submits {environment, username, password, web_service_client_id} to POST endpoint
+ * 6. CredentialsForm — edit mode sends PATCH; password field is blank (write-only, never pre-filled)
+ * 7. CredentialsForm — a save failure (e.g. 403) surfaces via the shared error-toast pattern
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, waitFor, fireEvent } from "@testing-library/react";
@@ -48,15 +51,35 @@ function makeCred(overrides: Partial<TracesCredential> = {}): TracesCredential {
   };
 }
 
+/**
+ * Route `authFetch` by URL so `/auth/users/me/` (role, consumed by
+ * `useCurrentUser`) and `/traces/credentials/` (the credentials list) can be
+ * mocked independently — `role` defaults to "ADMIN" since most of these
+ * tests are exercising admin-context CredentialsCard rendering, not the
+ * role gate itself.
+ */
+function mockCredentialsApi({
+  credentialsResponse,
+  role = "ADMIN",
+}: {
+  credentialsResponse: { data: unknown; status?: number };
+  role?: "ADMIN" | "COMPLIANCE_OFFICER" | "VIEWER" | "SUPPLIER_CONTACT";
+}) {
+  mockAuthFetch.mockImplementation((url: string) => {
+    if (url.includes("/auth/users/me/")) {
+      return Promise.resolve(jsonRes({ id: "u1", role, organization_id: "org-1" }));
+    }
+    return Promise.resolve(jsonRes(credentialsResponse.data, credentialsResponse.status));
+  });
+}
+
 // ── CredentialsCard ──────────────────────────────────────────────────────────
 
 describe("CredentialsCard", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("renders configured credentials without exposing any secret", async () => {
-    mockAuthFetch.mockResolvedValue(
-      jsonRes({ count: 1, results: [makeCred()] }),
-    );
+    mockCredentialsApi({ credentialsResponse: { data: { count: 1, results: [makeCred()] } } });
 
     renderWithProviders(<CredentialsCard />);
 
@@ -73,8 +96,8 @@ describe("CredentialsCard", () => {
     expect(allText).not.toMatch(/password/i);
   });
 
-  it("shows empty state with an Add credentials button when no credentials exist", async () => {
-    mockAuthFetch.mockResolvedValue(jsonRes({ count: 0, results: [] }));
+  it("shows empty state with an Add credentials button for an ADMIN when no credentials exist", async () => {
+    mockCredentialsApi({ credentialsResponse: { data: { count: 0, results: [] } }, role: "ADMIN" });
 
     renderWithProviders(<CredentialsCard />);
 
@@ -90,9 +113,12 @@ describe("CredentialsCard", () => {
   });
 
   it("shows a distinct error state (not the empty 'add credentials' CTA) when the list fails to load, e.g. 403 for a non-admin", async () => {
-    mockAuthFetch.mockResolvedValue(
-      jsonRes({ detail: "You do not have permission to access this resource." }, 403),
-    );
+    mockCredentialsApi({
+      credentialsResponse: {
+        data: { detail: "You do not have permission to access this resource." },
+        status: 403,
+      },
+    });
 
     renderWithProviders(<CredentialsCard />);
 
@@ -103,6 +129,42 @@ describe("CredentialsCard", () => {
     // the viewer could just add one, which isn't true for a permission failure.
     expect(
       screen.queryByText(/no traces credentials configured/i),
+    ).not.toBeInTheDocument();
+  });
+
+  // ── #70 QA rider: role-aware hiding of "Add credentials" ──────────────────
+
+  it("hides the 'Add credentials' button (header) for a non-admin (VIEWER) even though the endpoint 403s", async () => {
+    mockCredentialsApi({
+      credentialsResponse: {
+        data: { detail: "You do not have permission to access this resource." },
+        status: 403,
+      },
+      role: "VIEWER",
+    });
+
+    renderWithProviders(<CredentialsCard />);
+
+    await screen.findByText(/unable to load traces credentials/i);
+    expect(
+      screen.queryByRole("button", { name: /add credentials/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides the empty-state 'Add credentials' CTA for a non-admin (COMPLIANCE_OFFICER)", async () => {
+    // Hypothetical: even if the list GET somehow succeeded empty for a
+    // non-admin, the CTA to add one (a write the backend would 403) must
+    // stay hidden — the gate is role-driven, not derived from this response.
+    mockCredentialsApi({
+      credentialsResponse: { data: { count: 0, results: [] } },
+      role: "COMPLIANCE_OFFICER",
+    });
+
+    renderWithProviders(<CredentialsCard />);
+
+    await screen.findByText(/no traces credentials configured/i);
+    expect(
+      screen.queryByRole("button", { name: /add credentials/i }),
     ).not.toBeInTheDocument();
   });
 });

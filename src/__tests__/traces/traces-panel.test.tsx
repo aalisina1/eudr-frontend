@@ -44,15 +44,25 @@ function baseSubmission(overrides: Partial<TracesSubmission>): TracesSubmission 
  * `TracesSubmissionListSerializer` (no `traces_status`/`verification_number`/
  * `error_message`/`error_detail`) — the panel must follow up with a detail
  * GET by id to get the full row. Mock both legs.
+ *
+ * `role` defaults to "ADMIN" — the credentials pre-check (#36/#70) only ever
+ * runs for an admin, so tests that exercise `hasCreds` gating need an admin
+ * `/auth/users/me/` response to reach it at all; tests that don't care about
+ * credentials gating are unaffected by the default.
  */
 function mockApi({
   submission = null,
   hasCreds = true,
+  role = "ADMIN",
 }: {
   submission?: TracesSubmission | null;
   hasCreds?: boolean;
+  role?: "ADMIN" | "COMPLIANCE_OFFICER" | "VIEWER" | "SUPPLIER_CONTACT";
 }) {
   mockAuthFetch.mockImplementation((url: string) => {
+    if (url.includes("/auth/users/me/")) {
+      return Promise.resolve(jsonRes({ id: "u1", role, organization_id: "org-1" }));
+    }
     if (url.includes("/traces/credentials/")) {
       return Promise.resolve(jsonRes({ results: hasCreds ? [{ id: "c1" }] : [] }));
     }
@@ -79,13 +89,42 @@ describe("TracesPanel", () => {
     expect(btn).toBeEnabled();
   });
 
-  it("disables Submit with a hint when no credentials are configured", async () => {
-    mockApi({ submission: null, hasCreds: false });
+  it("disables Submit with a hint when no credentials are configured (ADMIN pre-check, #36/#70)", async () => {
+    mockApi({ submission: null, hasCreds: false, role: "ADMIN" });
     renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="APPROVED" />);
     await waitFor(() =>
       expect(screen.getByText(/configure traces credentials first/i)).toBeInTheDocument(),
     );
     expect(screen.getByRole("button", { name: /submit to traces/i })).toBeDisabled();
+    // The pre-check only runs for an admin — confirms this test actually
+    // exercised the gated query, not a coincidental default.
+    expect(
+      mockAuthFetch.mock.calls.some(([u]) => (u as string).includes("/traces/credentials/")),
+    ).toBe(true);
+  });
+
+  it("a COMPLIANCE_OFFICER sees an enabled Submit on an APPROVED DDS even with no TRACES credentials configured — the admin-only pre-check must not gate non-admin roles (#36)", async () => {
+    mockApi({ submission: null, hasCreds: false, role: "COMPLIANCE_OFFICER" });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="APPROVED" />);
+    await waitFor(() => expect(screen.getByText("Not submitted to TRACES.")).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: /submit to traces/i })).toBeEnabled();
+    // The credentials endpoint must never be called for a non-admin — it's
+    // IsAdmin-gated server-side and would otherwise 403, which is exactly
+    // the bug this test locks in the fix for.
+    expect(
+      mockAuthFetch.mock.calls.some(([u]) => (u as string).includes("/traces/credentials/")),
+    ).toBe(false);
+    expect(screen.queryByText(/configure traces credentials first/i)).not.toBeInTheDocument();
+  });
+
+  it("a VIEWER's Submit stays governed by the DDS-status gate alone (no credentials pre-check)", async () => {
+    mockApi({ submission: null, hasCreds: false, role: "VIEWER" });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="DRAFT" />);
+    await waitFor(() => expect(screen.getByText(/must be approved/i)).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: /submit to traces/i })).toBeDisabled();
+    expect(
+      mockAuthFetch.mock.calls.some(([u]) => (u as string).includes("/traces/credentials/")),
+    ).toBe(false);
   });
 
   it("disables Submit with a hint when the DDS is not Approved (mirrors the backend's submit gate)", async () => {
