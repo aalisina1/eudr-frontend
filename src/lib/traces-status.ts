@@ -1,3 +1,4 @@
+import { AlertTriangle, CheckCircle2, FileText, Loader2, Send, XCircle, type LucideIcon } from "lucide-react";
 import type { TracesSubmission } from "@/lib/api/types";
 
 /**
@@ -38,16 +39,16 @@ const IN_FLIGHT = new Set(["QUEUED", "PROCESSING", "RETRYING"]);
 
 export const TRACES_DISPLAY_STYLE: Record<
   TracesDisplayKey,
-  { bg: string; text: string; dot: string; label: string }
+  { bg: string; text: string; dot: string; label: string; icon: LucideIcon; spin?: boolean }
 > = {
-  submitting: { bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", label: "Submitting" },
-  submitted: { bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", label: "Submitted" },
-  available: { bg: "bg-[#34D399]/10", text: "text-[#1A6B5A]", dot: "bg-[#34D399]", label: "Available" },
-  rejected: { bg: "bg-[#C23D3D]/10", text: "text-[#C23D3D]", dot: "bg-[#C23D3D]", label: "Rejected" },
-  failed: { bg: "bg-[#C23D3D]/10", text: "text-[#C23D3D]", dot: "bg-[#C23D3D]", label: "Failed" },
-  withdrawn: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Withdrawn" },
-  grouped: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Grouped" },
-  archived: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Archived" },
+  submitting: { bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", label: "Submitting", icon: Loader2, spin: true },
+  submitted: { bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", label: "Submitted", icon: Send },
+  available: { bg: "bg-[#34D399]/10", text: "text-[#1A6B5A]", dot: "bg-[#34D399]", label: "Available", icon: CheckCircle2 },
+  rejected: { bg: "bg-[#C23D3D]/10", text: "text-[#C23D3D]", dot: "bg-[#C23D3D]", label: "Rejected", icon: AlertTriangle },
+  failed: { bg: "bg-[#C23D3D]/10", text: "text-[#C23D3D]", dot: "bg-[#C23D3D]", label: "Failed", icon: AlertTriangle },
+  withdrawn: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Withdrawn", icon: XCircle },
+  grouped: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Grouped", icon: FileText },
+  archived: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Archived", icon: FileText },
 };
 
 /**

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Sans, Fraunces } from "next/font/google";
+import { DM_Sans, Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/providers/providers";
 
@@ -14,6 +14,16 @@ const fraunces = Fraunces({
   variable: "--font-display",
   display: "swap",
   axes: ["opsz"],
+});
+
+// Backs `--font-mono` (see globals.css `@theme inline`: `--font-mono: var(--font-geist-mono)`).
+// Reference numbers, TRACES ids and other "mono chip" text rely on `font-mono`
+// throughout the app; this was previously an undefined CSS var (no font ever
+// loaded it), silently falling back to the body sans font.
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -31,7 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className={`${dmSans.variable} ${fraunces.variable} font-sans antialiased grain`}>
+      <body className={`${dmSans.variable} ${fraunces.variable} ${jetbrainsMono.variable} font-sans antialiased grain`}>
         <Providers>{children}</Providers>
       </body>
     </html>

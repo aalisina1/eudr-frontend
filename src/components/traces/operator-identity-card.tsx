@@ -37,7 +37,7 @@ export function OperatorIdentityCard() {
 
   return (
     <>
-      <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground">

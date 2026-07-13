@@ -204,6 +204,11 @@ interface TimelineStep {
   state: "done" | "current" | "pending" | "error";
 }
 
+/** TRACES timeline step — ported from the Claude Design prototype's
+ * `TimelineStep` (dds-detail/page.jsx): a 28px icon roundel (filled/tinted
+ * when done, dashed-outline when pending) connected by a vertical rule, a
+ * semibold title, and mono meta text. Visual only — `state` (done/current/
+ * pending/error) and its derivation in `buildTimeline` are unchanged. */
 function TimelineRow({ step, last }: { step: TimelineStep; last: boolean }) {
   const dim = step.state === "pending";
   const iconClass =
@@ -217,18 +222,18 @@ function TimelineRow({ step, last }: { step: TimelineStep; last: boolean }) {
   return (
     <div className={`flex gap-3 ${dim ? "opacity-55" : ""}`}>
       <div className="flex flex-col items-center">
-        <span className={`flex size-6 shrink-0 items-center justify-center rounded-full ${iconClass}`}>
+        <span className={`flex size-7 shrink-0 items-center justify-center rounded-full ${iconClass}`}>
           {step.state === "current" ? (
             <Loader2 className="size-3.5 animate-spin" />
           ) : (
             <step.icon className="size-3.5" />
           )}
         </span>
-        {!last && <span className="my-1 w-px flex-1 bg-border" style={{ minHeight: 14 }} />}
+        {!last && <span className="my-1 w-0.5 flex-1 bg-border rounded-full" style={{ minHeight: 16 }} />}
       </div>
-      <div className={last ? "pb-0" : "pb-3.5"}>
-        <p className="text-[13px] font-medium leading-tight">{step.title}</p>
-        <p className="mt-0.5 text-[11px] text-muted-foreground">{step.meta}</p>
+      <div className={last ? "pb-0" : "pb-4"}>
+        <p className="text-[13.5px] font-semibold leading-tight">{step.title}</p>
+        <p className="mt-0.5 font-mono text-[11.5px] text-muted-foreground">{step.meta}</p>
       </div>
     </div>
   );
@@ -384,7 +389,7 @@ export function TracesPanel({
   const submitFieldErrors = (submitMutation.error as (Error & { fieldErrors?: TracesErrorDetail[] }) | undefined)?.fieldErrors;
 
   return (
-    <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+    <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
           TRACES Submission

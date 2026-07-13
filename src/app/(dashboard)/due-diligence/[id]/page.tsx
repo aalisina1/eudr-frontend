@@ -14,14 +14,40 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Pencil, FileText } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { DDSForm } from "@/components/forms/dds-form";
-import type { DueDiligenceStatement } from "@/lib/api/types";
+import type { ActivityType, DueDiligenceStatement } from "@/lib/api/types";
 import { DDS_STATUS_STYLE } from "@/lib/dds-status";
 import { TracesPanel } from "@/components/traces/traces-panel";
 
 const TH = "text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
+
+const ACTIVITY_LABEL: Record<ActivityType, string> = {
+  DOMESTIC: "Domestic production",
+  IMPORT: "Import",
+  EXPORT: "Export",
+};
+
+/** Some seeded/legacy statements carry an empty `activity_type` (not one of
+ * the typed enum values) — degrade to "—" rather than rendering blank. */
+function activityLabel(activityType: DueDiligenceStatement["activity_type"]): string {
+  return ACTIVITY_LABEL[activityType] ?? "—";
+}
+
+/** Label + value row for the "Statement details" meta grid — the mono,
+ * uppercase label / plain value pairing is ported from the Claude Design
+ * prototype's `MetaRow` (dds-detail/page.jsx). */
+function MetaRow({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
+  return (
+    <>
+      <span className="self-center font-mono text-[10.5px] tracking-[0.08em] uppercase text-muted-foreground">
+        {label}
+      </span>
+      <span className={mono ? "font-mono text-sm" : "text-sm"}>{value}</span>
+    </>
+  );
+}
 
 export default function DDSDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -66,7 +92,7 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
 
   if (isLoading) {
     return (
-      <div className="space-y-6 max-w-4xl">
+      <div className="space-y-6 max-w-6xl">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-48 w-full rounded-2xl" />
       </div>
@@ -75,7 +101,7 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
 
   if (error || !stmt) {
     return (
-      <div className="space-y-4 max-w-4xl">
+      <div className="space-y-4 max-w-6xl">
         <Button variant="ghost" size="sm" onClick={() => router.push("/due-diligence")} className="gap-1.5">
           <ArrowLeft className="size-4" /> Back
         </Button>
@@ -87,176 +113,180 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
   }
 
   const ss = DDS_STATUS_STYLE[stmt.status] ?? DDS_STATUS_STYLE.DRAFT;
+  const StatusIcon = ss.icon;
   const canEdit = stmt.status === "DRAFT" || stmt.status === "REJECTED";
   const isPending = actionMutation.isPending || deleteMutation.isPending;
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      {/* Back + Actions */}
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => router.push("/due-diligence")} className="gap-1.5">
-          <ArrowLeft className="size-4" /> Submissions
-        </Button>
-        <div className="flex gap-2">
+    <div className="space-y-6 max-w-6xl">
+      {/* Back */}
+      <Button variant="ghost" size="sm" onClick={() => router.push("/due-diligence")} className="gap-1.5 -ml-2">
+        <ArrowLeft className="size-4" /> Submissions
+      </Button>
+
+      {/* Eyebrow + display header + status badge row */}
+      <header className="flex items-start justify-between gap-6 flex-wrap">
+        <div>
+          <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted-foreground mb-2.5">
+            Due diligence statement
+          </p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-display text-4xl leading-[1.04] italic font-light">{stmt.reference_number}</h1>
+            <Badge variant="secondary" className={`${ss.bg} ${ss.text} border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5`}>
+              <StatusIcon className="size-3" />
+              {ss.label}
+            </Badge>
+          </div>
+          <p className="mt-2.5 text-[15px] text-muted-foreground capitalize">
+            {stmt.statement_type.toLowerCase()} statement · {activityLabel(stmt.activity_type)}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
           {canEdit && (
             <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)} className="gap-1.5">
               <Pencil className="size-3.5" /> Edit
             </Button>
           )}
-        </div>
-      </div>
-
-      {/* Header Card */}
-      <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#E8C468]/10 flex items-center justify-center">
-              <FileText className="size-5 text-[#E8C468]" />
-            </div>
-            <div>
-              <h1 className="text-xl font-medium font-mono">{stmt.reference_number}</h1>
-              <p className="text-sm text-muted-foreground capitalize">{stmt.statement_type.toLowerCase()} statement</p>
-            </div>
-          </div>
-          <Badge variant="secondary" className={`${ss.bg} ${ss.text} border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${ss.dot}`} />
-            {ss.label}
-          </Badge>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-          <div>
-            <p className="text-muted-foreground text-xs mb-0.5">Risk Conclusion</p>
-            <p className="text-xs">
-              {stmt.risk_conclusion
-                ? stmt.risk_conclusion === "NEGLIGIBLE" ? "Negligible" : "Not Negligible"
-                : "Not assessed"}
-            </p>
-          </div>
-          <div>
-            <p className="text-muted-foreground text-xs mb-0.5">TRACES Reference</p>
-            <p className="text-xs font-mono">{stmt.traces_reference || "—"}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground text-xs mb-0.5">Submitted</p>
-            <p className="text-xs">{stmt.submitted_at ? new Date(stmt.submitted_at).toLocaleDateString() : "—"}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground text-xs mb-0.5">Valid Until</p>
-            <p className="text-xs">{stmt.valid_until ? new Date(stmt.valid_until).toLocaleDateString() : "—"}</p>
-          </div>
-        </div>
-
-        {stmt.conclusion_justification && (
-          <div className="mt-4 pt-4 border-t border-border/50">
-            <p className="text-muted-foreground text-xs mb-1">Justification</p>
-            <p className="text-sm">{stmt.conclusion_justification}</p>
-          </div>
-        )}
-      </div>
-
-      {/* TRACES submission */}
-      <TracesPanel
-        ddsId={id}
-        ddsStatus={stmt.status}
-        activityType={stmt.activity_type}
-        ddsCreatedAt={stmt.created_at}
-      />
-
-      {/* State Actions */}
-      <div className="flex flex-wrap gap-2">
-        {(stmt.status === "DRAFT" || stmt.status === "REJECTED") && (
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={isPending}
-            onClick={() => actionMutation.mutate("submit-for-review")}
-          >
-            Submit for Review
-          </Button>
-        )}
-        {stmt.status === "UNDER_REVIEW" && (
-          <>
+          {(stmt.status === "DRAFT" || stmt.status === "REJECTED") && (
             <Button
               size="sm"
+              variant="secondary"
               disabled={isPending}
-              onClick={() => actionMutation.mutate("approve")}
-              className="bg-[#34D399] hover:bg-[#2CB889] text-white"
+              onClick={() => actionMutation.mutate("submit-for-review")}
             >
-              Approve
+              Submit for Review
             </Button>
+          )}
+          {stmt.status === "UNDER_REVIEW" && (
+            <>
+              <Button
+                size="sm"
+                disabled={isPending}
+                onClick={() => actionMutation.mutate("approve")}
+                className="bg-[#34D399] hover:bg-[#2CB889] text-white"
+              >
+                Approve
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={isPending}
+                onClick={() => actionMutation.mutate("reject")}
+              >
+                Reject
+              </Button>
+            </>
+          )}
+          {stmt.status === "SUBMITTED" && (
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={isPending}
+              onClick={() => actionMutation.mutate("withdraw")}
+            >
+              Withdraw
+            </Button>
+          )}
+          {stmt.status === "DRAFT" && (
             <Button
               size="sm"
               variant="destructive"
               disabled={isPending}
-              onClick={() => actionMutation.mutate("reject")}
+              onClick={() => { if (confirm("Delete this draft?")) deleteMutation.mutate(); }}
             >
-              Reject
+              Delete Draft
             </Button>
-          </>
-        )}
-        {stmt.status === "SUBMITTED" && (
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={isPending}
-            onClick={() => actionMutation.mutate("withdraw")}
-          >
-            Withdraw
-          </Button>
-        )}
-        {stmt.status === "DRAFT" && (
-          <Button
-            size="sm"
-            variant="destructive"
-            disabled={isPending}
-            onClick={() => { if (confirm("Delete this draft?")) deleteMutation.mutate(); }}
-          >
-            Delete Draft
-          </Button>
-        )}
-        {actionMutation.error && (
-          <span className="text-xs text-destructive self-center">{(actionMutation.error as Error).message}</span>
-        )}
-      </div>
+          )}
+        </div>
+      </header>
+      {actionMutation.error && (
+        <p className="text-xs text-destructive -mt-4">{(actionMutation.error as Error).message}</p>
+      )}
 
-      {/* Risk Assessments */}
-      <div>
-        <h2 className="text-sm font-medium mb-3">Risk Assessments</h2>
-        {stmt.risk_assessments && stmt.risk_assessments.length > 0 ? (
-          <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent border-border/50">
-                  <TableHead className={TH}>Country Risk</TableHead>
-                  <TableHead className={TH}>Deforestation</TableHead>
-                  <TableHead className={TH}>Legality</TableHead>
-                  <TableHead className={TH}>Traceability</TableHead>
-                  <TableHead className={TH}>Conclusion</TableHead>
-                  <TableHead className={TH}>Assessed</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {stmt.risk_assessments.map((ra) => (
-                  <TableRow key={ra.id} className="border-border/30">
-                    <TableCell className="text-[13px]">{ra.country_risk}</TableCell>
-                    <TableCell className="text-[13px]">{ra.deforestation_risk_score}</TableCell>
-                    <TableCell className="text-[13px]">{ra.legality_risk_score}</TableCell>
-                    <TableCell className="text-[13px]">{ra.traceability_completeness}%</TableCell>
-                    <TableCell className="text-[13px]">{ra.overall_conclusion || "—"}</TableCell>
-                    <TableCell className="text-muted-foreground text-[13px]">
-                      {new Date(ra.assessed_at).toLocaleDateString()}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+      {/* Two-column layout: statement details + risk assessments (left), TRACES submission (right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)] gap-5 items-start">
+        <div className="flex flex-col gap-5 min-w-0">
+          <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
+            <h2 className="text-base font-medium mb-4">Statement details</h2>
+            <div className="grid grid-cols-[160px_1fr] gap-x-4 gap-y-3.5">
+              <MetaRow label="Activity" value={activityLabel(stmt.activity_type)} />
+              <MetaRow
+                label="Risk Conclusion"
+                value={
+                  stmt.risk_conclusion
+                    ? stmt.risk_conclusion === "NEGLIGIBLE" ? "Negligible" : "Not Negligible"
+                    : "Not assessed"
+                }
+              />
+              <MetaRow label="TRACES Reference" value={stmt.traces_reference || "—"} mono />
+              <MetaRow
+                label="Submitted"
+                value={stmt.submitted_at ? new Date(stmt.submitted_at).toLocaleDateString() : "—"}
+              />
+              <MetaRow
+                label="Valid Until"
+                value={stmt.valid_until ? new Date(stmt.valid_until).toLocaleDateString() : "—"}
+              />
+            </div>
+
+            {stmt.conclusion_justification && (
+              <div className="mt-4 pt-4 border-t border-border/50">
+                <p className="text-muted-foreground text-xs mb-1">Justification</p>
+                <p className="text-sm">{stmt.conclusion_justification}</p>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="rounded-2xl border border-border/50 bg-card p-8 text-center">
-            <p className="text-sm text-muted-foreground">No risk assessments yet</p>
+
+          {/* Risk Assessments */}
+          <div>
+            <h2 className="text-sm font-medium mb-3">Risk Assessments</h2>
+            {stmt.risk_assessments && stmt.risk_assessments.length > 0 ? (
+              <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-card">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent border-border/50">
+                      <TableHead className={TH}>Country Risk</TableHead>
+                      <TableHead className={TH}>Deforestation</TableHead>
+                      <TableHead className={TH}>Legality</TableHead>
+                      <TableHead className={TH}>Traceability</TableHead>
+                      <TableHead className={TH}>Conclusion</TableHead>
+                      <TableHead className={TH}>Assessed</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {stmt.risk_assessments.map((ra) => (
+                      <TableRow key={ra.id} className="border-border/30">
+                        <TableCell className="text-[13px]">{ra.country_risk}</TableCell>
+                        <TableCell className="text-[13px]">{ra.deforestation_risk_score}</TableCell>
+                        <TableCell className="text-[13px]">{ra.legality_risk_score}</TableCell>
+                        <TableCell className="text-[13px]">{ra.traceability_completeness}%</TableCell>
+                        <TableCell className="text-[13px]">{ra.overall_conclusion || "—"}</TableCell>
+                        <TableCell className="text-muted-foreground text-[13px]">
+                          {new Date(ra.assessed_at).toLocaleDateString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-border/50 bg-card p-8 text-center shadow-card">
+                <p className="text-sm text-muted-foreground">No risk assessments yet</p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+
+        {/* TRACES submission */}
+        <div className="min-w-0">
+          <TracesPanel
+            ddsId={id}
+            ddsStatus={stmt.status}
+            activityType={stmt.activity_type}
+            ddsCreatedAt={stmt.created_at}
+          />
+        </div>
       </div>
 
       {/* Timestamps */}

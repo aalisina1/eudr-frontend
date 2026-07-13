@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -263,8 +264,13 @@ export function DataTable<T>({
       )}
 
       {/* Table */}
-      <div className={`rounded-2xl border border-border/50 bg-card overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-opacity ${isPlaceholderData ? "opacity-70" : ""}`}>
+      <div className={`rounded-2xl border border-border/50 bg-card overflow-hidden shadow-card transition-opacity ${isPlaceholderData ? "opacity-70" : ""}`}>
         <Table>
+          {!isLoading && data && data.results.length > 0 && totalPages <= 1 && (
+            <TableCaption className="mb-1">
+              Showing {data.results.length} of {data.count} {data.count === 1 ? "result" : "results"}
+            </TableCaption>
+          )}
           <TableHeader>
             <TableRow className="hover:bg-transparent border-border/50">
               {columns.map((col) => (
