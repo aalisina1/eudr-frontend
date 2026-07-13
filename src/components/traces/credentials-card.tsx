@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { authFetch } from "@/lib/api/client";
 import { getErrorMessage } from "@/lib/api/errors";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import type { TracesCredential } from "@/lib/api/types";
 import { CredentialsForm } from "@/components/traces/credentials-form";
 
@@ -51,6 +52,13 @@ export function CredentialsCard() {
   const [editTarget, setEditTarget] = useState<TracesCredential | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TracesCredential | null>(null);
   const [testState, setTestState] = useState<TestState>("idle");
+
+  // Both the list/detail and create/update TRACES credential endpoints are
+  // IsAdmin-gated server-side — every other role's GET 403s (surfaced below
+  // as the "unable to load" error state) and every other role's POST would
+  // 403 too. Mirrors OperatorIdentityCard's Edit-button gating (#70 QA rider).
+  const { data: currentUser } = useCurrentUser();
+  const isAdmin = currentUser?.role === "ADMIN";
 
   const { data: credentials, isLoading, isError } = useQuery({
     queryKey: ["traces-credentials"],
@@ -114,15 +122,17 @@ export function CredentialsCard() {
               Credentials used to submit Due Diligence Statements to the EU TRACES system.
             </p>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1.5"
-            onClick={openAdd}
-          >
-            <Plus className="size-3.5" />
-            Add credentials
-          </Button>
+          {isAdmin && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={openAdd}
+            >
+              <Plus className="size-3.5" />
+              Add credentials
+            </Button>
+          )}
         </div>
 
         {/* Body */}
@@ -140,10 +150,12 @@ export function CredentialsCard() {
             <p className="text-sm text-muted-foreground">
               No TRACES credentials configured.
             </p>
-            <Button size="sm" className="gap-1.5" onClick={openAdd}>
-              <Plus className="size-3.5" />
-              Add credentials
-            </Button>
+            {isAdmin && (
+              <Button size="sm" className="gap-1.5" onClick={openAdd}>
+                <Plus className="size-3.5" />
+                Add credentials
+              </Button>
+            )}
           </div>
         ) : (
           <div className="space-y-3">

@@ -38,6 +38,7 @@ describe("Type definitions", () => {
       last_name: "User",
       role: "ADMIN",
       organization_id: null,
+      organization_name: null,
       is_staff: false,
     };
     expect(user.id).toBeDefined();

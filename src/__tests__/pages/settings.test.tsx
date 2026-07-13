@@ -11,6 +11,7 @@ const mockUser = {
   last_name: "Doe",
   role: "ADMIN",
   organization_id: "org-abc-123",
+  organization_name: "Canopy Trading GmbH",
   is_staff: true,
 };
 
@@ -74,6 +75,13 @@ describe("SettingsPage", () => {
     renderWithProviders(<SettingsPage />);
     await waitFor(() => {
       expect(screen.getByText("org-abc-123")).toBeInTheDocument();
+    });
+  });
+
+  it("displays the organization name (eudr-app #72/#70)", async () => {
+    renderWithProviders(<SettingsPage />);
+    await waitFor(() => {
+      expect(screen.getByText("Canopy Trading GmbH")).toBeInTheDocument();
     });
   });
 

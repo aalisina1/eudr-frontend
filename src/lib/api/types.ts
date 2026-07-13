@@ -11,6 +11,7 @@ export interface User {
   last_name: string;
   role: "ADMIN" | "COMPLIANCE_OFFICER" | "VIEWER" | "SUPPLIER_CONTACT";
   organization_id: string | null;
+  organization_name: string | null;
   is_staff: boolean;
 }
 

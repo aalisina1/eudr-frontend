@@ -26,6 +26,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetch } from "@/lib/api/client";
 import { getErrorMessage } from "@/lib/api/errors";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import type { DDSStatus, TracesErrorDetail, TracesSubmission } from "@/lib/api/types";
 
 /**
@@ -103,6 +104,14 @@ async function fetchLatestSubmission(ddsId: string): Promise<TracesSubmission | 
   return detailRes.json();
 }
 
+/** `GET /api/v1/traces/credentials/` is `IsAdmin`-gated server-side (only an
+ * org admin can view/manage TRACES credentials) — for any other role this
+ * 403s, which is indistinguishable from "no credentials configured" and
+ * would permanently disable Submit for exactly the persona whose job is
+ * submitting (#36/#70). Only ever call this behind an `isAdmin` check; for
+ * everyone else, skip the pre-check entirely and let the DDS-status gate
+ * govern Submit — a genuine missing-credentials failure still surfaces via
+ * the backend's structured submit error (FAILED + error_detail). */
 async function fetchHasCredentials(): Promise<boolean> {
   const res = await authFetch(`/api/v1/traces/credentials/`);
   if (!res.ok) return false;
@@ -328,9 +337,16 @@ export function TracesPanel({
     refetchInterval: (query) => (isPending(query.state.data ?? null) ? 3000 : false),
   });
 
+  const { data: currentUser } = useCurrentUser();
+  const isAdmin = currentUser?.role === "ADMIN";
+
+  // Admin-only pre-check (see fetchHasCredentials doc comment above) — a UX
+  // nicety for the person who can actually add credentials. Disabled for
+  // every other role so a 403 here never masks the real DDS-status gate.
   const { data: hasCreds } = useQuery({
     queryKey: ["traces-credentials"],
     queryFn: fetchHasCredentials,
+    enabled: isAdmin,
   });
 
   const sub = submission ?? null;
@@ -384,7 +400,11 @@ export function TracesPanel({
   // `error_detail` (ADR pending, principal-architect) — it must not also
   // require a DDS.status transition the backend doesn't perform today.
   const notApproved = !sub && ddsStatus !== undefined && ddsStatus !== "APPROVED";
-  const submitDisabled = hasCreds === false || notApproved;
+  // Only blocks Submit for the admin pre-check (see hasCreds's `enabled` gate
+  // above) — for every other role this is always false, so `notApproved`
+  // alone governs Submit, same as it does server-side.
+  const credentialsBlocking = isAdmin && hasCreds === false;
+  const submitDisabled = credentialsBlocking || notApproved;
   const timeline = buildTimeline(display, sub, ddsCreatedAt);
   const submitFieldErrors = (submitMutation.error as (Error & { fieldErrors?: TracesErrorDetail[] }) | undefined)?.fieldErrors;
 
@@ -455,12 +475,12 @@ export function TracesPanel({
             <Send className="size-3.5" />
             {sub ? "Resubmit to TRACES" : "Submit to TRACES"}
           </Button>
-          {hasCreds === false && (
+          {credentialsBlocking && (
             <p className="text-xs text-muted-foreground mt-1.5">
               Configure TRACES credentials first (Settings → TRACES connection).
             </p>
           )}
-          {hasCreds !== false && notApproved && (
+          {!credentialsBlocking && notApproved && (
             <p className="text-xs text-muted-foreground mt-1.5">
               This DDS must be Approved before it can be submitted to TRACES (current status: {ddsStatus}).
             </p>
