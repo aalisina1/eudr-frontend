@@ -52,6 +52,7 @@ function readinessRow(overrides: Partial<BatchReadiness> = {}): BatchReadiness {
       uncovered_quantity: "250000.0000",
     },
     lot_count: 2,
+    next_deadline: null,
     ...overrides,
   };
 }
