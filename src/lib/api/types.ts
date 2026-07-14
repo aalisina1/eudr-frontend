@@ -188,7 +188,8 @@ export type ReadinessBlockerCode =
   | "OPERATOR_IDENTITY_INCOMPLETE"
   | "UNIT_MISMATCH"
   | "PLOTS_FAILED_VALIDATION"
-  | "PLOTS_PENDING_VALIDATION";
+  | "PLOTS_PENDING_VALIDATION"
+  | "OVER_ALLOCATED";
 
 export interface ReadinessBlocker {
   code: ReadinessBlockerCode;

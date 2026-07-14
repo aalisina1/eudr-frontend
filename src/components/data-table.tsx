@@ -92,6 +92,14 @@ interface DataTableProps<T> {
   emptyAction?: React.ReactNode;
 }
 
+// Stable module-level default so callers that omit `extraParams` get the
+// same object reference on every render — a `= {}` default parameter would
+// otherwise create a brand-new object on every invocation of `DataTable`
+// (including ones triggered purely by its own internal state, e.g. paging),
+// which broke every pre-existing consumer's pagination (eudr-frontend #44
+// QA finding).
+const EMPTY_EXTRA_PARAMS: Record<string, string> = {};
+
 // ── Hook: debounced value ────────────────────────────────────────────────────
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -110,7 +118,7 @@ export function DataTable<T>({
   endpoint,
   columns,
   filters = [],
-  extraParams = {},
+  extraParams = EMPTY_EXTRA_PARAMS,
   toolbarExtra,
   searchable = true,
   searchPlaceholder = "Search...",
@@ -131,11 +139,18 @@ export function DataTable<T>({
 
   const debouncedSearch = useDebounce(search, 300);
 
+  // `extraParams` may be an unstable reference even beyond the omitted-prop
+  // case above — a caller passing an inline object literal (not wrapped in
+  // useMemo) recreates it on every one of its own renders too. Depend on a
+  // stable serialization of its *content* rather than object identity, so
+  // this effect only re-fires when the params actually change.
+  const extraParamsKey = JSON.stringify(extraParams);
+
   // Reset to page 1 when search/filters change
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
-  }, [debouncedSearch, activeFilters, extraParams]);
+  }, [debouncedSearch, activeFilters, extraParamsKey]);
 
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
