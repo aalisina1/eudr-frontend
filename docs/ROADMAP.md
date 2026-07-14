@@ -60,7 +60,7 @@ Tracks what's shipped versus what's planned. The integrations 4-tab restructure 
 - **Run-now + run status** (#9) — `SourceCard` shows each source's latest ingestion run as a badge (Running/Completed/Failed), polled every 3s while RUNNING, plus a Run-now button (`POST sources/<id>/ingest/`).
 
 ### TRACES Submission surface (v0.2.0 frontend, merged 2026-07-12)
-The frontend half of the TRACES round-trip. Ships the three v0.2.0 FE surfaces; the round-trip itself is code-complete pending live acceptance-environment verification + demo (see the backend roadmap's "TRACES round-trip (v0.2.0)").
+The frontend half of the TRACES round-trip. Ships the three v0.2.0 FE surfaces. The round-trip is now **live-verified**: `DDS-2025-GH-001` submitted through this UI as the compliance officer reached **AVAILABLE** on live TRACES acceptance (2026-07-14; ref `26FREQVKTA7K2V`). v0.2.0's success criterion is MET; the milestone closes on the formal design-partner demo + retro (see the backend roadmap's "TRACES round-trip (v0.2.0)" and vault `Current Milestone.md`).
 
 - **DDS-detail TRACES panel** (#2, PRs #35 + #40) — the round-trip demo surface: Submit-to-TRACES action + submission timeline across Not-submitted / Submitting / RETRYING / AVAILABLE / REJECTED / Locked states, derived from the detail serializer's `traces_status`. #40 aligned the in-flight state set with ADR-0017 (RETRYING is in-flight). Design: `dds-traces-submission.design-prompt.md`.
 - **TRACES Connection Settings** (#17, PR #34) — admin UI for `TracesCredential` + operator identity (EORI + authorised-representative), write-only secret. Design: `dds-traces-submission.design-prompt.md` (ADMIN credentials variant).
@@ -76,8 +76,8 @@ The frontend half of the TRACES round-trip. Ships the three v0.2.0 FE surfaces; 
 
 ## Planned
 
-### v0.2.1 — Sourcing readiness pipeline & File DDS (next; hard-gated behind v0.2.0)
-The compliance-officer reframe's Sourcing/provenance/worklist screens, restructured around a **readiness pipeline** (derived per-PO stages), a **tonnes coverage funnel** (ordered→allocated→geolocated→filed→uncovered), a **deadline-driven worklist**, and the **File DDS** composition page. **No FE work starts until v0.2.0 ships and is demoed** — the v0.2.0 FE surfaces have merged (see Shipped), so the gate now rests solely on the live acceptance-environment round-trip + demo. Design source of truth: `eudr-vault/10-Specs/UI-Workflows/sourcing-readiness.design-prompt.md`; specs `dds-readiness-pipeline.md` + `compliance-flow-reframe.md`. Tracker #27.
+### v0.2.1 — Sourcing readiness pipeline & File DDS (next; GATE LIFTED 2026-07-14)
+The compliance-officer reframe's Sourcing/provenance/worklist screens, restructured around a **readiness pipeline** (derived per-PO stages), a **tonnes coverage funnel** (ordered→allocated→geolocated→filed→uncovered), a **deadline-driven worklist**, and the **File DDS** composition page. **Gate lifted by the user** now that v0.2.0's criterion is live-verified (demo still pending) — the wave has started with backend #60 (readiness endpoint) in flight. **All FE screens here are gated on #60's endpoint** (they render its readiness stages / tonnes funnel), so FE #28 (Sourcing list, the entry point) picks up `agent:claude` the moment #60 lands. Design source of truth: `eudr-vault/10-Specs/UI-Workflows/sourcing-readiness.design-prompt.md`; specs `dds-readiness-pipeline.md` + `compliance-flow-reframe.md`. Tracker #27.
 - Sourcing list — readiness stages + coverage bars + deadline sort (#28, delivers reframe Phase 2).
 - PO Detail — coverage funnel + readiness blockers + gated File DDS CTA (#29, reframe Phase 2).
 - Dashboard worklist — Needs filing / Needs remediation / Awaiting data; retires the charts (#30, reframe Phase 3).
