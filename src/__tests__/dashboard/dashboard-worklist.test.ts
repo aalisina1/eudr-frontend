@@ -147,17 +147,17 @@ describe("bucketReadiness", () => {
     expect(awaiting).toEqual([]);
   });
 
-  it("puts non-blocked OPEN/ALLOCATED POs in awaiting", () => {
+  it("puts non-blocked OPEN/ALLOCATED/PLOTS_COMPLETE POs in awaiting", () => {
     const open = po({ id: "open", stage: "OPEN" });
     const allocated = po({ id: "allocated", stage: "ALLOCATED" });
-    const { awaiting } = bucketReadiness([open, allocated]);
-    expect(awaiting.map((r) => r.id).sort()).toEqual(["allocated", "open"]);
+    const plotsComplete = po({ id: "plots-complete", stage: "PLOTS_COMPLETE" });
+    const { awaiting } = bucketReadiness([open, allocated, plotsComplete]);
+    expect(awaiting.map((r) => r.id).sort()).toEqual(["allocated", "open", "plots-complete"]);
   });
 
-  it("puts a non-blocked PLOTS_COMPLETE or FILED PO in none of the three buckets", () => {
-    const plotsComplete = po({ id: "plots-complete", stage: "PLOTS_COMPLETE" });
+  it("puts a non-blocked FILED PO in none of the three buckets", () => {
     const filed = po({ id: "filed", stage: "FILED" });
-    const { filing, blocked, awaiting } = bucketReadiness([plotsComplete, filed]);
+    const { filing, blocked, awaiting } = bucketReadiness([filed]);
     expect(filing).toEqual([]);
     expect(blocked).toEqual([]);
     expect(awaiting).toEqual([]);

@@ -72,7 +72,7 @@ describe("AwaitingDataCard", () => {
     expect(screen.getByText("2 lots missing plot geolocation")).toBeInTheDocument();
   });
 
-  it("excludes blocked and READY/PLOTS_COMPLETE/FILED POs", async () => {
+  it("excludes blocked and READY/FILED POs", async () => {
     mockApi([
       readinessRow({ id: "po-blocked", reference_number: "PO-BLOCKED", blocked: true }),
       readinessRow({ id: "po-ready", reference_number: "PO-READY", stage: "READY" }),
@@ -84,6 +84,23 @@ describe("AwaitingDataCard", () => {
     expect(screen.queryByText("PO-BLOCKED")).not.toBeInTheDocument();
     expect(screen.queryByText("PO-READY")).not.toBeInTheDocument();
     expect(screen.queryByText("PO-FILED")).not.toBeInTheDocument();
+  });
+
+  it("includes a non-blocked PLOTS_COMPLETE PO — it still has an actionable blocker message", async () => {
+    mockApi([
+      readinessRow({
+        id: "po-plots-complete",
+        reference_number: "PO-2026-0212",
+        stage: "PLOTS_COMPLETE",
+        blockers: [{ code: "MISSING_HARVEST_PERIOD", message: "1 lot missing harvest period", count: 1 }],
+        next_deadline: "2026-08-20",
+      }),
+    ]);
+    renderWithProviders(<AwaitingDataCard />);
+
+    await waitFor(() => expect(screen.getByText("PO-2026-0212")).toBeInTheDocument());
+    expect(screen.getByText("Plots complete")).toBeInTheDocument();
+    expect(screen.getByText("1 lot missing harvest period")).toBeInTheDocument();
   });
 
   it("shows the quiet empty state when nothing is waiting on data", async () => {

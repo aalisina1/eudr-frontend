@@ -102,16 +102,22 @@ export interface ReadinessBuckets {
    * list's own precedent of `blocked` visually overriding the stage badge
    * (`StageBadge`/`StageCell`). */
   blocked: BatchReadiness[];
-  /** OPEN/ALLOCATED POs that aren't blocked — "waiting on data", not a
-   * failed check. */
+  /** OPEN/ALLOCATED/PLOTS_COMPLETE POs that aren't blocked — "waiting on
+   * data", not a failed check. PLOTS_COMPLETE belongs here too: the
+   * readiness endpoint still returns an itemised, actionable `blockers`
+   * message for it (e.g. "1 lot missing harvest period") in the same
+   * format as an OPEN/ALLOCATED row — the officer needs to see that as
+   * much as an earlier-stage PO waiting on data (QA finding on PR #46:
+   * a fully plot-validated, deadline-bearing PO one field away from
+   * fileable was silently invisible on the worklist). */
   awaiting: BatchReadiness[];
 }
 
 /** Buckets the readiness list into the Dashboard worklist's three cards.
  * Mutually exclusive by design (a PO appears in at most one bucket) so the
  * three cards read as a priority-ordered triage, not an every-PO listing —
- * a non-blocked PLOTS_COMPLETE/FILED PO deliberately appears in none of
- * them (nothing actionable to surface). */
+ * a non-blocked FILED PO is the only one that deliberately appears in none
+ * of them (fully filed, nothing left to act on). */
 export function bucketReadiness(rows: BatchReadiness[]): ReadinessBuckets {
   const blocked = rows.filter((r) => r.blocked);
 
@@ -125,7 +131,9 @@ export function bucketReadiness(rows: BatchReadiness[]): ReadinessBuckets {
       return a.next_deadline.localeCompare(b.next_deadline);
     });
 
-  const awaiting = rows.filter((r) => !r.blocked && (r.stage === "OPEN" || r.stage === "ALLOCATED"));
+  const awaiting = rows.filter(
+    (r) => !r.blocked && (r.stage === "OPEN" || r.stage === "ALLOCATED" || r.stage === "PLOTS_COMPLETE")
+  );
 
   return { filing, blocked, awaiting };
 }

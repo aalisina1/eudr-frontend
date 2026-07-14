@@ -53,6 +53,28 @@ const OPEN_PO = readinessRow({
   next_deadline: null,
 });
 
+// PLOTS_COMPLETE, non-blocked — QA finding on PR #46: this stage was
+// silently excluded from every card despite the readiness endpoint
+// returning an actionable `blockers` message for it (mirrors the live
+// seeded PO-2026-0212 repro: 240t geolocated, "1 lot missing harvest
+// period", a real deadline). Must land in "Awaiting data".
+const PLOTS_COMPLETE_PO = readinessRow({
+  id: "po-e2e-4",
+  reference_number: "PO-2026-0212",
+  stage: "PLOTS_COMPLETE",
+  blockers: [{ code: "MISSING_HARVEST_PERIOD", message: "1 lot missing harvest period", count: 1 }],
+  funnel: {
+    unit: "TONNES",
+    ordered_quantity: "240.0000",
+    allocated_quantity: "240.0000",
+    geolocated_quantity: "240.0000",
+    filed_quantity: "0.0000",
+    uncovered_quantity: "240.0000",
+  },
+  lot_count: 3,
+  next_deadline: "2026-08-20",
+});
+
 const DDS_STATEMENT = {
   id: "dds-e2e-1",
   reference_number: "DDS-2026-0089",
@@ -157,7 +179,7 @@ test.describe("Dashboard worklist (#30)", () => {
 
   test("busy state — populates all three cards and the stat strip", async ({ page }) => {
     await stubWorklist(page, {
-      readinessResults: [readinessRow(), BLOCKED_PO, OPEN_PO],
+      readinessResults: [readinessRow(), BLOCKED_PO, OPEN_PO, PLOTS_COMPLETE_PO],
       summaryBody: summary(),
       ddsResults: [DDS_STATEMENT],
       latestSubmissions: [{ id: "sub-e2e-1", dds_id: "dds-e2e-1", status: "SUBMITTED" }],
@@ -185,6 +207,12 @@ test.describe("Dashboard worklist (#30)", () => {
     // Awaiting data
     await expect(page.getByText("PO-2026-0156")).toBeVisible();
     await expect(page.getByText("No lots linked yet")).toBeVisible();
+
+    // Awaiting data — non-blocked PLOTS_COMPLETE (QA finding on PR #46:
+    // previously invisible on every card despite an actionable blocker).
+    await expect(page.getByText("PO-2026-0212")).toBeVisible();
+    await expect(page.getByText("Plots complete")).toBeVisible();
+    await expect(page.getByText("1 lot missing harvest period")).toBeVisible();
 
     // Stat strip
     await expect(page.getByText("1,240 t")).toBeVisible();
