@@ -17,7 +17,9 @@ import {
 import { ArrowLeft, Pencil, Trash2, ShieldCheck } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { SupplierForm } from "@/components/forms/supplier-form";
-import type { Supplier, KYCStatus, RiskRating } from "@/lib/api/types";
+import { SupplierSourcingCard } from "@/components/sourcing/supplier-sourcing-card";
+import { SupplierDataGapsCard } from "@/components/sourcing/supplier-data-gaps-card";
+import type { BatchReadiness, PaginatedResponse, Supplier, KYCStatus, RiskRating } from "@/lib/api/types";
 
 const KYC_COLORS: Record<KYCStatus, { bg: string; text: string; dot: string; label: string }> = {
   PENDING: { bg: "bg-[#C7956D]/10", text: "text-[#A07850]", dot: "bg-[#C7956D]", label: "Pending" },
@@ -46,6 +48,26 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
       const res = await authFetch(`/api/v1/suppliers/${id}/`);
       if (!res.ok) throw new Error("Failed to fetch supplier");
       return res.json();
+    },
+  });
+
+  // Sourcing-readiness rows for this supplier (sourcing-readiness.design-prompt.md
+  // Prompt E, eudr-frontend #31) — the readiness list filtered by `seller_id`
+  // (eudr-app PR #83's documented contract), fetched once here and passed
+  // down to both the "Sourcing from this supplier" and "Data gaps" cards so
+  // they share one fetch instead of duplicating it. Pilot-scale `page_size`
+  // cap, same convention as the Sourcing list's own supplier/product lookups.
+  const {
+    data: readinessPos,
+    isLoading: readinessLoading,
+    error: readinessError,
+  } = useQuery<BatchReadiness[]>({
+    queryKey: ["batches-readiness", "supplier", id],
+    queryFn: async () => {
+      const res = await authFetch(`/api/v1/supply-chain/batches/readiness/?seller_id=${id}&page_size=100`);
+      if (!res.ok) throw new Error("Failed to fetch supplier readiness");
+      const body: PaginatedResponse<BatchReadiness> = await res.json();
+      return body.results;
     },
   });
 
@@ -148,7 +170,16 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
         </div>
       </div>
 
-      {/* Certifications */}
+      {/* Sourcing from this supplier (Prompt E) — full-width, directly under
+       * the header, ahead of certifications: for this persona, sourcing
+       * coverage outranks certificates. */}
+      <SupplierSourcingCard pos={readinessPos ?? []} isLoading={readinessLoading} error={!!readinessError} />
+
+      {/* Data gaps (Prompt E) — supplier-level blockers aggregated from the
+       * same readiness rows. */}
+      <SupplierDataGapsCard pos={readinessPos ?? []} />
+
+      {/* Certifications — moved below Sourcing/Data gaps (Prompt E). */}
       <div>
         <h2 className="text-sm font-medium mb-3 flex items-center gap-2">
           <ShieldCheck className="size-4 text-muted-foreground" />
