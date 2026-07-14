@@ -43,7 +43,7 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
   } = useQuery<POReadinessDetail>({
     queryKey: ["po-readiness", id],
     queryFn: async () => {
-      const res = await authFetch(`/api/v1/supply-chain/batches/${id}/readiness/`);
+      const res = await authFetch(`/api/v1/supply-chain/batches/${encodeURIComponent(id)}/readiness/`);
       if (!res.ok) throw new Error("Failed to fetch PO readiness");
       return res.json();
     },
@@ -56,7 +56,7 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
   const { data: supplier } = useQuery<Supplier>({
     queryKey: ["supplier", po?.seller_id],
     queryFn: async () => {
-      const res = await authFetch(`/api/v1/suppliers/${po!.seller_id}/`);
+      const res = await authFetch(`/api/v1/suppliers/${encodeURIComponent(po!.seller_id)}/`);
       if (!res.ok) throw new Error("Failed to fetch supplier");
       return res.json();
     },
@@ -67,7 +67,7 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
   const { data: product } = useQuery<Product>({
     queryKey: ["product", po?.commodity_id],
     queryFn: async () => {
-      const res = await authFetch(`/api/v1/commodities/products/${po!.commodity_id}/`);
+      const res = await authFetch(`/api/v1/commodities/products/${encodeURIComponent(po!.commodity_id)}/`);
       if (!res.ok) throw new Error("Failed to fetch product");
       return res.json();
     },
