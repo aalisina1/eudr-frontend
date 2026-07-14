@@ -121,15 +121,18 @@ export interface Commodity {
 
 export interface Product {
   id: string;
-  commodity_id: string;
+  // `commodity`/`species` — the FK field names themselves, per
+  // `ProductSerializer.Meta.fields`; DRF does not append `_id`. Corrected
+  // while wiring the first real consumer of this type (eudr-frontend #28's
+  // New-PO "Commodity" picker) — previously unused, so this was undetected
+  // drift, not a behavior change for any existing screen.
+  commodity: string;
   commodity_name?: string;
-  species_id: string | null;
+  species: string | null;
   description: string;
   internal_product_code: string;
   cn_code: string;
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
 }
 
 // ── Supply Chain (Batches) ──
@@ -165,6 +168,66 @@ export interface BatchChainLink {
   child_batch: string;
   volume_ratio: number;
   created_at: string;
+}
+
+// ── Supply Chain — PO Readiness (BE-A, eudr-app #60 / PR #83, in QA) ──
+// Derived (not stored) readiness pipeline + tonnes coverage funnel for a "PO
+// batch" (a Batch with no plots of its own — lots resolve to it via
+// BatchChainLink). See eudr-vault/10-Specs/dds-readiness-pipeline.md
+// Decision 4 and eudr-app PR #83's body for the full contract this mirrors.
+
+export type ReadinessStage = "OPEN" | "ALLOCATED" | "PLOTS_COMPLETE" | "READY" | "FILED";
+
+export type ReadinessBlockerCode =
+  | "NO_LOTS_LINKED"
+  | "MISSING_HARVEST_PERIOD"
+  | "MISSING_GEOLOCATION"
+  | "PRODUCT_UNRESOLVABLE"
+  | "PLOT_NOT_FOUND"
+  | "BATCH_NOT_FOUND"
+  | "OPERATOR_IDENTITY_INCOMPLETE"
+  | "UNIT_MISMATCH"
+  | "PLOTS_FAILED_VALIDATION"
+  | "PLOTS_PENDING_VALIDATION";
+
+export interface ReadinessBlocker {
+  code: ReadinessBlockerCode;
+  message: string;
+  count: number | null;
+}
+
+/** Quantities are `DecimalField`s — DRF serializes these as strings (e.g.
+ * `"500000.0000"`), not numbers. `Number(...)` before doing arithmetic. */
+export interface CoverageFunnel {
+  unit: BatchUnit;
+  ordered_quantity: string;
+  allocated_quantity: string;
+  geolocated_quantity: string;
+  filed_quantity: string;
+  uncovered_quantity: string;
+}
+
+/** One row of `GET /api/v1/supply-chain/batches/readiness/` (list), and the
+ * base shape `GET .../batches/{id}/readiness/` (detail) extends with a
+ * `lots` breakdown — not modelled here yet, out of scope until PO Detail
+ * ships the per-lot table (eudr-frontend #29).
+ *
+ * Note: no deadline/ETA field yet — `expected_clearance_date` and
+ * `shipment_reference` ship with eudr-app #61 (BE-B), not yet built. Render
+ * the Next-deadline column as the muted placeholder until then
+ * (`DeadlineChip` with no props) — do not invent a client-side substitute. */
+export interface BatchReadiness {
+  id: string;
+  reference_number: string;
+  seller_id: string;
+  buyer_id: string;
+  commodity_id: string;
+  transaction_date: string;
+  stage: ReadinessStage;
+  blocked: boolean;
+  blockers: ReadinessBlocker[];
+  funnel: CoverageFunnel;
+  lot_count: number;
 }
 
 // ── Due Diligence ──
