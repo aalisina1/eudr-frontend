@@ -213,10 +213,20 @@ export interface CoverageFunnel {
  * `lots` breakdown — not modelled here yet, out of scope until PO Detail
  * ships the per-lot table (eudr-frontend #29).
  *
- * Note: no deadline/ETA field yet — `expected_clearance_date` and
- * `shipment_reference` ship with eudr-app #61 (BE-B), not yet built. Render
- * the Next-deadline column as the muted placeholder until then
- * (`DeadlineChip` with no props) — do not invent a client-side substitute. */
+ * `next_deadline` (eudr-app #61/BE-B, PR #85 — merged) is the soonest
+ * `expected_clearance_date` across the PO's linked lot batches, or `null`
+ * if none of them has one yet (in particular, always `null` for stage
+ * OPEN — a PO with no lots has nothing to derive a deadline from). The FE
+ * computes eta-label/days-remaining client-side from this date (see
+ * `formatEtaLabel`/`daysUntil` in `lib/dashboard-worklist.ts`) — the
+ * backend deliberately doesn't pre-compute a days-remaining count, since
+ * "today" is a presentation concern.
+ *
+ * [FOLLOW-UP eudr-frontend#29/#44] The Sourcing list's own `DeadlineChip`
+ * usage (`app/(dashboard)/supply-chains/page.tsx`) still renders the muted
+ * placeholder unconditionally — wiring it to this now-shipped field is
+ * that page's own follow-up, out of this ticket's (#30, dashboard-only)
+ * surface. */
 export interface BatchReadiness {
   id: string;
   reference_number: string;
@@ -229,6 +239,31 @@ export interface BatchReadiness {
   blockers: ReadinessBlocker[];
   funnel: CoverageFunnel;
   lot_count: number;
+  next_deadline: string | null;
+}
+
+/** `GET /api/v1/supply-chain/batches/readiness/summary/` (no `group_by`) —
+ * one org-wide rollup, built straight from a plain dict (`aggregate_overall`,
+ * not a Serializer), but `Decimal`s still render as strings under DRF's
+ * default `COERCE_DECIMAL_TO_STRING`, same as everywhere else in this file.
+ * Tonnage is always normalised to KG here (POs in non-mass units are
+ * excluded from the funnel rollup but still counted in `po_count`/
+ * `stage_counts`) — per-PO views show native units instead, see
+ * `BatchReadiness`/`CoverageFunnel`. */
+export interface ReadinessSummaryFunnel {
+  unit: "KG";
+  ordered_quantity: string;
+  allocated_quantity: string;
+  geolocated_quantity: string;
+  filed_quantity: string;
+  uncovered_quantity: string;
+}
+
+export interface ReadinessSummary {
+  po_count: number;
+  stage_counts: Record<ReadinessStage, number>;
+  blocked_count: number;
+  funnel: ReadinessSummaryFunnel;
 }
 
 // ── Due Diligence ──
