@@ -38,6 +38,11 @@ const TH = "text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreg
 
 export default function SupplierDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  // Route params are attacker-controlled (e.g. a crafted link) — encode once
+  // here and reuse everywhere `id` is interpolated into a fetch URL, so a
+  // value like `sup-1&page_size=999999` can't smuggle extra query params
+  // onto the request (PR #47 QA security finding).
+  const encodedId = encodeURIComponent(id);
   const router = useRouter();
   const queryClient = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
@@ -45,7 +50,7 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
   const { data: supplier, isLoading, error } = useQuery<Supplier>({
     queryKey: ["supplier", id],
     queryFn: async () => {
-      const res = await authFetch(`/api/v1/suppliers/${id}/`);
+      const res = await authFetch(`/api/v1/suppliers/${encodedId}/`);
       if (!res.ok) throw new Error("Failed to fetch supplier");
       return res.json();
     },
@@ -64,7 +69,7 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
   } = useQuery<BatchReadiness[]>({
     queryKey: ["batches-readiness", "supplier", id],
     queryFn: async () => {
-      const res = await authFetch(`/api/v1/supply-chain/batches/readiness/?seller_id=${id}&page_size=100`);
+      const res = await authFetch(`/api/v1/supply-chain/batches/readiness/?seller_id=${encodedId}&page_size=100`);
       if (!res.ok) throw new Error("Failed to fetch supplier readiness");
       const body: PaginatedResponse<BatchReadiness> = await res.json();
       return body.results;
@@ -73,7 +78,7 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const res = await authFetch(`/api/v1/suppliers/${id}/`, { method: "DELETE" });
+      const res = await authFetch(`/api/v1/suppliers/${encodedId}/`, { method: "DELETE" });
       if (!res.ok && res.status !== 204) throw new Error("Failed to delete");
     },
     onSuccess: () => {
