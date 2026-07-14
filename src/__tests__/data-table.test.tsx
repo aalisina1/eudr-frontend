@@ -226,4 +226,107 @@ describe("DataTable", () => {
     // Should show pagination info
     expect(screen.getByText(/Showing 1–20 of 60/)).toBeInTheDocument();
   });
+
+  it("stays on page 2 after clicking Next, for a caller that does not pass extraParams (regression)", async () => {
+    // A fresh Response per call — a single shared Response instance can only
+    // have its body read once, and the fix under test legitimately causes
+    // more than one fetch.
+    const fetchMock = vi.fn().mockImplementation(
+      async () =>
+        new Response(
+          JSON.stringify(mockPaginatedResponse(mockItems, 60)),
+          { status: 200 }
+        )
+    );
+    globalThis.fetch = fetchMock;
+
+    // Mounted exactly like an existing consumer (suppliers/documents/due
+    // diligence pages) that never passes extraParams at all.
+    const { container } = renderWithProviders(
+      <DataTable<MockItem>
+        queryKey="test-no-extraparams"
+        endpoint="/api/v1/test/"
+        columns={columns}
+        rowKey={(i) => i.id}
+        pageSize={20}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Alpha")).toBeInTheDocument();
+    });
+
+    const buttons = container.querySelectorAll("button");
+    const nextButton = buttons[buttons.length - 1];
+
+    const user = userEvent.setup();
+    await user.click(nextButton);
+
+    // The bug: a fresh `extraParams = {}` default reference on every render
+    // makes the page-reset effect re-fire after the click and silently
+    // bounce back to page 1 (an unrequested offset=0 fetch right after the
+    // offset=20 one for page 2).
+    await waitFor(() => {
+      expect(screen.getByText(/Showing 21–40 of 60/)).toBeInTheDocument();
+    });
+
+    // Fetch sequence should be [initial offset=0, then offset=20 for page 2]
+    // and stay there — the bug produced an extra, unrequested offset=0 fetch
+    // right after the offset=20 one, silently landing back on page 1.
+    const offsets = fetchMock.mock.calls
+      .map(([url]) => new URL(String(url), "http://localhost").searchParams.get("offset"))
+      .filter((o): o is string => o !== null);
+    expect(offsets[offsets.length - 1]).toBe("20");
+    expect(offsets.filter((o) => o === "0")).toHaveLength(1);
+  });
+
+  it("keeps pagination stable across a rerender with a fresh inline (non-memoized) extraParams literal", async () => {
+    const fetchMock = vi.fn().mockImplementation(
+      async () =>
+        new Response(
+          JSON.stringify(mockPaginatedResponse(mockItems, 60)),
+          { status: 200 }
+        )
+    );
+    globalThis.fetch = fetchMock;
+
+    const makeElement = () => (
+      <DataTable<MockItem>
+        queryKey="test-inline-extraparams"
+        endpoint="/api/v1/test/"
+        columns={columns}
+        rowKey={(i) => i.id}
+        pageSize={20}
+        // Deliberately NOT memoized — a fresh object literal every time this
+        // is (re-)evaluated, as a real (non-useMemo) caller would produce on
+        // its own unrelated re-renders.
+        extraParams={{ status: "active" }}
+      />
+    );
+
+    const { container, rerender } = renderWithProviders(makeElement());
+
+    await waitFor(() => {
+      expect(screen.getByText("Alpha")).toBeInTheDocument();
+    });
+
+    const buttons = container.querySelectorAll("button");
+    const nextButton = buttons[buttons.length - 1];
+
+    const user = userEvent.setup();
+    await user.click(nextButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Showing 21–40 of 60/)).toBeInTheDocument();
+    });
+
+    // Simulate the caller re-rendering (e.g. unrelated parent state change)
+    // and handing DataTable a brand-new but content-identical extraParams
+    // object — this must not be mistaken for a real params change.
+    rerender(makeElement());
+
+    await waitFor(() => {
+      expect(screen.getByText(/Showing 21–40 of 60/)).toBeInTheDocument();
+    });
+  });
 });

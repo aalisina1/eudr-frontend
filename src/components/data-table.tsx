@@ -25,6 +25,11 @@ export interface ColumnDef<T> {
   header: string;
   sortable?: boolean;
   render: (item: T) => React.ReactNode;
+  /** Optional override for the CSV export cell — e.g. resolve a joined name
+   * instead of a raw foreign-key UUID, or format a nested/derived value the
+   * raw `item[key]` lookup can't reach (eudr-frontend #28). Falls back to
+   * the existing `item[key]` behaviour when omitted. */
+  exportValue?: (item: T) => string | number;
 }
 
 export interface FilterOption {
@@ -54,6 +59,16 @@ interface DataTableProps<T> {
   columns: ColumnDef<T>[];
   /** Filter definitions */
   filters?: FilterDef[];
+  /** Extra fixed query params merged into every request (list + CSV export).
+   * For a filter whose options don't all map to the same query param — e.g.
+   * a derived "Stage" select where one option (Blocked) is really a
+   * different backend param than the rest (`blocked=true` vs. `stage=...`)
+   * — eudr-frontend #28. Optional; existing callers are unaffected. */
+  extraParams?: Record<string, string>;
+  /** Extra toolbar content rendered in the same row as search/filters/export
+   * (e.g. a custom Select whose options don't fit the generic `FilterDef`
+   * key/value shape — eudr-frontend #28). */
+  toolbarExtra?: React.ReactNode;
   /** Enable the search input */
   searchable?: boolean;
   /** Placeholder text for the search input */
@@ -72,7 +87,18 @@ interface DataTableProps<T> {
   emptyIcon?: React.ReactNode;
   emptyTitle?: string;
   emptyDescription?: string;
+  /** Rendered under the empty-state title/description — e.g. call-to-action
+   * buttons (eudr-frontend #28). Optional; existing pages unaffected. */
+  emptyAction?: React.ReactNode;
 }
+
+// Stable module-level default so callers that omit `extraParams` get the
+// same object reference on every render — a `= {}` default parameter would
+// otherwise create a brand-new object on every invocation of `DataTable`
+// (including ones triggered purely by its own internal state, e.g. paging),
+// which broke every pre-existing consumer's pagination (eudr-frontend #44
+// QA finding).
+const EMPTY_EXTRA_PARAMS: Record<string, string> = {};
 
 // ── Hook: debounced value ────────────────────────────────────────────────────
 
@@ -92,6 +118,8 @@ export function DataTable<T>({
   endpoint,
   columns,
   filters = [],
+  extraParams = EMPTY_EXTRA_PARAMS,
+  toolbarExtra,
   searchable = true,
   searchPlaceholder = "Search...",
   pageSize = 20,
@@ -102,6 +130,7 @@ export function DataTable<T>({
   emptyIcon,
   emptyTitle = "No results",
   emptyDescription = "Try adjusting your search or filters",
+  emptyAction,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
   const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
@@ -110,11 +139,18 @@ export function DataTable<T>({
 
   const debouncedSearch = useDebounce(search, 300);
 
+  // `extraParams` may be an unstable reference even beyond the omitted-prop
+  // case above — a caller passing an inline object literal (not wrapped in
+  // useMemo) recreates it on every one of its own renders too. Depend on a
+  // stable serialization of its *content* rather than object identity, so
+  // this effect only re-fires when the params actually change.
+  const extraParamsKey = JSON.stringify(extraParams);
+
   // Reset to page 1 when search/filters change
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
-  }, [debouncedSearch, activeFilters]);
+  }, [debouncedSearch, activeFilters, extraParamsKey]);
 
   const queryParams = useMemo(() => {
     const params = new URLSearchParams();
@@ -125,8 +161,11 @@ export function DataTable<T>({
     for (const [key, value] of Object.entries(activeFilters)) {
       if (value) params.set(key, value);
     }
+    for (const [key, value] of Object.entries(extraParams)) {
+      if (value) params.set(key, value);
+    }
     return params.toString();
-  }, [debouncedSearch, ordering, page, pageSize, activeFilters]);
+  }, [debouncedSearch, ordering, page, pageSize, activeFilters, extraParams]);
 
   const { data, isLoading, isPlaceholderData, error } = useQuery<PaginatedResponse<T>>({
     queryKey: [queryKey, queryParams],
@@ -162,6 +201,9 @@ export function DataTable<T>({
     for (const [key, value] of Object.entries(activeFilters)) {
       if (value) exportParams.set(key, value);
     }
+    for (const [key, value] of Object.entries(extraParams)) {
+      if (value) exportParams.set(key, value);
+    }
     const res = await authFetch(`${endpoint}?${exportParams.toString()}`);
     if (!res.ok) return;
     const result: PaginatedResponse<T> = await res.json();
@@ -170,7 +212,7 @@ export function DataTable<T>({
     const headers = columns.map((c) => c.header);
     const rows = result.results.map((item) =>
       columns.map((col) => {
-        const val = (item as Record<string, unknown>)[col.key];
+        const val = col.exportValue ? col.exportValue(item) : (item as Record<string, unknown>)[col.key];
         const str = val == null ? "" : String(val);
         return str.includes(",") || str.includes('"') || str.includes("\n")
           ? `"${str.replace(/"/g, '""')}"`
@@ -186,7 +228,7 @@ export function DataTable<T>({
     a.download = `${exportFilename ?? queryKey}-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [columns, debouncedSearch, ordering, activeFilters, endpoint, queryKey, exportFilename]);
+  }, [columns, debouncedSearch, ordering, activeFilters, extraParams, endpoint, queryKey, exportFilename]);
 
   const SortIcon = ({ columnKey }: { columnKey: string }) => {
     if (ordering === columnKey) return <ArrowUp className="size-3" />;
@@ -199,7 +241,7 @@ export function DataTable<T>({
   return (
     <div className="space-y-4">
       {/* Toolbar: search + filters */}
-      {(searchable || filters.length > 0) && (
+      {(searchable || filters.length > 0 || toolbarExtra) && (
         <div className="flex flex-wrap items-center gap-3">
           {searchable && (
             <div className="relative flex-1 min-w-[200px] max-w-sm">
@@ -227,6 +269,7 @@ export function DataTable<T>({
               ))}
             </select>
           ))}
+          {toolbarExtra}
           {exportable && (
             <Button
               variant="outline"
@@ -312,7 +355,7 @@ export function DataTable<T>({
 
             {!isLoading && data?.results.length === 0 && (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-40">
+                <TableCell colSpan={columns.length} className={emptyAction ? "py-14" : "h-40"}>
                   <div className="flex flex-col items-center justify-center text-center">
                     {emptyIcon && (
                       <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center mb-3">
@@ -320,7 +363,8 @@ export function DataTable<T>({
                       </div>
                     )}
                     <p className="text-sm font-medium mb-0.5">{emptyTitle}</p>
-                    <p className="text-xs text-muted-foreground">{emptyDescription}</p>
+                    <p className="text-xs text-muted-foreground max-w-md">{emptyDescription}</p>
+                    {emptyAction && <div className="mt-4">{emptyAction}</div>}
                   </div>
                 </TableCell>
               </TableRow>

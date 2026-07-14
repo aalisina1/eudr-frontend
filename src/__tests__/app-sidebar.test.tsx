@@ -56,10 +56,18 @@ describe("AppSidebar", () => {
 
   it("renders all compliance navigation items", () => {
     renderWithProviders(<AppSidebar />);
-    expect(screen.getByText("Supply Chains")).toBeInTheDocument();
+    expect(screen.getByText("Sourcing")).toBeInTheDocument();
     expect(screen.getByText("Submissions")).toBeInTheDocument();
     expect(screen.getByText("Documents")).toBeInTheDocument();
     expect(screen.getByText("Integrations")).toBeInTheDocument();
+  });
+
+  it("nav item for /supply-chains route is labelled Sourcing, not Supply Chains (#28 rename)", () => {
+    renderWithProviders(<AppSidebar />);
+    const link = screen.getAllByRole("link").find((l) => l.getAttribute("href") === "/supply-chains");
+    expect(link).toBeTruthy();
+    expect(link?.textContent).toContain("Sourcing");
+    expect(screen.queryByText("Supply Chains")).toBeNull();
   });
 
   it("nav item for /due-diligence route is labelled Submissions (not Due Diligence)", () => {
