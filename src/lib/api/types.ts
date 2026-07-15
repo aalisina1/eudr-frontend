@@ -301,6 +301,34 @@ export interface ReadinessSummary {
   funnel: ReadinessSummaryFunnel;
 }
 
+/** `POST /api/v1/supply-chain/batches/payload-estimate/` (BE-C, eudr-app #94 /
+ * PR #98) — the geolocation payload size estimate feeding the File DDS
+ * composition page's "Geolocation payload" meter (eudr-frontend #26). Per the
+ * architect ruling on #94: always 200 for a well-formed request (candidate
+ * `batch_ids` that can't contribute geometry surface only in `errors`, never
+ * in `batches`); `estimated_bytes` is guaranteed to be the exact sum of
+ * `batches[*].estimated_bytes` (no plot dedup across batches). 400 only for a
+ * malformed request body (missing/empty/non-list/non-UUID/>500 `batch_ids`). */
+export interface PayloadEstimateBatchRow {
+  batch_id: string;
+  shipment_reference: string | null;
+  plot_count: number;
+  estimated_bytes: number;
+}
+
+export interface PayloadEstimateError {
+  field: string;
+  message: string;
+}
+
+export interface PayloadEstimateResponse {
+  estimated_bytes: number;
+  limit_bytes: number;
+  exceeds_limit: boolean;
+  batches: PayloadEstimateBatchRow[];
+  errors: PayloadEstimateError[];
+}
+
 // ── Due Diligence ──
 
 export type DDSStatus = "DRAFT" | "UNDER_REVIEW" | "APPROVED" | "SUBMITTED" | "REJECTED" | "WITHDRAWN";
