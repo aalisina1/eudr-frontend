@@ -143,13 +143,21 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
             </Button>
           ) : (
             <Tooltip>
+              {/* `aria-disabled` + `focusableWhenDisabled` (not the native
+               * `disabled` attribute) so the button itself stays the real
+               * hover/focus target: a native-disabled control can't receive
+               * focus or pointer events at all, which is why the tooltip
+               * explaining the block previously never opened on keyboard
+               * focus (mouse hover "worked" only because Chromium still lets
+               * a wrapping ancestor's synthetic hover reach it). Base UI's
+               * Button already guards onClick/Enter/Space against `disabled`
+               * regardless of `focusableWhenDisabled`, so this stays
+               * non-activatable. */}
               <TooltipTrigger
                 render={
-                  <span tabIndex={0} className="inline-flex">
-                    <Button disabled className="gap-1.5">
-                      <FileText className="size-4" /> File DDS
-                    </Button>
-                  </span>
+                  <Button disabled focusableWhenDisabled className="gap-1.5">
+                    <FileText className="size-4" /> File DDS
+                  </Button>
                 }
               />
               <TooltipContent>{missingSummary}</TooltipContent>

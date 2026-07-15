@@ -245,7 +245,27 @@ describe("PoDetailPage", () => {
 
       expect(container.querySelector('[data-slot="badge"]')).toHaveTextContent("Blocked");
       const fileDdsBtn = screen.getByRole("button", { name: /File DDS/i });
-      expect(fileDdsBtn).toBeDisabled();
+      // `aria-disabled`, not the native `disabled` attribute — the button
+      // stays focusable so its tooltip can open on keyboard focus, not just
+      // mouse hover (see the focus-tooltip test below).
+      expect(fileDdsBtn).toHaveAttribute("aria-disabled", "true");
+      expect(fileDdsBtn).not.toBeDisabled();
+    });
+
+    it("keeps the File DDS button focusable and opens its tooltip on keyboard focus, not just mouse hover", async () => {
+      mockApi({ detail: gapsDetail() });
+      await renderPage();
+      await waitFor(() => expect(screen.getByText("PO-2026-0141")).toBeInTheDocument());
+
+      const fileDdsBtn = screen.getByRole("button", { name: /File DDS/i });
+      fileDdsBtn.focus();
+      expect(fileDdsBtn).toHaveFocus();
+
+      await waitFor(() =>
+        expect(
+          screen.getByText("2 lots missing harvest period · 3 plots failed deforestation validation")
+        ).toBeInTheDocument()
+      );
     });
 
     it("itemises each server-side blocker as a concrete gap row with a deep-link action", async () => {

@@ -317,6 +317,36 @@ test.describe("PO Detail — Gaps (earlier stage, blocked) state (#29)", () => {
     });
   });
 
+  test("File DDS tooltip opens on keyboard Tab focus (not just mouse hover), and Enter does not navigate", async ({ page }) => {
+    await routeReadinessDetail(page, GAPS_DETAIL);
+    await stubLookups(page);
+    await page.goto(`/supply-chains/${GAPS_DETAIL.id}`);
+    await expect(page.getByRole("heading", { name: "PO-2026-E2E8" })).toBeVisible();
+
+    const fileDdsBtn = page.getByRole("button", { name: "File DDS" });
+    await expect(fileDdsBtn).toBeDisabled(); // aria-disabled, per Playwright's actionability semantics
+
+    // Real keyboard walk — Tab until the disabled CTA itself has DOM focus,
+    // rather than programmatically focusing it, so this proves the same
+    // path a keyboard-only user takes.
+    let guard = 0;
+    while (!(await fileDdsBtn.evaluate((el) => el === document.activeElement)) && guard < 40) {
+      await page.keyboard.press("Tab");
+      guard += 1;
+    }
+    await expect(fileDdsBtn).toBeFocused();
+
+    // The blocker tooltip — the same text mouse hover reveals — must also
+    // surface on keyboard focus (this was the QA-blocking defect on PR #48).
+    await expect(
+      page.getByText("2 lots missing harvest period · 3 plots failed deforestation validation")
+    ).toBeVisible({ timeout: 10_000 });
+
+    // Enter must not activate the blocked CTA while it's focused.
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(new RegExp(`/supply-chains/${GAPS_DETAIL.id}$`));
+  });
+
   test("'Review plots' deep-link navigates to /plots", async ({ page }) => {
     await routeReadinessDetail(page, GAPS_DETAIL);
     await stubLookups(page);
