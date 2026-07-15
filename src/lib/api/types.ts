@@ -209,9 +209,8 @@ export interface CoverageFunnel {
 }
 
 /** One row of `GET /api/v1/supply-chain/batches/readiness/` (list), and the
- * base shape `GET .../batches/{id}/readiness/` (detail) extends with a
- * `lots` breakdown — not modelled here yet, out of scope until PO Detail
- * ships the per-lot table (eudr-frontend #29).
+ * base shape `GET .../batches/{id}/readiness/` (detail, see
+ * `POReadinessDetail` below) extends with a `lots` breakdown.
  *
  * `next_deadline` (eudr-app #61/BE-B, PR #85 — merged) is the soonest
  * `expected_clearance_date` across the PO's linked lot batches, or `null`
@@ -240,6 +239,42 @@ export interface BatchReadiness {
   funnel: CoverageFunnel;
   lot_count: number;
   next_deadline: string | null;
+}
+
+/** One entry of `POReadinessDetail.lots` (`LotReadinessSerializer`,
+ * eudr-app apps/supply_chain/serializers.py) — the per-lot breakdown behind
+ * the PO Detail "Lots fulfilling this order" table (eudr-frontend #29). */
+export interface LotReadiness {
+  id: string;
+  reference_number: string;
+  quantity: string;
+  unit: BatchUnit;
+  harvest_period_start: string | null;
+  harvest_period_end: string | null;
+  plot_count: number;
+  plots_resolved: boolean;
+  plots_failed_count: number;
+  plots_pending_count: number;
+  filed: boolean;
+  filing_dds_id: string | null;
+  filing_dds_reference: string;
+  /** [FOLLOW-UP eudr-app — file a small additive PR] NOT yet on
+   * `LotReadinessSerializer` as of eudr-app PR #85 — only `BatchSerializer`/
+   * `BatchListSerializer` (the raw Batch endpoints) got `shipment_reference`/
+   * `expected_clearance_date`; the readiness detail's per-lot rows didn't.
+   * Optional here so PO Detail's "grouped by shipment" table activates
+   * automatically the day the backend adds them (same additive-serializer
+   * pattern as `next_deadline`) — do not invent client-side values in the
+   * meantime; today's live lots table renders as a single ungrouped list. */
+  shipment_reference?: string | null;
+  expected_clearance_date?: string | null;
+}
+
+/** `GET /api/v1/supply-chain/batches/{id}/readiness/` — full readiness
+ * detail for one PO batch (`POReadinessDetailSerializer`), adding the
+ * per-lot breakdown on top of the list row shape above. */
+export interface POReadinessDetail extends BatchReadiness {
+  lots: LotReadiness[];
 }
 
 /** `GET /api/v1/supply-chain/batches/readiness/summary/` (no `group_by`) —
