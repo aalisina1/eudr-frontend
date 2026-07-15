@@ -145,7 +145,7 @@ export interface Batch {
   seller_id: string;
   buyer_id: string;
   organization_id: string;
-  commodity_id: string;
+  product_id: string;
   quantity: number;
   unit: BatchUnit;
   transaction_date: string;
@@ -231,7 +231,7 @@ export interface BatchReadiness {
   reference_number: string;
   seller_id: string;
   buyer_id: string;
-  commodity_id: string;
+  product_id: string;
   transaction_date: string;
   stage: ReadinessStage;
   blocked: boolean;

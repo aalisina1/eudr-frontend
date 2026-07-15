@@ -219,7 +219,7 @@ describe("Type definitions", () => {
       seller_id: "supplier1",
       buyer_id: "org1",
       organization_id: "org1",
-      commodity_id: "commodity1",
+      product_id: "commodity1",
       quantity: 100,
       unit: "KG",
       transaction_date: "2025-06-30",

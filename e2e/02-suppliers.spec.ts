@@ -45,7 +45,7 @@ test.describe("Supplier Detail: sourcing additions (#31)", () => {
     reference_number: "PO-2026-E2E1",
     seller_id: "seller-e2e",
     buyer_id: "buyer-e2e",
-    commodity_id: "commodity-e2e",
+    product_id: "commodity-e2e",
     transaction_date: "2026-06-01",
     stage: "READY",
     blocked: false,

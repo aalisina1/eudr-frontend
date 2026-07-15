@@ -5,7 +5,7 @@
  *
  * PR #48 (commit e6fcc65) wraps all three of this page's fetch
  * interpolations — the route `id`, and the readiness response's
- * `seller_id`/`commodity_id` — with `encodeURIComponent`. This test proves
+ * `seller_id`/`product_id` — with `encodeURIComponent`. This test proves
  * that fix holds for an adversarial value rather than taking the PR
  * description's word for it.
  *
@@ -65,7 +65,7 @@ function readinessDetail(): POReadinessDetail {
     reference_number: "PO-2026-0141",
     seller_id: MALICIOUS_ID,
     buyer_id: "buyer-1",
-    commodity_id: MALICIOUS_ID,
+    product_id: MALICIOUS_ID,
     transaction_date: "2026-07-01",
     stage: "READY",
     blocked: false,
@@ -145,7 +145,7 @@ describe("PoDetailPage — route/response id escaping (security)", () => {
     expect(parsed.search).toBe("");
   });
 
-  it("keeps the readiness response's commodity_id as one opaque path segment on the product fetch", async () => {
+  it("keeps the readiness response's product_id as one opaque path segment on the product fetch", async () => {
     const calledUrls: string[] = [];
     await renderPage(calledUrls);
 

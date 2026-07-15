@@ -21,7 +21,7 @@ import type { Batch } from "@/lib/api/types";
 const batchSchema = z.object({
   reference_number: z.string().min(1, "Reference number is required"),
   seller_id: z.string().uuid("Select a valid supplier"),
-  commodity_id: z.string().uuid("Select a valid commodity"),
+  product_id: z.string().uuid("Select a valid commodity"),
   quantity: z.number().positive("Quantity must be positive"),
   unit: z.enum(["KG", "TONNES", "M3", "PIECES"]),
   transaction_date: z.string().min(1, "Transaction date is required"),
@@ -53,7 +53,7 @@ export function BatchForm({ open, onOpenChange, batch }: BatchFormProps) {
       ? {
           reference_number: batch.reference_number,
           seller_id: batch.seller_id,
-          commodity_id: batch.commodity_id,
+          product_id: batch.product_id,
           quantity: batch.quantity,
           unit: batch.unit,
           transaction_date: batch.transaction_date,
@@ -64,7 +64,7 @@ export function BatchForm({ open, onOpenChange, batch }: BatchFormProps) {
       : {
           reference_number: "",
           seller_id: "",
-          commodity_id: "",
+          product_id: "",
           quantity: 0,
           unit: "KG",
           transaction_date: new Date().toISOString().split("T")[0],
@@ -124,9 +124,9 @@ export function BatchForm({ open, onOpenChange, batch }: BatchFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="commodity_id">Commodity ID *</Label>
-            <Input id="commodity_id" {...register("commodity_id")} placeholder="Commodity UUID" />
-            {errors.commodity_id && <p className="text-xs text-destructive">{errors.commodity_id.message}</p>}
+            <Label htmlFor="product_id">Commodity ID *</Label>
+            <Input id="product_id" {...register("product_id")} placeholder="Commodity UUID" />
+            {errors.product_id && <p className="text-xs text-destructive">{errors.product_id.message}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
