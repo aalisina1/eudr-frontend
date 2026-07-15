@@ -213,10 +213,13 @@ export interface CoverageFunnel {
  * `lots` breakdown — not modelled here yet, out of scope until PO Detail
  * ships the per-lot table (eudr-frontend #29).
  *
- * Note: no deadline/ETA field yet — `expected_clearance_date` and
- * `shipment_reference` ship with eudr-app #61 (BE-B), not yet built. Render
- * the Next-deadline column as the muted placeholder until then
- * (`DeadlineChip` with no props) — do not invent a client-side substitute. */
+ * `next_deadline` (eudr-app #61, BE-B — merged to main) is the soonest
+ * `expected_clearance_date` across the PO's linked lot batches, or `null`
+ * if none is set yet. The backend does not pre-compute a days-remaining
+ * count (a presentation concern) — derive `DeadlineChip`'s `etaLabel`/`days`
+ * client-side from this date. [NOTE for #29/#30: added here for #31's
+ * Supplier Detail sourcing table — if you're wiring the same field
+ * concurrently, this line should be a trivial rebase, not a real conflict.] */
 export interface BatchReadiness {
   id: string;
   reference_number: string;
@@ -229,6 +232,7 @@ export interface BatchReadiness {
   blockers: ReadinessBlocker[];
   funnel: CoverageFunnel;
   lot_count: number;
+  next_deadline: string | null;
 }
 
 // ── Due Diligence ──
