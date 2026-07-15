@@ -28,7 +28,7 @@ const SELECT_CLASSNAME =
 const purchaseOrderSchema = z.object({
   reference_number: z.string().min(1, "Enter a PO reference"),
   seller_id: z.string().uuid("Choose a supplier"),
-  commodity_id: z.string().uuid("Choose a commodity"),
+  product_id: z.string().uuid("Choose a commodity"),
   quantity: z.number().positive("Enter a quantity in tonnes"),
   transaction_date: z.string().min(1, "Enter an order date"),
 });
@@ -44,7 +44,7 @@ function defaultValues(): PurchaseOrderFormValues {
   return {
     reference_number: "",
     seller_id: "",
-    commodity_id: "",
+    product_id: "",
     quantity: 0,
     transaction_date: new Date().toISOString().split("T")[0],
   };
@@ -113,7 +113,7 @@ export function PurchaseOrderForm({ open, onOpenChange }: PurchaseOrderFormProps
           // The buyer is always the operator's own organisation — there is
           // no separate "trading party" identity in the schema yet.
           buyer_id: me?.organization_id,
-          commodity_id: values.commodity_id,
+          product_id: values.product_id,
           quantity: values.quantity,
           // TONNES is a real `Batch.Unit` choice (not a KG conversion) —
           // matches the design's "Ordered quantity (t)" label exactly.
@@ -177,8 +177,8 @@ export function PurchaseOrderForm({ open, onOpenChange }: PurchaseOrderFormProps
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="po-commodity_id">Commodity *</Label>
-            <select id="po-commodity_id" className={SELECT_CLASSNAME} {...register("commodity_id")}>
+            <Label htmlFor="po-product_id">Commodity *</Label>
+            <select id="po-product_id" className={SELECT_CLASSNAME} {...register("product_id")}>
               <option value="">Select commodity</option>
               {products?.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -187,7 +187,7 @@ export function PurchaseOrderForm({ open, onOpenChange }: PurchaseOrderFormProps
                 </option>
               ))}
             </select>
-            {errors.commodity_id && <p className="text-xs text-destructive">{errors.commodity_id.message}</p>}
+            {errors.product_id && <p className="text-xs text-destructive">{errors.product_id.message}</p>}
           </div>
 
           <div className="space-y-1.5">

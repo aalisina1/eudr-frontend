@@ -49,8 +49,8 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
     },
   });
 
-  // Supplier/commodity are resolved client-side for display — the readiness
-  // contract only carries `seller_id`/`commodity_id` UUIDs (same convention
+  // Supplier/product are resolved client-side for display — the readiness
+  // contract only carries `seller_id`/`product_id` UUIDs (same convention
   // as the Sourcing list), fetched by id directly here since the detail page
   // only ever needs the one supplier/product this PO references.
   const { data: supplier } = useQuery<Supplier>({
@@ -65,13 +65,13 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
   });
 
   const { data: product } = useQuery<Product>({
-    queryKey: ["product", po?.commodity_id],
+    queryKey: ["product", po?.product_id],
     queryFn: async () => {
-      const res = await authFetch(`/api/v1/commodities/products/${encodeURIComponent(po!.commodity_id)}/`);
+      const res = await authFetch(`/api/v1/commodities/products/${encodeURIComponent(po!.product_id)}/`);
       if (!res.ok) throw new Error("Failed to fetch product");
       return res.json();
     },
-    enabled: !!po?.commodity_id,
+    enabled: !!po?.product_id,
     staleTime: 60_000,
   });
 

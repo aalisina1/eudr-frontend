@@ -15,7 +15,7 @@ function po(overrides: Partial<BatchReadiness> = {}): BatchReadiness {
     reference_number: "PO-2026-0119",
     seller_id: "sup-1",
     buyer_id: "buyer-1",
-    commodity_id: "prod-1",
+    product_id: "prod-1",
     transaction_date: "2026-06-01",
     stage: "READY",
     blocked: false,

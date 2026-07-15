@@ -20,7 +20,7 @@ const READY_PO = {
   reference_number: "PO-2026-E2E1",
   seller_id: "11111111-1111-1111-1111-111111111111",
   buyer_id: "22222222-2222-2222-2222-222222222222",
-  commodity_id: "33333333-3333-3333-3333-333333333333",
+  product_id: "33333333-3333-3333-3333-333333333333",
   transaction_date: "2026-07-01",
   stage: "READY",
   blocked: false,
@@ -145,7 +145,7 @@ const READY_DETAIL = {
   reference_number: "PO-2026-E2E9",
   seller_id: "44444444-4444-4444-4444-444444444444",
   buyer_id: "22222222-2222-2222-2222-222222222222",
-  commodity_id: "33333333-3333-3333-3333-333333333333",
+  product_id: "33333333-3333-3333-3333-333333333333",
   transaction_date: "2026-07-01",
   stage: "READY",
   blocked: false,
@@ -224,7 +224,7 @@ const GAPS_DETAIL = {
 };
 
 const SUPPLIER_STUB = { id: READY_DETAIL.seller_id, name: "Kuapa Kokoo Union", country_of_origin: "GH" };
-const PRODUCT_STUB = { id: READY_DETAIL.commodity_id, commodity_name: "Cocoa", description: "Fermented cocoa beans" };
+const PRODUCT_STUB = { id: READY_DETAIL.product_id, commodity_name: "Cocoa", description: "Fermented cocoa beans" };
 
 function routeReadinessDetail(page: import("@playwright/test").Page, detail: unknown) {
   return page.route("**/api/v1/supply-chain/batches/*/readiness/**", async (route) => {

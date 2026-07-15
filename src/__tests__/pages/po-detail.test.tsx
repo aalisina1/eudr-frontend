@@ -39,7 +39,7 @@ function readinessDetail(overrides: Partial<POReadinessDetail> = {}): POReadines
     reference_number: "PO-2026-0141",
     seller_id: SUPPLIER.id,
     buyer_id: "buyer-1",
-    commodity_id: PRODUCT.id,
+    product_id: PRODUCT.id,
     transaction_date: "2026-07-01",
     stage: "READY",
     blocked: false,

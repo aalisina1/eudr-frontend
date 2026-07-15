@@ -16,7 +16,7 @@ function readinessRow(overrides: Record<string, unknown> = {}) {
     reference_number: "PO-2026-0141",
     seller_id: "sup-e2e-1",
     buyer_id: "buyer-e2e-1",
-    commodity_id: "commodity-e2e-1",
+    product_id: "commodity-e2e-1",
     transaction_date: "2026-07-01",
     stage: "READY",
     blocked: false,

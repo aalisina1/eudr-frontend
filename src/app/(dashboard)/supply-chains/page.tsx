@@ -41,10 +41,10 @@ function SupplierCell({ sellerId, suppliersById }: { sellerId: string; suppliers
   );
 }
 
-function CommodityCell({ commodityId, productsById }: { commodityId: string; productsById?: Record<string, Product> }) {
-  const product = productsById?.[commodityId];
+function CommodityCell({ productId, productsById }: { productId: string; productsById?: Record<string, Product> }) {
+  const product = productsById?.[productId];
   if (!product) {
-    return <span className="font-mono text-xs text-muted-foreground">{commodityId.slice(-8)}</span>;
+    return <span className="font-mono text-xs text-muted-foreground">{productId.slice(-8)}</span>;
   }
   return <span className="text-[13px] text-muted-foreground">{product.commodity_name || product.description}</span>;
 }
@@ -107,9 +107,9 @@ export default function SourcingPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [stageFilter, setStageFilter] = useState("");
 
-  // Supplier/commodity are resolved client-side for display — the readiness
+  // Supplier/product are resolved client-side for display — the readiness
   // list/detail contract (eudr-app PR #83) only carries `seller_id` /
-  // `commodity_id` UUIDs, not joined names. Pilot-scale lookups (page_size
+  // `product_id` UUIDs, not joined names. Pilot-scale lookups (page_size
   // capped at the backend's max of 100), same assumption as the New-PO form.
   const { data: suppliersById } = useQuery({
     queryKey: ["suppliers", "lookup"],
@@ -159,12 +159,12 @@ export default function SourcingPage() {
         exportValue: (po) => suppliersById?.[po.seller_id]?.name ?? po.seller_id,
       },
       {
-        key: "commodity_id",
+        key: "product_id",
         header: "Commodity",
-        render: (po) => <CommodityCell commodityId={po.commodity_id} productsById={productsById} />,
+        render: (po) => <CommodityCell productId={po.product_id} productsById={productsById} />,
         exportValue: (po) => {
-          const product = productsById?.[po.commodity_id];
-          return product?.commodity_name || product?.description || po.commodity_id;
+          const product = productsById?.[po.product_id];
+          return product?.commodity_name || product?.description || po.product_id;
         },
       },
       {
