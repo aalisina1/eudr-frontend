@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, FileQuestion, Plus } from "lucide-react";
 import { DataTable, type ColumnDef, type FilterDef } from "@/components/data-table";
 import { DDSForm } from "@/components/forms/dds-form";
+import { FileDdsComposer } from "@/components/due-diligence/file-dds-composer";
 import { authFetch } from "@/lib/api/client";
 import type { DueDiligenceStatement, TracesSubmission, TracesSubmissionStatus } from "@/lib/api/types";
 import { DDS_STATUS_STYLE } from "@/lib/dds-status";
@@ -78,9 +80,31 @@ const filters: FilterDef[] = [
   },
 ];
 
+/** `useSearchParams()` requires a Suspense boundary to avoid a full
+ * client-side-render bailout for this route (Next.js App Router) — the
+ * actual page body lives in `DueDiligencePageInner` below. */
 export default function DueDiligencePage() {
+  return (
+    <Suspense fallback={<Skeleton className="h-10 w-72" />}>
+      <DueDiligencePageInner />
+    </Suspense>
+  );
+}
+
+function DueDiligencePageInner() {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
+
+  // #26 — the `?po=` deep-link target (from PO Detail's "File DDS" CTA,
+  // `src/app/(dashboard)/supply-chains/[id]/page.tsx`) takes over this whole
+  // route with the full-page File DDS composer instead of the Submissions
+  // list. `poId` is read here (not inside a conditional hook) so every hook
+  // below still runs in the same order on every render — Rules of Hooks —
+  // the composer branch below is a return, not a skipped hook call; the
+  // list's own queries are merely `enabled: !poId` so they don't fire a
+  // wasted fetch while the composer is showing.
+  const searchParams = useSearchParams();
+  const poId = searchParams.get("po");
 
   // #22 / ADR-0017: the badge must reflect the DDS's latest TRACES
   // submission once one exists, not just the internal DDS status (which
@@ -95,6 +119,7 @@ export default function DueDiligencePage() {
     queryKey: ["traces-submissions", "latest-by-dds"],
     queryFn: fetchLatestSubmissionsByDds,
     staleTime: 60_000,
+    enabled: !poId,
   });
 
   const pendingDetailIds = useMemo(
@@ -213,6 +238,10 @@ export default function DueDiligencePage() {
     ],
     [detailByDds, latestByDds],
   );
+
+  if (poId) {
+    return <FileDdsComposer poId={poId} />;
+  }
 
   return (
     <div className="space-y-6 max-w-6xl">
