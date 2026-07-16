@@ -152,6 +152,14 @@ export interface Batch {
   country_of_harvest: string;
   harvest_period_start: string | null;
   harvest_period_end: string | null;
+  /** #51 / eudr-app PR #85 (`supply_chain.0004_batch_shipment_reference_and_clearance_date`).
+   * Both `BatchListSerializer` and `BatchSerializer` expose these — required
+   * (not `?`), since the model fields are `null=True` and DRF's ModelSerializer
+   * always renders the key (value `null` when unset), never omits it. NOT on
+   * `LotReadinessSerializer` yet — see the optional fields of the same name on
+   * `LotReadiness` below. */
+  shipment_reference: string | null;
+  expected_clearance_date: string | null;
   land_plot_ids: string[];
   reference_number: string;
   status: BatchStatus;
