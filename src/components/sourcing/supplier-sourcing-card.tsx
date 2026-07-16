@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { StageBadge } from "@/components/sourcing/stage-badge";
 import { DeadlineChip } from "@/components/sourcing/deadline-chip";
 import { TonnageBar } from "@/components/sourcing/tonnage-bar";
+import { UNIT_LABELS } from "@/lib/readiness-format";
 import type { BatchReadiness } from "@/lib/api/types";
 
 /** DOM anchor the "Data gaps" callout scrolls to for lot/PO-shaped gaps
@@ -34,13 +35,6 @@ import type { BatchReadiness } from "@/lib/api/types";
  * specific PO, and this table is the entry point). Exported so
  * `supplier-data-gaps-card.tsx` doesn't hardcode the id in two places. */
 export const SOURCING_TABLE_ANCHOR_ID = "supplier-sourcing-pos";
-
-const UNIT_LABELS: Record<string, string> = {
-  KG: "kg",
-  TONNES: "t",
-  M3: "m³",
-  PIECES: "pcs",
-};
 
 // Mirrors eudr-app `apps/supply_chain/readiness.py`'s `_KG_PER_UNIT` — the
 // backend's own cross-PO tonnage normalisation (mass units only; M3/PIECES

@@ -49,8 +49,7 @@ import {
   harvestPeriodRange,
   summarizeNetMass,
 } from "@/lib/file-dds-composer";
-
-const UNIT_LABELS: Record<string, string> = { KG: "kg", TONNES: "t", M3: "m³", PIECES: "pcs" };
+import { UNIT_LABELS } from "@/lib/readiness-format";
 
 async function fetchPoReadiness(poId: string): Promise<POReadinessDetail> {
   const res = await authFetch(`/api/v1/supply-chain/batches/${encodeURIComponent(poId)}/readiness/`);

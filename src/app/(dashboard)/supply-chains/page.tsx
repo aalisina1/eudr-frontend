@@ -11,14 +11,8 @@ import { StageBadge, STAGE_FILTER_OPTIONS, STAGE_LABELS } from "@/components/sou
 import { DeadlineChip } from "@/components/sourcing/deadline-chip";
 import { TonnageBar, CoverageLegend } from "@/components/sourcing/tonnage-bar";
 import { authFetch } from "@/lib/api/client";
+import { UNIT_LABELS } from "@/lib/readiness-format";
 import type { BatchReadiness, PaginatedResponse, Product, Supplier } from "@/lib/api/types";
-
-const UNIT_LABELS: Record<string, string> = {
-  KG: "kg",
-  TONNES: "t",
-  M3: "m³",
-  PIECES: "pcs",
-};
 
 /** Whole-number, thousands-separated quantity — funnel values are decimal
  * strings (e.g. "250000.0000"); display the PO's native unit rather than
