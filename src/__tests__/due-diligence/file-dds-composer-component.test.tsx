@@ -182,6 +182,27 @@ describe("FileDdsComposer", () => {
     checkboxes.forEach((cb) => expect(cb).toHaveAttribute("aria-checked", "true"));
   });
 
+  it("falls back to the payload-estimate's per-batch shipment_reference when the readiness lot row doesn't carry one yet", async () => {
+    // The readiness detail endpoint doesn't populate `LotReadiness.shipment_reference`
+    // on real backend main yet (documented FOLLOW-UP in `lib/api/types.ts`) — this
+    // mirrors that live gap, while the payload-estimate response (a required
+    // field there) still has it.
+    const poWithoutShipmentOnLots: POReadinessDetail = {
+      ...PO,
+      lots: PO.lots.map((lot) => {
+        const rest = { ...lot };
+        delete rest.shipment_reference;
+        return rest;
+      }),
+    };
+    globalThis.fetch = makeFetch({ po: poWithoutShipmentOnLots, estimate: UNDER_LIMIT_ESTIMATE });
+    renderWithProviders(<FileDdsComposer poId="po-1" />);
+
+    await waitFor(() => expect(screen.getByText("LOT-GH-26-0001")).toBeInTheDocument());
+    expect(await screen.findByText("MV Elbe Trader")).toBeInTheDocument();
+    expect(await screen.findByText("MV Baltic Star")).toBeInTheDocument();
+  });
+
   it("GETs the readiness endpoint with an encoded PO id (query-param injection guard)", async () => {
     const fetchSpy = makeFetch();
     globalThis.fetch = fetchSpy;

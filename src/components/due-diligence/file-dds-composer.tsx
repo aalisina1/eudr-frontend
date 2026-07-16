@@ -174,6 +174,19 @@ export function FileDdsComposer({ poId }: FileDdsComposerProps) {
     return map;
   }, [po]);
 
+  // `LotReadiness.shipment_reference` isn't populated by the readiness
+  // detail endpoint yet (documented gap — see the FOLLOW-UP note on
+  // `LotReadiness` in `lib/api/types.ts`), but the payload-estimate response
+  // carries it per batch as a required field. Reusing that (already-fetched
+  // for the meter) fills the "Covered lots" table's Shipment column with
+  // real backend data instead of always reading "—", without adding a new
+  // request or inventing anything client-side.
+  const shipmentRefByBatchId = useMemo(() => {
+    const map = new Map<string, string | null>();
+    estimate?.batches.forEach((b) => map.set(b.batch_id, b.shipment_reference));
+    return map;
+  }, [estimate]);
+
   const createMutation = useMutation({
     mutationFn: async (advanceToReview: boolean) => {
       const res = await authFetch(`/api/v1/due-diligence/statements/`, {
@@ -343,7 +356,7 @@ export function FileDdsComposer({ poId }: FileDdsComposerProps) {
                         </TableCell>
                         <TableCell>
                           <span className="text-[12.5px] text-muted-foreground">
-                            {lot.shipment_reference || "—"}
+                            {lot.shipment_reference || shipmentRefByBatchId.get(lot.id) || "—"}
                           </span>
                         </TableCell>
                         <TableCell className="text-right font-mono">
