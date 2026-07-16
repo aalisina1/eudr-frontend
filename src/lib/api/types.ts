@@ -160,6 +160,14 @@ export interface Batch {
    * `LotReadiness` below. */
   shipment_reference: string | null;
   expected_clearance_date: string | null;
+  /** #51 / eudr-app PR #100 (ADR-0019, #90 lot-stream PO join) — drift that
+   * post-dates PR #50's baseline sync. Raw commercial reference this LOT
+   * claims to fulfil, exactly as the origin/traceability stream supplied it
+   * (resolved to a PO number at join time); null on PO batches and
+   * manually-composed batches. NEVER the upsert/dedup key — that stays
+   * `external_id`. Same required-but-nullable reasoning as the two fields
+   * above. */
+  fulfils_reference: string | null;
   land_plot_ids: string[];
   reference_number: string;
   status: BatchStatus;

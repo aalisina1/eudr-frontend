@@ -228,6 +228,7 @@ describe("Type definitions", () => {
       harvest_period_end: "2025-03-31",
       shipment_reference: "MSCU1234567",
       expected_clearance_date: "2026-09-01",
+      fulfils_reference: "PO-2026-00123",
       land_plot_ids: [],
       reference_number: "BATCH-001",
       status: "DRAFT",
@@ -243,7 +244,7 @@ describe("Type definitions", () => {
     expect(batchWithoutHarvestPeriod.harvest_period_end).toBeNull();
   });
 
-  it("Batch interface has shipment_reference/expected_clearance_date fields, required-but-nullable (#51, eudr-app PR #85 — BatchSerializer/BatchListSerializer always return the key, value null when unset)", () => {
+  it("Batch interface has shipment_reference/expected_clearance_date/fulfils_reference fields, required-but-nullable (#51, eudr-app PR #85 + #100 — BatchSerializer/BatchListSerializer always return the key, value null when unset)", () => {
     const batch: Batch = {
       id: "b1",
       seller_id: "supplier1",
@@ -258,6 +259,7 @@ describe("Type definitions", () => {
       harvest_period_end: null,
       shipment_reference: "MSCU1234567",
       expected_clearance_date: "2026-09-01",
+      fulfils_reference: "PO-2026-00123",
       land_plot_ids: [],
       reference_number: "BATCH-001",
       status: "DRAFT",
@@ -267,16 +269,19 @@ describe("Type definitions", () => {
     };
     expect(batch.shipment_reference).toBe("MSCU1234567");
     expect(batch.expected_clearance_date).toBe("2026-09-01");
+    expect(batch.fulfils_reference).toBe("PO-2026-00123");
 
-    // Both fields are `null=True` on the model and DRF always renders the
-    // key (not omitted) — required-but-nullable, not optional (`?`).
+    // All three fields are `null=True` on the model and DRF always renders
+    // the key (not omitted) — required-but-nullable, not optional (`?`).
     const batchWithoutShipmentInfo: Batch = {
       ...batch,
       shipment_reference: null,
       expected_clearance_date: null,
+      fulfils_reference: null,
     };
     expect(batchWithoutShipmentInfo.shipment_reference).toBeNull();
     expect(batchWithoutShipmentInfo.expected_clearance_date).toBeNull();
+    expect(batchWithoutShipmentInfo.fulfils_reference).toBeNull();
   });
 
   it("DueDiligenceStatement interface has activity_type field", () => {
