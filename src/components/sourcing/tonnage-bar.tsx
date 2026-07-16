@@ -5,8 +5,10 @@ import { cn } from "@/lib/utils";
 /** The hatched "uncovered remainder" background, shared by the bar track and
  * the legend swatch — kept as a raw CSS value (not a Tailwind arbitrary
  * class) since a bracketed `bg-[repeating-linear-gradient(...)]` utility
- * with nested `color-mix()` is fragile to author correctly. */
-const HATCH_BACKGROUND =
+ * with nested `color-mix()` is fragile to author correctly. Exported (#49)
+ * as the canonical value — `CoverageFunnelCard` (PO Detail funnel) used to
+ * reproduce this locally with slightly drifted stripe/period values. */
+export const HATCH_BACKGROUND =
   "repeating-linear-gradient(135deg, color-mix(in oklab, var(--foreground) 14%, transparent) 0 1.5px, transparent 1.5px 5.5px)";
 
 interface TonnageBarProps {

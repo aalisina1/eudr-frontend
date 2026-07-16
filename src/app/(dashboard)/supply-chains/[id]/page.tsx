@@ -13,9 +13,8 @@ import { ReadinessChecklistCard } from "@/components/sourcing/readiness-checklis
 import { PoLotsTable } from "@/components/sourcing/po-lots-table";
 import { PoProvenanceCard } from "@/components/sourcing/po-provenance-card";
 import { authFetch } from "@/lib/api/client";
+import { UNIT_LABELS } from "@/lib/readiness-format";
 import type { POReadinessDetail, Product, Supplier } from "@/lib/api/types";
-
-const UNIT_LABELS: Record<string, string> = { KG: "kg", TONNES: "t", M3: "m³", PIECES: "pcs" };
 
 /** Whole-number, thousands-separated quantity — see the Sourcing list's
  * identically-named helper; funnel values are decimal strings. */

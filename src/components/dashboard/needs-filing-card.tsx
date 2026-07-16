@@ -8,14 +8,8 @@ import { RefLink, WorkCard, WorkRow } from "@/components/dashboard/work-card";
 import { DeadlineChip } from "@/components/sourcing/deadline-chip";
 import { useReadinessRows, useSuppliersLookup } from "@/hooks/use-dashboard-data";
 import { bucketReadiness, daysUntil, formatEtaLabel, formatWholeNumber } from "@/lib/dashboard-worklist";
+import { UNIT_LABELS } from "@/lib/readiness-format";
 import type { BatchReadiness, Supplier } from "@/lib/api/types";
-
-const UNIT_LABELS: Record<string, string> = {
-  KG: "kg",
-  TONNES: "t",
-  M3: "m³",
-  PIECES: "pcs",
-};
 
 function FilingRow({ po, supplier }: { po: BatchReadiness; supplier?: Supplier }) {
   const unitLabel = UNIT_LABELS[po.funnel.unit] ?? po.funnel.unit.toLowerCase();

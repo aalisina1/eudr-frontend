@@ -2,35 +2,10 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DeadlineChip } from "@/components/sourcing/deadline-chip";
+import { HATCH_BACKGROUND } from "@/components/sourcing/tonnage-bar";
 import { cn } from "@/lib/utils";
+import { UNIT_LABELS, daysUntil, formatEta } from "@/lib/readiness-format";
 import type { CoverageFunnel } from "@/lib/api/types";
-
-/** Same hatch treatment as `TonnageBar`'s uncovered remainder, reproduced
- * locally (rather than exporting/importing it) to keep this new card
- * self-contained — `TonnageBar` renders a compact segmented bar for list
- * rows; this card renders five full-width, individually-labelled bars per
- * sourcing-readiness.design-prompt.md Prompt B ("the segmented tonnes funnel
- * rendered large"), a different enough shape that sharing markup would
- * fight both use cases. */
-const HATCH_BACKGROUND =
-  "repeating-linear-gradient(135deg, color-mix(in oklab, var(--foreground) 14%, transparent) 0 2px, transparent 2px 7px)";
-
-const UNIT_LABELS: Record<string, string> = { KG: "kg", TONNES: "t", M3: "m³", PIECES: "pcs" };
-
-/** Whole days between now and `dateStr` (negative = overdue). */
-function daysUntil(dateStr: string | null): number | null {
-  if (!dateStr) return null;
-  return Math.round((new Date(dateStr).getTime() - Date.now()) / 86_400_000);
-}
-
-/** "20 Jul" — matches the DeadlineChip/design's short ETA label format.
- * `timeZone: "UTC"` — `next_deadline` is a date-only (`DateField`) value;
- * `new Date("2026-07-20")` parses as UTC midnight, so formatting in the
- * viewer's local zone can roll the displayed calendar day backward west of
- * UTC. Force UTC so the date always reads as the day the backend stored. */
-function formatEta(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
-}
 
 interface FunnelRowProps {
   label: string;

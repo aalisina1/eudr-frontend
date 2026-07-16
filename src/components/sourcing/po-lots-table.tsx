@@ -15,23 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DeadlineChip } from "@/components/sourcing/deadline-chip";
+import { UNIT_LABELS, daysUntil, formatEta } from "@/lib/readiness-format";
 import type { LotReadiness } from "@/lib/api/types";
-
-const UNIT_LABELS: Record<string, string> = { KG: "kg", TONNES: "t", M3: "m³", PIECES: "pcs" };
-
-function daysUntil(dateStr: string | null | undefined): number | null {
-  if (!dateStr) return null;
-  return Math.round((new Date(dateStr).getTime() - Date.now()) / 86_400_000);
-}
-
-function formatEta(dateStr: string): string {
-  // `timeZone: "UTC"` — these are date-only (`DateField`) values; `new
-  // Date("2025-10-01")` parses as UTC midnight, so formatting in the
-  // viewer's local zone can roll the displayed calendar day (and even
-  // month) backward west of UTC. Force UTC so the date always reads as
-  // the day the backend actually stored.
-  return new Date(dateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
-}
 
 /** "Oct – Dec 2025" (design vocabulary) from the lot's harvest period dates;
  * `null` when the start date is missing (renders the destructive "Missing"
