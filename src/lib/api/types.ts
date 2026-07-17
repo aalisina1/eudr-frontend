@@ -140,11 +140,14 @@ export interface Product {
 export type BatchUnit = "KG" | "TONNES" | "M3" | "PIECES";
 export type BatchStatus = "DRAFT" | "CONFIRMED" | "IN_DDS";
 
+// #33: no `organization_id` here — neither `BatchListSerializer` nor
+// `BatchSerializer` (eudr-app `apps/supply_chain/serializers.py`) exposes it;
+// the field never existed at runtime. If org scoping is ever needed
+// client-side, derive it from the authenticated user, not the batch.
 export interface Batch {
   id: string;
   seller_id: string;
   buyer_id: string;
-  organization_id: string;
   product_id: string;
   quantity: number;
   unit: BatchUnit;
