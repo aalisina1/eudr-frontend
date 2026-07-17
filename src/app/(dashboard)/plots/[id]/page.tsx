@@ -48,7 +48,7 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
 
   if (isLoading) {
     return (
-      <div className="space-y-6 max-w-4xl">
+      <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-80 w-full rounded-2xl" />
         <Skeleton className="h-40 w-full rounded-2xl" />
@@ -58,7 +58,7 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
 
   if (error || !plot) {
     return (
-      <div className="space-y-4 max-w-4xl">
+      <div className="space-y-4">
         <Button variant="ghost" size="sm" onClick={() => router.push("/plots")} className="gap-1.5">
           <ArrowLeft className="size-4" /> Back to Plots
         </Button>
@@ -73,7 +73,7 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
   const StatusIcon = status.icon;
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
       {/* Back */}
       <Button variant="ghost" size="sm" onClick={() => router.push("/plots")} className="gap-1.5">
         <ArrowLeft className="size-4" /> Land Plots

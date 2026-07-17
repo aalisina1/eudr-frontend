@@ -92,7 +92,7 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
 
   if (isLoading) {
     return (
-      <div className="space-y-6 max-w-6xl">
+      <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-48 w-full rounded-2xl" />
       </div>
@@ -101,7 +101,7 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
 
   if (error || !stmt) {
     return (
-      <div className="space-y-4 max-w-6xl">
+      <div className="space-y-4">
         <Button variant="ghost" size="sm" onClick={() => router.push("/due-diligence")} className="gap-1.5">
           <ArrowLeft className="size-4" /> Back
         </Button>
@@ -118,7 +118,7 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
   const isPending = actionMutation.isPending || deleteMutation.isPending;
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6">
       {/* Back */}
       <Button variant="ghost" size="sm" onClick={() => router.push("/due-diligence")} className="gap-1.5 -ml-2">
         <ArrowLeft className="size-4" /> Submissions

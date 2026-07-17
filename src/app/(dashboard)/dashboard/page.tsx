@@ -19,7 +19,7 @@ import { formatDateLine, greeting } from "@/lib/dashboard-worklist";
  */
 export default function DashboardPage() {
   return (
-    <div className="mx-auto max-w-[1080px]">
+    <div>
       <header className="mb-[22px]">
         <h1 className="text-display text-4xl leading-[1.04] font-light italic">{greeting()}</h1>
         <p className="mt-2.5 text-[15px] text-muted-foreground">{formatDateLine()}</p>

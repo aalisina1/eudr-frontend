@@ -76,7 +76,7 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
 
   if (isLoading) {
     return (
-      <div className="max-w-6xl space-y-6">
+      <div className="space-y-6">
         <Skeleton className="h-4 w-36" />
         <Skeleton className="h-10 w-72" />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -90,7 +90,7 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
 
   if (error || !po) {
     return (
-      <div className="max-w-6xl space-y-4">
+      <div className="space-y-4">
         <Button variant="ghost" size="sm" onClick={() => router.push("/supply-chains")} className="-ml-2 gap-1.5 text-muted-foreground">
           <ArrowLeft className="size-4" /> All purchase orders
         </Button>
@@ -110,7 +110,7 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
 
   return (
     <TooltipProvider>
-      <div className="max-w-6xl space-y-6">
+      <div className="space-y-6">
         <Button
           variant="ghost"
           size="sm"

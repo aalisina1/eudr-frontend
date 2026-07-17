@@ -49,7 +49,7 @@ export default function IntegrationsPage() {
   const sources = data?.results ?? [];
 
   return (
-    <div className="space-y-8 max-w-6xl">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
