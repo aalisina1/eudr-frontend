@@ -244,7 +244,7 @@ function DueDiligencePageInner() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6">
       <div className="flex items-end justify-between gap-6 flex-wrap">
         <div>
           <h1 className="text-display text-4xl leading-[1.04] italic font-light">Submissions</h1>

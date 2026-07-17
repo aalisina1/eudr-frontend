@@ -89,7 +89,7 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
 
   if (isLoading) {
     return (
-      <div className="space-y-6 max-w-4xl">
+      <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-40 w-full rounded-2xl" />
         <Skeleton className="h-60 w-full rounded-2xl" />
@@ -99,7 +99,7 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
 
   if (error || !supplier) {
     return (
-      <div className="space-y-4 max-w-4xl">
+      <div className="space-y-4">
         <Button variant="ghost" size="sm" onClick={() => router.push("/suppliers")} className="gap-1.5">
           <ArrowLeft className="size-4" /> Back to Suppliers
         </Button>
@@ -114,7 +114,7 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
   const risk = RISK_COLORS[supplier.risk_rating];
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
       {/* Back + Actions */}
       <div className="flex items-center justify-between">
         <Button variant="ghost" size="sm" onClick={() => router.push("/suppliers")} className="gap-1.5">

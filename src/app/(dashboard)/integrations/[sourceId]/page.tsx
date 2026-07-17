@@ -248,7 +248,7 @@ export default function SourceDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 max-w-6xl">
+      <div className="space-y-6">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-48 w-full rounded-xl" />
       </div>
@@ -257,7 +257,7 @@ export default function SourceDetailPage() {
 
   if (!source) {
     return (
-      <div className="space-y-6 max-w-6xl">
+      <div className="space-y-6">
         <p className="text-muted-foreground">Source not found.</p>
       </div>
     );
@@ -276,7 +276,7 @@ export default function SourceDetailPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6">
       {/* Back + Header */}
       <div>
         <button

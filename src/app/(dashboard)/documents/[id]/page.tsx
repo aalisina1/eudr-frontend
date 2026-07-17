@@ -83,7 +83,7 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
 
   if (isLoading) {
     return (
-      <div className="space-y-6 max-w-4xl">
+      <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-48 w-full rounded-2xl" />
       </div>
@@ -92,7 +92,7 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
 
   if (error || !doc) {
     return (
-      <div className="space-y-4 max-w-4xl">
+      <div className="space-y-4">
         <Button variant="ghost" size="sm" onClick={() => router.push("/documents")} className="gap-1.5">
           <ArrowLeft className="size-4" /> Back
         </Button>
@@ -106,7 +106,7 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
   const isPending = archiveMutation.isPending || deleteMutation.isPending;
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
       {/* Back + Actions */}
       <div className="flex items-center justify-between">
         <Button variant="ghost" size="sm" onClick={() => router.push("/documents")} className="gap-1.5">

@@ -125,7 +125,7 @@ export default function DocumentsPage() {
   const [formOpen, setFormOpen] = useState(false);
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-display text-2xl font-light italic mb-0.5">Documents</h1>
