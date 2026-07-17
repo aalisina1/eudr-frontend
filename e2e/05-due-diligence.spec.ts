@@ -33,10 +33,15 @@ test.describe("Due Diligence Statements (E1/E2)", () => {
     });
     // Lifecycle is reflected: a status-appropriate action control OR the status itself
     // (actions like Submit/Approve/Reject/Withdraw/Edit are intentionally state-gated).
-    // Use locator.first() on the combined or() to avoid strict-mode violations when
-    // multiple matches exist (e.g., TRACES panel also has a "Submit to TRACES" button).
+    // #39: `.first()` has to apply to the COMBINED `or()` locator, not to each operand
+    // separately. E.g. when status is SUBMITTED, the "Withdraw" action button and a
+    // "Submitted" status label (the header badge, *and* the TRACES panel's own
+    // "Submitted — waiting for TRACES to resolve…" copy) are all on the page at once,
+    // so `action.first().or(status.first())` still resolves the union to 2+ elements
+    // and strict-mode-violates. Reducing the union itself to its first match keeps the
+    // assertion unambiguous no matter how many candidates are present.
     const action = page.getByRole("button", { name: /approve|reject|withdraw|edit|delete/i });
-    const status = page.getByText(/\b(draft|submitted|approved|rejected|withdrawn)\b/i).first();
-    await expect(action.first().or(status)).toBeVisible({ timeout: 15_000 });
+    const status = page.getByText(/\b(draft|submitted|approved|rejected|withdrawn)\b/i);
+    await expect(action.or(status).first()).toBeVisible({ timeout: 15_000 });
   });
 });
