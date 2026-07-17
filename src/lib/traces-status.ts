@@ -1,5 +1,5 @@
 import { AlertTriangle, CheckCircle2, FileText, Loader2, Send, XCircle, type LucideIcon } from "lucide-react";
-import type { TracesSubmission } from "@/lib/api/types";
+import type { TracesSubmission, TracesSubmissionStatus } from "@/lib/api/types";
 
 /**
  * Derived TRACES-submission display state — collapses the internal pipeline
@@ -34,8 +34,22 @@ export type TracesDisplayKey =
 /** Pipeline states that mean "still in flight, no verdict yet" (ADR-0017:
  * QUEUED/PROCESSING/RETRYING all map to "Submitting…", covering the entire
  * time a submission attempt is active, including transient failures being
- * retried — never falls back to raw dds.status during these states). */
-const IN_FLIGHT = new Set(["QUEUED", "PROCESSING", "RETRYING"]);
+ * retried — never falls back to raw dds.status during these states).
+ *
+ * #41: this used to be hand-rolled a second time in `traces-panel.tsx`, and
+ * RETRYING was independently missed (then re-added) in both copies across
+ * three separate QA passes before they were merged into this one set —
+ * exported via `isInFlight()` below as the single source of truth every
+ * surface must consume instead of redeclaring its own copy. */
+const IN_FLIGHT = new Set<TracesSubmissionStatus>(["QUEUED", "PROCESSING", "RETRYING"]);
+
+/** Is a TRACES submission's pipeline `status` still in flight (no verdict
+ * yet)? ADR-0017's state table: QUEUED/PROCESSING/RETRYING are all "still
+ * trying" (→ "Submitting…"); SUBMITTED means transport succeeded (verdict
+ * comes from `traces_status` instead); FAILED is terminal. */
+export function isInFlight(status: TracesSubmissionStatus): boolean {
+  return IN_FLIGHT.has(status);
+}
 
 export const TRACES_DISPLAY_STYLE: Record<
   TracesDisplayKey,
@@ -71,6 +85,6 @@ export function deriveTracesDisplay(
   if (sub.traces_status === "ARCHIVED") return "archived";
   if (sub.traces_status === "SUBMITTED") return "submitted";
   if (sub.status === "FAILED") return "failed";
-  if (IN_FLIGHT.has(sub.status)) return "submitting";
+  if (isInFlight(sub.status)) return "submitting";
   return null;
 }

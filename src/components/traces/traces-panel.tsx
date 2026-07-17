@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { authFetch } from "@/lib/api/client";
 import { getErrorMessage } from "@/lib/api/errors";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { isInFlight } from "@/lib/traces-status";
 import type { DDSStatus, TracesErrorDetail, TracesSubmission } from "@/lib/api/types";
 
 /**
@@ -62,14 +63,12 @@ const STATUS_META: Record<
   archived: { label: "Archived", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
 };
 
-// ADR-0017's FE derivation table: status ∈ {QUEUED, PROCESSING, RETRYING} → "Submitting…".
-// RETRYING is a real TracesSubmission.Status member (the backend's own dedup
-// check treats it as in-flight) — omitting it here both mis-renders a
-// retrying submission as "Not submitted" (with an active Submit button) and
-// silently stops refetchInterval polling, which gates on isPending().
-const IN_FLIGHT = new Set(["QUEUED", "PROCESSING", "RETRYING"]);
-
-/** Derive the single display state a submission (or its absence) maps to. */
+/** Derive the single display state a submission (or its absence) maps to.
+ * ADR-0017's FE derivation table: status ∈ {QUEUED, PROCESSING, RETRYING} →
+ * "Submitting…" — `isInFlight()` (`@/lib/traces-status`, #41) is the single
+ * source of truth for that in-flight set, so it can't drift out of sync
+ * with this file's own copy again (RETRYING was independently missed here
+ * and there before the two were consolidated). */
 function deriveDisplay(sub: TracesSubmission | null): DisplayKey {
   if (!sub) return "not_submitted";
   if (sub.traces_status === "AVAILABLE") return "available";
@@ -79,7 +78,7 @@ function deriveDisplay(sub: TracesSubmission | null): DisplayKey {
   if (sub.traces_status === "ARCHIVED") return "archived";
   if (sub.traces_status === "SUBMITTED") return "submitted";
   if (sub.status === "FAILED") return "failed";
-  if (IN_FLIGHT.has(sub.status)) return "submitting";
+  if (isInFlight(sub.status)) return "submitting";
   return "not_submitted";
 }
 
