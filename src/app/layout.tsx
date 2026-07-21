@@ -27,7 +27,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Canopy — EUDR Compliance Platform",
+  title: "Grovetrace — EUDR Compliance Platform",
   description: "Deforestation-free supply chain management & due diligence reporting",
 };
 

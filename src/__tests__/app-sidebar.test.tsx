@@ -41,9 +41,9 @@ vi.mock("@/components/ui/sidebar", () => ({
 }));
 
 describe("AppSidebar", () => {
-  it("renders the Canopy branding", () => {
+  it("renders the Grovetrace branding", () => {
     renderWithProviders(<AppSidebar />);
-    expect(screen.getByText("Canopy")).toBeInTheDocument();
+    expect(screen.getByText("Grovetrace")).toBeInTheDocument();
     expect(screen.getByText("EUDR Compliance")).toBeInTheDocument();
   });
 

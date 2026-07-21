@@ -64,7 +64,7 @@ export default function LoginPage() {
             </div>
             <div>
               <span className="text-white text-lg font-semibold tracking-tight block leading-none">
-                Canopy
+                Grovetrace
               </span>
               <span className="text-white/40 text-[11px] tracking-widest uppercase">
                 EUDR Platform
@@ -109,7 +109,7 @@ export default function LoginPage() {
             <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
               <TreePine className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-lg tracking-tight">Canopy</span>
+            <span className="font-semibold text-lg tracking-tight">Grovetrace</span>
           </div>
 
           <div className="mb-8">
@@ -166,7 +166,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-[11px] text-center text-muted-foreground/60 mt-10">
-            Canopy EUDR Compliance Platform
+            Grovetrace EUDR Compliance Platform
           </p>
         </div>
       </div>
