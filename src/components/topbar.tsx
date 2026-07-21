@@ -22,13 +22,13 @@ const CRUMBS: { prefix: string; label: string }[] = [
 ];
 
 function crumbFor(pathname: string | null): string {
-  if (!pathname) return "Canopy";
+  if (!pathname) return "Grovetrace";
   const match = CRUMBS.find((c) => pathname === c.prefix || pathname.startsWith(`${c.prefix}/`));
-  return match?.label ?? "Canopy";
+  return match?.label ?? "Grovetrace";
 }
 
 /**
- * Shared dashboard topbar — breadcrumb (Canopy › current section) + a
+ * Shared dashboard topbar — breadcrumb (Grovetrace › current section) + a
  * notifications affordance. Ported from the Claude Design prototype's
  * `Topbar` (redesign/shell.jsx); the sidebar-collapse trigger is real,
  * existing app behavior kept alongside it.
@@ -44,7 +44,7 @@ export function Topbar() {
         <Separator orientation="vertical" className="h-4 bg-border/60" />
         <div className="flex items-center gap-2.5 text-[13px]">
           <Leaf className="size-3.5 text-primary" />
-          <span className="text-muted-foreground">Canopy</span>
+          <span className="text-muted-foreground">Grovetrace</span>
           <ChevronRight className="size-3.5 text-border" />
           <span className="font-semibold text-foreground">{crumb}</span>
         </div>

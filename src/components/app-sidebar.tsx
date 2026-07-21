@@ -84,7 +84,7 @@ export function AppSidebar() {
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="font-semibold text-[15px] tracking-tight text-sidebar-foreground leading-none">
-              Canopy
+              Grovetrace
             </span>
             <span className="text-[10px] tracking-[0.12em] uppercase text-sidebar-foreground/35 leading-none">
               EUDR Compliance

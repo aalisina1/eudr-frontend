@@ -101,7 +101,7 @@ export default function SettingsPage() {
           <div className="grid gap-2 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Platform</span>
-              <span>Canopy EUDR Compliance</span>
+              <span>Grovetrace EUDR Compliance</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Version</span>

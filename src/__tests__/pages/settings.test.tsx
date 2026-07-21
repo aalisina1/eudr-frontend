@@ -87,7 +87,7 @@ describe("SettingsPage", () => {
 
   it("renders app info section", () => {
     renderWithProviders(<SettingsPage />);
-    expect(screen.getByText("Canopy EUDR Compliance")).toBeInTheDocument();
+    expect(screen.getByText("Grovetrace EUDR Compliance")).toBeInTheDocument();
     expect(screen.getByText("0.1.0")).toBeInTheDocument();
     expect(screen.getByText("EU 2023/1115")).toBeInTheDocument();
   });
