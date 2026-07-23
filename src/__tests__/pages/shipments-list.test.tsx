@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act } from "react";
 import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { renderWithProviders, mockPaginatedResponse } from "../helpers";
 import ShipmentsPage from "@/app/(dashboard)/shipments/page";
 import type { ConsignmentRow, User } from "@/lib/api/types";
@@ -63,5 +64,28 @@ describe("/shipments list", () => {
     await renderPage();
     await waitFor(() => expect(screen.getByText("BL-RED-1")).toBeInTheDocument());
     expect(screen.queryByRole("button", { name: /New consignment/i })).not.toBeInTheDocument();
+  });
+
+  it("sends rag and countdown_after filter params to the API", async () => {
+    const calls = mockApi([row()]);
+    const user = userEvent.setup();
+    await renderPage();
+    await waitFor(() => expect(screen.getByText("BL-RED-1")).toBeInTheDocument());
+
+    // Select "Red" in the RAG filter
+    const ragSelect = screen.getByLabelText(/RAG status/i);
+    await user.selectOptions(ragSelect, "RED");
+
+    // Type a date into the "Lands after" input
+    const afterInput = screen.getByLabelText(/Lands after/i);
+    await user.type(afterInput, "2026-08-01");
+
+    // Assert that API calls include the filter params
+    await waitFor(() => {
+      expect(calls.some(url => url.includes("rag=RED"))).toBe(true);
+    });
+    await waitFor(() => {
+      expect(calls.some(url => url.includes("countdown_after=2026-08-01"))).toBe(true);
+    });
   });
 });
