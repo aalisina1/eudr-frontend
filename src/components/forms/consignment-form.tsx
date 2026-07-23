@@ -27,12 +27,16 @@ const schema = z.object({
 });
 type FormValues = z.infer<typeof schema>;
 
+/** POST/PATCH return the base Consignment shape — the readiness headline
+ * (rag/counts/countdown) is list/detail-only, so don't promise it. */
+export type SavedConsignment = Partial<ConsignmentRow> & { id: string; reference: string };
+
 interface ConsignmentFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Present → PATCH edit; absent → POST create. */
   consignment?: ConsignmentRow | ConsignmentDetail | null;
-  onSaved?: (c: ConsignmentRow) => void;
+  onSaved?: (c: SavedConsignment) => void;
 }
 
 export function ConsignmentForm({ open, onOpenChange, consignment, onSaved }: ConsignmentFormProps) {
@@ -78,7 +82,7 @@ export function ConsignmentForm({ open, onOpenChange, consignment, onSaved }: Co
         const err = await res.json().catch(() => ({}));
         throw new Error(getErrorMessage(err));
       }
-      return res.json() as Promise<ConsignmentRow>;
+      return res.json() as Promise<SavedConsignment>;
     },
     onSuccess: (saved) => {
       queryClient.invalidateQueries({ queryKey: ["shipments"] });

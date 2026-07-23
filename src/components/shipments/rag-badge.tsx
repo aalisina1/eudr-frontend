@@ -21,7 +21,12 @@ interface RagBadgeProps {
  * muted-outline=GRAY, primary-solid+check=GREEN. */
 export function RagBadge({ rag, countdownDays, countdownLabel, className }: RagBadgeProps) {
   const title = countdownLabel ? `Lands ${countdownLabel}` : undefined;
-  const daySuffix = countdownDays == null ? "" : ` · ${countdownDays} d`;
+  const daySuffix =
+    countdownDays == null
+      ? ""
+      : countdownDays < 0
+        ? ` · ${Math.abs(countdownDays)} d overdue`
+        : ` · ${countdownDays} d`;
 
   if (rag === "GREEN") {
     return (

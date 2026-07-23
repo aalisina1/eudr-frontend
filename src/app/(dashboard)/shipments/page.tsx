@@ -29,7 +29,8 @@ function ShipmentsPageInner() {
   const { data: currentUser } = useCurrentUser();
   const canWrite = currentUser?.role === "ADMIN" || currentUser?.role === "COMPLIANCE_OFFICER";
 
-  const [rag, setRag] = useState(searchParams.get("rag") ?? "");
+  const ragParam = searchParams.get("rag") ?? "";
+  const [rag, setRag] = useState(RAG_OPTIONS.some((o) => o.value === ragParam) ? ragParam : "");
   const [after, setAfter] = useState("");
   const [before, setBefore] = useState("");
   const [formOpen, setFormOpen] = useState(false);
@@ -55,6 +56,10 @@ function ShipmentsPageInner() {
   }, [isSupplierContact, router]);
   if (isSupplierContact) return null;
 
+  // Content gate fails closed: don't mount the list (and fire its fetch)
+  // until the role is known — the SUPPLIER_CONTACT redirect must win.
+  if (!currentUser) return <Skeleton className="h-40 w-full" />;
+
   const filtersActive = !!(rag || after || before);
 
   const columns: ColumnDef<ConsignmentRow>[] = [
@@ -71,7 +76,7 @@ function ShipmentsPageInner() {
           countdownLabel={c.countdown_to ? formatEta(c.countdown_to) : null}
         />
       ),
-      exportValue: (c) => c.rag,
+      exportValue: (c) => (c.countdown_to ? `${c.rag} (${c.countdown_to})` : c.rag),
     },
     {
       key: "coverage", header: "Coverage",
@@ -106,7 +111,11 @@ function ShipmentsPageInner() {
           <span className="text-[12.5px] text-muted-foreground">—</span>
         ),
     },
-    { key: "tracking", header: "Tracking", render: (c) => <TrackingBadge state={deriveTrackingState(c)} /> },
+    {
+      key: "tracking", header: "Tracking",
+      render: (c) => <TrackingBadge state={deriveTrackingState(c)} />,
+      exportValue: (c) => deriveTrackingState(c),
+    },
   ];
 
   const toolbarExtra = (

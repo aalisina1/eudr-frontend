@@ -6,8 +6,22 @@ import { renderWithProviders, mockPaginatedResponse } from "../helpers";
 import ShipmentsPage from "@/app/(dashboard)/shipments/page";
 import type { ConsignmentRow, User } from "@/lib/api/types";
 
+// File-level mock (house pattern — see file-dds-composer-routing.test.tsx):
+// the global next/navigation mock in setup.ts can't assert router calls, and
+// the SUPPLIER_CONTACT redirect test below needs to assert `replace` was
+// called with "/dashboard".
+const push = vi.fn();
+const replace = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push, replace, back: vi.fn(), forward: vi.fn(), refresh: vi.fn(), prefetch: vi.fn() }),
+  usePathname: () => "/shipments",
+  useParams: () => ({}),
+  useSearchParams: () => new URLSearchParams(),
+  redirect: vi.fn(),
+}));
+
 const originalFetch = globalThis.fetch;
-afterEach(() => { globalThis.fetch = originalFetch; vi.restoreAllMocks(); });
+afterEach(() => { globalThis.fetch = originalFetch; vi.restoreAllMocks(); vi.clearAllMocks(); });
 
 // Countdown dates are computed from the real clock — daysUntil() uses
 // Date.now() and nothing in the suite fakes time, so a hardcoded date would
@@ -87,5 +101,29 @@ describe("/shipments list", () => {
     await waitFor(() => {
       expect(calls.some(url => url.includes("countdown_after=2026-08-01"))).toBe(true);
     });
+  });
+
+  it("shows both first-run CTAs in the empty state for COMPLIANCE_OFFICER", async () => {
+    mockApi([], "COMPLIANCE_OFFICER");
+    await renderPage();
+    await waitFor(() => expect(screen.getByText(/No shipments tracked yet/)).toBeInTheDocument());
+    // "New consignment" renders twice (toolbar + empty-state CTA) — assert presence, not count.
+    expect(screen.getAllByRole("button", { name: /New consignment/i }).length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: /Assign lots to a consignment/i })).toBeInTheDocument();
+  });
+
+  it("hides both first-run CTAs for VIEWER", async () => {
+    mockApi([], "VIEWER");
+    await renderPage();
+    await waitFor(() => expect(screen.getByText(/No shipments tracked yet/)).toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: /New consignment/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Assign lots to a consignment/i })).not.toBeInTheDocument();
+  });
+
+  it("redirects SUPPLIER_CONTACT to /dashboard without rendering the list", async () => {
+    mockApi([row()], "SUPPLIER_CONTACT");
+    await renderPage();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/dashboard"));
+    expect(screen.queryByText("BL-RED-1")).not.toBeInTheDocument();
   });
 });

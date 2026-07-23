@@ -8,6 +8,10 @@ describe("RagBadge", () => {
     render(<RagBadge rag="RED" countdownDays={4} countdownLabel="24 Jul" />);
     expect(screen.getByText(/RED · 4 d/)).toBeInTheDocument();
   });
+  it("renders RED overdue when countdownDays is negative", () => {
+    render(<RagBadge rag="RED" countdownDays={-3} />);
+    expect(screen.getByText(/RED · 3 d overdue/)).toBeInTheDocument();
+  });
   it("shows AMBER with its day count", () => {
     render(<RagBadge rag="AMBER" countdownDays={12} />);
     expect(screen.getByText(/AMBER · 12 d/)).toBeInTheDocument();
