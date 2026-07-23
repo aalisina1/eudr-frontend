@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { authFetch } from "@/lib/api/client";
 import { getErrorMessage } from "@/lib/api/errors";
 import type { Batch, ConsignmentLot, PaginatedResponse } from "@/lib/api/types";
@@ -110,9 +111,10 @@ export function AssignLotsSheet({ open, onOpenChange, consignmentId, currentLots
                   key={b.id}
                   type="button"
                   onClick={() => toggle(addIds, setAddIds, b.id)}
-                  className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-[13px] transition-colors ${
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-[13px] transition-colors",
                     addIds.has(b.id) ? "border-primary bg-primary/5" : "border-border/60"
-                  }`}
+                  )}
                 >
                   <span className="font-mono">{b.reference_number}</span>
                   {b.shipment_reference && (
@@ -127,18 +129,19 @@ export function AssignLotsSheet({ open, onOpenChange, consignmentId, currentLots
           </div>
           {currentLots.length > 0 && (
             <div className="space-y-1.5">
-              <Label>Currently assigned (unselect to remove)</Label>
-              <div className="flex flex-wrap gap-1.5">
+              <p id="current-lots-label" className="text-sm font-medium">Currently assigned (unselect to remove)</p>
+              <div role="group" aria-labelledby="current-lots-label" className="flex flex-wrap gap-1.5">
                 {currentLots.map((l) => (
                   <button
                     key={l.id}
                     type="button"
                     onClick={() => toggle(removeIds, setRemoveIds, l.id)}
-                    className={`rounded-full border px-2.5 py-0.5 font-mono text-[11.5px] transition-colors ${
+                    className={cn(
+                      "rounded-full border px-2.5 py-0.5 font-mono text-[11.5px] transition-colors",
                       removeIds.has(l.id)
                         ? "border-destructive/40 bg-destructive/10 text-destructive line-through"
                         : "border-border text-muted-foreground"
-                    }`}
+                    )}
                   >
                     {l.reference_number}
                   </button>
