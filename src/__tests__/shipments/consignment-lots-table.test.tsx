@@ -27,4 +27,16 @@ describe("ConsignmentLotsTable", () => {
     render(<ConsignmentLotsTable lots={[]} />);
     expect(screen.getByText(/No lots assigned/i)).toBeInTheDocument();
   });
+
+  it("falls back to covering_dds_id when covering_dds_reference is empty", () => {
+    render(<ConsignmentLotsTable lots={[lot({ covered: true, covering_dds_id: "dds-42", covering_dds_reference: "" })]} />);
+    const link = screen.getByRole("link", { name: /dds-42/ });
+    expect(link).toHaveAttribute("href", "/due-diligence/dds-42");
+  });
+
+  it("shows Not covered but no resolve link for an uncovered PLOTS_COMPLETE lot", () => {
+    render(<ConsignmentLotsTable lots={[lot({ stage: "PLOTS_COMPLETE", covered: false })]} />);
+    expect(screen.getByText(/Not covered/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Complete plots/i })).toBeNull();
+  });
 });
