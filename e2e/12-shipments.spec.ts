@@ -6,17 +6,19 @@
  * `10-submissions.spec.ts` / `04-supply-chains.spec.ts`):
  *   - REAL backend: auth/nav/role-gating, and everything the live seeded data
  *     on maria's org (COMPLIANCE_OFFICER) can exercise deterministically —
- *     RAG filter, date-range filter (both server-side per eudr-app #121), the
- *     RED detail + blocker deep-link, Compose-DDS prefill, the location map
- *     (3 seeded consignments carry a real `latest_location`), and the
- *     zero-results state (RAG=GRAY has 0 live matches).
+ *     RAG filter, date-range filter (both server-side per eudr-app #121, and
+ *     the only two filters this suite verifies the outbound query params
+ *     for), the RED detail + blocker deep-link, Compose-DDS prefill, the
+ *     location map (3 seeded consignments carry a real `latest_location`,
+ *     one of them also exercising the live `subscribing` tracking state),
+ *     and the zero-results state (RAG=GRAY has 0 live matches).
  *   - STUBBED (`page.route`, registered before `page.goto`): every state the
  *     live 5-consignment fixture can't produce — empty (zero consignments),
  *     GRAY (no date at all), the divergence badge (no live row has both a
  *     manual date and a feed ETA), tracking states `live`/`error`/
- *     `quota_reached` (only `untracked`/`subscribing` are derivable from live
- *     data), 404, and the "GREEN after filing" recompute (the DDS filing
- *     mechanics themselves are already covered by `05-due-diligence.spec.ts`
+ *     `quota_reached` (`untracked` and `subscribing` are asserted live —
+ *     see the map tests), 404, and the "GREEN after filing" recompute (the
+ *     DDS filing mechanics themselves are already covered by `05-due-diligence.spec.ts`
  *     / `11-file-dds-composer.spec.ts`; this locks in that the *shipments*
  *     detail page re-renders the new RAG/coverage on a fresh fetch, not that
  *     it caches stale data). The manual "Assign to consignment" journey is
@@ -45,8 +47,13 @@ const REF = {
   amberRotterdam: "BKG-2026-4471", // AMBER, location Rotterdam (NLRTM), subscribing, 1 lot
 } as const;
 
-/** Search `/shipments` for an exact reference (server-side search, #121) and
- * open the single matching row. Returns the resolved consignment id. */
+/** Type a reference into `/shipments`'s search box, then let Playwright's own
+ * `hasText` filter pick the matching row out of whatever's rendered and open
+ * it. This does NOT assert that the search actually narrowed server-side
+ * (unlike the RAG-filter and date-range tests, which capture the outbound
+ * request and verify the real query params) — it's purely an id-resolution
+ * helper, since consignment ids are random UUID4s that differ per
+ * `seed_demo_data` run. Returns the resolved consignment id. */
 async function openConsignmentByReference(page: Page, reference: string): Promise<string> {
   await page.goto("/shipments");
   await expectListResponded(page);
@@ -325,13 +332,17 @@ test.describe("COMPLIANCE_OFFICER — manual Assign to consignment from PO unass
     await expect(page.getByRole("heading", { name: PO_WITH_UNASSIGNED.reference_number })).toBeVisible();
     await expect(page.getByText("No shipment assigned")).toBeVisible();
 
-    // Interaction 1: open the Sheet from the unassigned bucket's CTA.
+    // Open the Sheet from the unassigned bucket's CTA. (The doc's "≤2
+    // interactions" success signal is a UX-design intent, not something this
+    // test bounds numerically — what's asserted below is the end state: the
+    // lot reaches a newly created consignment via this Sheet, without ever
+    // navigating to /shipments directly.)
     await page.getByRole("button", { name: "Assign to consignment" }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog.getByRole("heading", { name: "Assign to consignment" })).toBeVisible();
     await expect(dialog.getByText("Attach 1 lot")).toBeVisible();
 
-    // Interaction 2: create-and-assign inline.
+    // Switch to "New" mode and create-and-assign inline.
     await dialog.getByRole("button", { name: "New", exact: true }).click();
     await dialog.getByLabel(/Reference/).fill("BL-E2E-NEW");
     await dialog.getByRole("button", { name: "Assign" }).click();
@@ -423,9 +434,13 @@ test.describe("States matrix (stubbed, no live fixture produces these)", () => {
   });
 
   test("cross-org / nonexistent detail renders the standard house 404, never a 403 or leaked row", async ({ page }) => {
-    // Stubbed 404 — matches Decision 7 (cross-org access is 404, verified
-    // live against the real backend too: a SUPPLIER_CONTACT's org token
-    // hitting maria's real consignment id returns 404, confirmed manually).
+    // This test asserts the FRONTEND's rendering of a 404 response — the
+    // real cross-org isolation enforcement is the backend's, and is covered
+    // by eudr-app's pytest cross-org test suite, not here. There's no second
+    // operator-org credential in the E2E seed data to automate a true
+    // cross-org click-through in this suite; during investigation a manual
+    // curl (a SUPPLIER_CONTACT's org token hitting maria's real consignment
+    // id) confirmed the backend returns 404, never 403, matching Decision 7.
     const id = "e2e-404-stub";
     routeConsignmentDetail(page, id, { status: 404 });
     await page.goto(`/shipments/${id}`);
@@ -446,6 +461,11 @@ test.describe("Port-location map (ADR-0025, live)", () => {
     await expect(page.getByText("Location", { exact: true })).toBeVisible();
     await expect(page.locator(".h-56.w-full.overflow-hidden.rounded-xl")).toBeVisible();
     await expect(page.getByText("Currently at Rotterdam")).toBeVisible();
+    // This fixture has a tracking_number but no latest_eta yet — the live
+    // "subscribing" tracking state (untracked/subscribing are the only two
+    // states the live seed data can produce; live/error/quota_reached are
+    // covered by stubs in the States matrix above).
+    await expect(page.locator('[data-slot="badge"]', { hasText: "Subscribing" })).toBeVisible();
   });
 
   test("a consignment with no location shows the 'No location yet' fallback", async ({ page }) => {
@@ -489,7 +509,7 @@ test.describe("Dark mode (criterion, live)", () => {
 });
 
 // ===========================================================================
-// ADMIN — edit a consignment, reflected without a full reload (criterion 7, stubbed)
+// ADMIN — edit a consignment, reflected via query invalidation (criterion 7, stubbed)
 // ===========================================================================
 test.describe("ADMIN — edit consignment reflected in detail + list (stubbed)", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
@@ -540,7 +560,8 @@ test.describe("ADMIN — edit consignment reflected in detail + list (stubbed)",
 
     expect(patchBody).toMatchObject({ reference: "E2E-ADMIN-1-EDITED", expected_clearance_date: "2026-09-15", tracking_number: "TRK-NEW-99" });
     // Detail reflects the edit via the standard React Query invalidation
-    // refetch — no full page reload.
+    // refetch (end-state asserted below — this test doesn't itself check
+    // for the absence of a navigation/reload event).
     await expect(page.getByRole("heading", { name: "E2E-ADMIN-1-EDITED" })).toBeVisible({ timeout: 10_000 });
 
     // List reflects it too (its own query key was invalidated on save).
@@ -590,6 +611,11 @@ test.describe("VIEWER — mutation controls absent (mix live + stubbed)", () => 
 // ===========================================================================
 // SUPPLIER_CONTACT — no route access at all (criterion 9, live)
 // ===========================================================================
+// These two tests assert the CLIENT-SIDE block/redirect only (the inline
+// `isSupplierContact` check + `router.replace("/dashboard")` in the page
+// components). Whether the backend itself also denies a SUPPLIER_CONTACT
+// token read access to `/api/v1/supply-chain/consignments/` is a separate,
+// server-side posture tracked in eudr-app#129 — not verified by this suite.
 test.describe("SUPPLIER_CONTACT — route-level block (live)", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
