@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, FileText } from "lucide-react";
@@ -12,9 +12,11 @@ import { CoverageFunnelCard } from "@/components/sourcing/coverage-funnel-card";
 import { ReadinessChecklistCard } from "@/components/sourcing/readiness-checklist-card";
 import { PoLotsTable } from "@/components/sourcing/po-lots-table";
 import { PoProvenanceCard } from "@/components/sourcing/po-provenance-card";
+import { AssignToConsignmentSheet } from "@/components/shipments/assign-to-consignment-sheet";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { authFetch } from "@/lib/api/client";
 import { UNIT_LABELS } from "@/lib/readiness-format";
-import type { POReadinessDetail, Product, Supplier } from "@/lib/api/types";
+import type { LotReadiness, POReadinessDetail, Product, Supplier } from "@/lib/api/types";
 
 /** Whole-number, thousands-separated quantity — see the Sourcing list's
  * identically-named helper; funnel values are decimal strings. */
@@ -34,6 +36,10 @@ function formatQty(value: string): string {
 export default function PoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { data: currentUser } = useCurrentUser();
+  const canWrite = currentUser?.role === "ADMIN" || currentUser?.role === "COMPLIANCE_OFFICER";
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [assignLots, setAssignLots] = useState<LotReadiness[]>([]);
 
   const {
     data: po,
@@ -172,6 +178,11 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
         <PoLotsTable
           lots={po.lots}
           allocatedLabel={`${formatQty(po.funnel.allocated_quantity)} ${unitLabel} allocated`}
+          canAssignUnassigned={canWrite}
+          onAssignUnassigned={(lots) => {
+            setAssignLots(lots);
+            setAssignOpen(true);
+          }}
         />
 
         <PoProvenanceCard
@@ -181,6 +192,14 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
           plotCount={totalPlots}
           lotCount={po.lots.length}
         />
+
+        {canWrite && (
+          <AssignToConsignmentSheet
+            open={assignOpen}
+            onOpenChange={setAssignOpen}
+            lotIds={assignLots.map((l) => l.id)}
+          />
+        )}
       </div>
     </TooltipProvider>
   );
