@@ -191,7 +191,11 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
     isLoading,
     error,
   } = useQuery<POReadinessDetail>({
-    queryKey: ["dds-composer-source", anchorKind, anchorId],
+    // PO path reuses ["po-readiness", id] — the same key the PO-detail page
+    // queries (src/app/(dashboard)/supply-chains/[id]/page.tsx) — so landing
+    // here from PO detail is an instant cache hit. Consignment path has no
+    // such sibling query yet, so it gets its own key.
+    queryKey: anchorKind === "po" ? ["po-readiness", anchorId] : ["dds-composer-source", "consignment", anchorId],
     queryFn: () =>
       anchorKind === "consignment" ? fetchConsignmentSource(anchorId) : fetchPoReadiness(anchorId),
     enabled: !!anchorId,

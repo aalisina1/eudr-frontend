@@ -64,7 +64,7 @@ describe("/shipments/[id] detail", () => {
     await waitFor(() => expect(screen.getByRole("heading", { name: "BL-RED-1" })).toBeInTheDocument());
     expect(screen.getByText(/0\/1/)).toBeInTheDocument();
     expect(screen.getByText("LOT-1")).toBeInTheDocument();
-    expect(screen.getByText(/eta_changed/)).toBeInTheDocument();
+    expect(screen.getByText(/Eta changed/)).toBeInTheDocument();
   });
 
   it("shows the divergence badge when clearance date and feed ETA disagree", async () => {

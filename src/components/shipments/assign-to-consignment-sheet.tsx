@@ -35,7 +35,7 @@ interface AssignToConsignmentSheetProps {
 }
 
 async function assignLots(consignmentId: string, lotIds: string[]) {
-  const res = await authFetch(`/api/v1/supply-chain/consignments/${consignmentId}/lots/`, {
+  const res = await authFetch(`/api/v1/supply-chain/consignments/${encodeURIComponent(consignmentId)}/lots/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ add: lotIds }),
@@ -70,17 +70,25 @@ export function AssignToConsignmentSheet({ open, onOpenChange, lotIds, onSaved }
   // a retry reuses the consignment it already made instead of re-creating it.
   const createdRef = useRef<{ reference: string; id: string } | null>(null);
 
-  const { data: options } = useQuery<PaginatedResponse<ConsignmentRow>>({
+  const { data: consignmentPage } = useQuery<PaginatedResponse<ConsignmentRow>>({
     queryKey: ["shipments-picker", search],
     queryFn: async () => {
       const res = await authFetch(
-        `/api/v1/supply-chain/consignments/?limit=20${search ? `&search=${encodeURIComponent(search)}` : ""}`
+        `/api/v1/supply-chain/consignments/?page_size=20${search ? `&search=${encodeURIComponent(search)}` : ""}`
       );
       if (!res.ok) throw new Error("Failed to load consignments");
       return res.json();
     },
     enabled: open && mode === "existing",
   });
+
+  // Interim client-side filter: the backend currently ignores `?search=` on
+  // /consignments/ (tracked upstream: eudr-app#121 adds search_fields). Keep
+  // sending the param for when that lands, but also filter the rendered
+  // options here in the meantime.
+  const options = (consignmentPage?.results ?? []).filter(
+    (c) => !search || c.reference.toLowerCase().includes(search.toLowerCase())
+  );
 
   const mutation = useMutation({
     mutationFn: async (newValues?: NewConsignmentValues) => {
@@ -107,12 +115,15 @@ export function AssignToConsignmentSheet({ open, onOpenChange, lotIds, onSaved }
           createdRef.current = { reference, id: created.id };
         }
       }
-      return assignLots(consignmentId, lotIds);
+      await assignLots(consignmentId, lotIds);
+      return consignmentId;
     },
-    onSuccess: () => {
+    onSuccess: (id) => {
       createdRef.current = null;
       queryClient.invalidateQueries({ queryKey: ["shipments"] });
       queryClient.invalidateQueries({ queryKey: ["po-readiness"] });
+      queryClient.invalidateQueries({ queryKey: ["consignment", id] });
+      queryClient.invalidateQueries({ queryKey: ["shipments-picker"] });
       onSaved?.();
       onOpenChange(false);
       setMode("existing");
@@ -168,7 +179,7 @@ export function AssignToConsignmentSheet({ open, onOpenChange, lotIds, onSaved }
               <Label htmlFor="c-search">Search by reference</Label>
               <Input id="c-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="BL / booking #" />
               <div className="max-h-56 space-y-1 overflow-y-auto">
-                {(options?.results ?? []).map((c) => (
+                {options.map((c) => (
                   <button
                     key={c.id}
                     type="button"
@@ -185,7 +196,7 @@ export function AssignToConsignmentSheet({ open, onOpenChange, lotIds, onSaved }
                     </span>
                   </button>
                 ))}
-                {options && options.results.length === 0 && (
+                {consignmentPage && options.length === 0 && (
                   <p className="px-1 text-xs text-muted-foreground">No consignments match.</p>
                 )}
               </div>

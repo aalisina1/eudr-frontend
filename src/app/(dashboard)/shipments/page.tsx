@@ -10,7 +10,7 @@ import { DataTable, type ColumnDef } from "@/components/data-table";
 import { RagBadge } from "@/components/shipments/rag-badge";
 import { TrackingBadge } from "@/components/shipments/tracking-badge";
 import { ConsignmentForm } from "@/components/forms/consignment-form";
-import { coveragePct, deriveTrackingState } from "@/lib/consignment-format";
+import { coveragePct, deriveTrackingState, humanizeEventType } from "@/lib/consignment-format";
 import { daysUntil, formatEta } from "@/lib/readiness-format";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import type { ConsignmentRow } from "@/lib/api/types";
@@ -94,8 +94,8 @@ function ShipmentsPageInner() {
       key: "latest_event_type", header: "Latest milestone",
       render: (c) =>
         c.latest_event_type ? (
-          <span className="text-[12.5px]">
-            {c.latest_event_type}
+          <span className="text-[12.5px]" title={c.latest_event_type}>
+            {humanizeEventType(c.latest_event_type)}
             {c.latest_event_at ? ` · ${formatEta(c.latest_event_at)}` : ""}
           </span>
         ) : (

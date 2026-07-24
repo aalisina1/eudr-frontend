@@ -13,7 +13,7 @@ import { TrackingBadge } from "@/components/shipments/tracking-badge";
 import { ConsignmentLotsTable } from "@/components/shipments/consignment-lots-table";
 import { ConsignmentForm } from "@/components/forms/consignment-form";
 import { AssignLotsSheet } from "@/components/shipments/assign-lots-sheet";
-import { coveragePct, deriveTrackingState } from "@/lib/consignment-format";
+import { coveragePct, deriveTrackingState, humanizeEventType } from "@/lib/consignment-format";
 import { daysUntil, formatEta } from "@/lib/readiness-format";
 import { authFetch } from "@/lib/api/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -178,7 +178,7 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
             ) : (
               c.events.map((e, i) => (
                 <div key={e.id ?? `${e.event_type}-${i}`} className="flex items-baseline justify-between gap-3 border-b border-border/40 pb-2 last:border-0">
-                  <span className="text-[13px] font-medium">{e.event_type}</span>
+                  <span className="text-[13px] font-medium" title={e.event_type}>{humanizeEventType(e.event_type)}</span>
                   <span className="text-xs text-muted-foreground">{formatEta(e.occurred_at)}</span>
                 </div>
               ))

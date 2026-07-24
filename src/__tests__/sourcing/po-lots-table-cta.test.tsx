@@ -30,6 +30,23 @@ describe("PoLotsTable unassigned CTA", () => {
     expect(onAssign.mock.calls[0][0].map((l: LotReadiness) => l.id)).toEqual(["b"]);
   });
 
+  it("shows the CTA when every lot is unassigned (the __all__ fallback bucket) and passes all lots", async () => {
+    const onAssign = vi.fn();
+    render(
+      <PoLotsTable
+        allocatedLabel="x"
+        canAssignUnassigned
+        onAssignUnassigned={onAssign}
+        // no lot has a shipment_reference → groupByShipment's single
+        // { key: "__all__", label: null } fallback bucket
+        lots={[lot({ id: "a" }), lot({ id: "b" })]}
+      />
+    );
+    await userEvent.click(screen.getByRole("button", { name: /Assign to consignment/i }));
+    expect(onAssign).toHaveBeenCalledTimes(1);
+    expect(onAssign.mock.calls[0][0].map((l: LotReadiness) => l.id)).toEqual(["a", "b"]);
+  });
+
   it("hides the CTA when canAssignUnassigned is false", () => {
     render(
       <PoLotsTable

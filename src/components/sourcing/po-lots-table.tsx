@@ -151,8 +151,31 @@ function GroupHeaderRow({
   canAssignUnassigned?: boolean;
   onAssignUnassigned?: (lots: LotReadiness[]) => void;
 }) {
-  const isUnassigned = group.key === "__unassigned__";
-  if (group.label === null) return null;
+  const isUnassigned = group.key === "__unassigned__" || group.key === "__all__";
+  if (group.label === null) {
+    // The `__all__` fallback bucket (no lot carries a shipment_reference —
+    // today's live API, or a PO where every lot is unassigned) has no label
+    // to render — but a fully-unassigned PO is the canonical manual-journey
+    // start, so still surface the CTA alone: right-aligned, no label/chip.
+    if (!(canAssignUnassigned && onAssignUnassigned && group.lots.length > 0)) return null;
+    return (
+      <TableRow className="bg-foreground/4 hover:bg-foreground/4">
+        <TableCell colSpan={COLUMN_COUNT} className="py-1.5">
+          <span className="inline-flex w-full items-center justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1.5 text-xs"
+              onClick={() => onAssignUnassigned(group.lots)}
+            >
+              <Plus className="size-3.5" /> Assign to consignment
+            </Button>
+          </span>
+        </TableCell>
+      </TableRow>
+    );
+  }
   const days = daysUntil(group.deadline);
   return (
     <TableRow className="bg-foreground/4 hover:bg-foreground/4">

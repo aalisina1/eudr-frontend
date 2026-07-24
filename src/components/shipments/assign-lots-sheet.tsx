@@ -47,7 +47,7 @@ export function AssignLotsSheet({ open, onOpenChange, consignmentId, currentLots
     queryKey: ["lot-picker", search],
     queryFn: async () => {
       const res = await authFetch(
-        `/api/v1/supply-chain/batches/?limit=20${search ? `&search=${encodeURIComponent(search)}` : ""}`
+        `/api/v1/supply-chain/batches/?page_size=20${search ? `&search=${encodeURIComponent(search)}` : ""}`
       );
       if (!res.ok) throw new Error("Failed to load lots");
       return res.json();
@@ -60,7 +60,7 @@ export function AssignLotsSheet({ open, onOpenChange, consignmentId, currentLots
   const mutation = useMutation({
     mutationFn: async () => {
       const body = { add: Array.from(addIds), remove: Array.from(removeIds) };
-      const res = await authFetch(`/api/v1/supply-chain/consignments/${consignmentId}/lots/`, {
+      const res = await authFetch(`/api/v1/supply-chain/consignments/${encodeURIComponent(consignmentId)}/lots/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -74,6 +74,8 @@ export function AssignLotsSheet({ open, onOpenChange, consignmentId, currentLots
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["consignment", consignmentId] });
       queryClient.invalidateQueries({ queryKey: ["shipments"] });
+      queryClient.invalidateQueries({ queryKey: ["po-readiness"] });
+      queryClient.invalidateQueries({ queryKey: ["lot-picker"] });
       onSaved?.();
       onOpenChange(false);
       setAddIds(new Set());
@@ -110,6 +112,7 @@ export function AssignLotsSheet({ open, onOpenChange, consignmentId, currentLots
                 <button
                   key={b.id}
                   type="button"
+                  aria-pressed={addIds.has(b.id)}
                   onClick={() => toggle(addIds, setAddIds, b.id)}
                   className={cn(
                     "flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-[13px] transition-colors",
