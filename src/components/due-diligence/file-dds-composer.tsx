@@ -34,6 +34,7 @@ import { DDSForm } from "@/components/forms/dds-form";
 import { authFetch } from "@/lib/api/client";
 import { getErrorMessage } from "@/lib/api/errors";
 import type {
+  ConsignmentDetail,
   DueDiligenceStatement,
   PayloadEstimateResponse,
   POReadinessDetail,
@@ -55,6 +56,55 @@ async function fetchPoReadiness(poId: string): Promise<POReadinessDetail> {
   const res = await authFetch(`/api/v1/supply-chain/batches/${encodeURIComponent(poId)}/readiness/`);
   if (!res.ok) throw new Error("Failed to load purchase order.");
   return res.json();
+}
+
+/** Adapt a consignment into the composer's existing PO-shaped `source`
+ * (Decision 4 — a consignment is a second anchor, not a mode). Lots carry only
+ * id/ref/qty/unit/coverage; harvest/plot/seller are absent, so they resolve to
+ * the composer's existing "Missing"/"—"/empty-lookup behaviors. The payload
+ * meter reads from the payload-estimate endpoint (by lot id), so it is
+ * unaffected. */
+function consignmentToSource(d: ConsignmentDetail): POReadinessDetail {
+  return {
+    id: d.id,
+    reference_number: d.reference,
+    seller_id: "",
+    buyer_id: "",
+    product_id: "",
+    transaction_date: "",
+    stage: "OPEN",
+    blocked: false,
+    blockers: [],
+    funnel: {
+      unit: "KG", ordered_quantity: "0", allocated_quantity: "0",
+      geolocated_quantity: "0", filed_quantity: "0", uncovered_quantity: "0",
+    },
+    lot_count: d.lots.length,
+    next_deadline: d.countdown_to,
+    lots: d.lots.map((l) => ({
+      id: l.id,
+      reference_number: l.reference_number,
+      quantity: l.quantity,
+      unit: l.unit,
+      harvest_period_start: null,
+      harvest_period_end: null,
+      plot_count: 0,
+      plots_resolved: false,
+      plots_failed_count: 0,
+      plots_pending_count: 0,
+      filed: l.covered,
+      filing_dds_id: l.covering_dds_id,
+      filing_dds_reference: l.covering_dds_reference,
+      shipment_reference: d.reference,
+      expected_clearance_date: d.expected_clearance_date,
+    })),
+  };
+}
+
+async function fetchConsignmentSource(consignmentId: string): Promise<POReadinessDetail> {
+  const res = await authFetch(`/api/v1/supply-chain/consignments/${encodeURIComponent(consignmentId)}/`);
+  if (!res.ok) throw new Error("Failed to load consignment.");
+  return consignmentToSource(await res.json());
 }
 
 async function fetchSupplier(id: string): Promise<Supplier> {
@@ -88,7 +138,10 @@ async function fetchPayloadEstimate(batchIds: string[]): Promise<PayloadEstimate
 }
 
 interface FileDdsComposerProps {
-  poId: string;
+  /** Exactly one anchor is set: a PO (existing `?po=` path) or a consignment
+   * (`?consignment=`, spec Decision 4). */
+  poId?: string;
+  consignmentId?: string;
 }
 
 /**
@@ -113,7 +166,7 @@ interface FileDdsComposerProps {
  * TRACES-submission endpoint itself; "hands off" is literal. "Save draft"
  * performs only the first step, leaving it DRAFT for further editing.
  */
-export function FileDdsComposer({ poId }: FileDdsComposerProps) {
+export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   // `null` means "no manual selection yet" — `checkedIds` below falls back
@@ -126,13 +179,22 @@ export function FileDdsComposer({ poId }: FileDdsComposerProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [freeformOpen, setFreeformOpen] = useState(false);
 
+  const anchorKind: "po" | "consignment" = consignmentId ? "consignment" : "po";
+  const anchorId = consignmentId ?? poId ?? "";
+  const backHref =
+    anchorKind === "consignment"
+      ? `/shipments/${encodeURIComponent(anchorId)}`
+      : `/supply-chains/${encodeURIComponent(anchorId)}`;
+
   const {
     data: po,
     isLoading,
     error,
   } = useQuery<POReadinessDetail>({
-    queryKey: ["po-readiness", poId],
-    queryFn: () => fetchPoReadiness(poId),
+    queryKey: ["dds-composer-source", anchorKind, anchorId],
+    queryFn: () =>
+      anchorKind === "consignment" ? fetchConsignmentSource(anchorId) : fetchPoReadiness(anchorId),
+    enabled: !!anchorId,
   });
 
   const allLotIds = useMemo(() => new Set(po?.lots.map((l) => l.id) ?? []), [po]);
@@ -162,7 +224,7 @@ export function FileDdsComposer({ poId }: FileDdsComposerProps) {
     isFetching: estimateLoading,
     error: estimateError,
   } = useQuery<PayloadEstimateResponse>({
-    queryKey: ["payload-estimate", poId, checkedList.join(",")],
+    queryKey: ["payload-estimate", anchorId, checkedList.join(",")],
     queryFn: () => fetchPayloadEstimate(checkedList),
     enabled: checkedList.length > 0,
   });
@@ -247,7 +309,7 @@ export function FileDdsComposer({ poId }: FileDdsComposerProps) {
           <ArrowLeft className="size-4" /> Submissions
         </Button>
         <div className="flex items-center gap-2 rounded-xl border border-destructive/15 bg-destructive/8 px-4 py-3 text-sm text-destructive">
-          Purchase order not found or failed to load.
+          {anchorKind === "consignment" ? "Consignment" : "Purchase order"} not found or failed to load.
         </div>
       </div>
     );
@@ -291,7 +353,7 @@ export function FileDdsComposer({ poId }: FileDdsComposerProps) {
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => router.push(`/supply-chains/${encodeURIComponent(poId)}`)}
+        onClick={() => router.push(backHref)}
         className="-ml-2 gap-1.5 text-muted-foreground"
       >
         <ArrowLeft className="size-4" /> {po.reference_number}
