@@ -5,6 +5,7 @@ export const CREDENTIALS = {
   compliance: { email: "maria@canopy.test", password: "canopy2025" },
   admin: { email: "admin@canopy.test", password: "canopy2025" },
   viewer: { email: "viewer@canopy.test", password: "canopy2025" },
+  supplier: { email: "kofi@agroforest.test", password: "canopy2025" },
 } as const;
 
 /** Log in through the real login form. */
