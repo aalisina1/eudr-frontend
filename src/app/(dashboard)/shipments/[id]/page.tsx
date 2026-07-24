@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RagBadge } from "@/components/shipments/rag-badge";
 import { TrackingBadge } from "@/components/shipments/tracking-badge";
 import { ConsignmentLotsTable } from "@/components/shipments/consignment-lots-table";
+import { ShipmentLocationMap } from "@/components/shipments/shipment-location-map";
 import { ConsignmentForm } from "@/components/forms/consignment-form";
 import { AssignLotsSheet } from "@/components/shipments/assign-lots-sheet";
 import { coveragePct, deriveTrackingState, humanizeEventType } from "@/lib/consignment-format";
@@ -169,22 +170,31 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
         <div className="lg:col-span-2">
           <ConsignmentLotsTable lots={c.lots} />
         </div>
-        {/* Milestone timeline */}
-        <Card>
-          <CardHeader><CardTitle>Milestone timeline</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            {c.events.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No tracking milestones yet.</p>
-            ) : (
-              c.events.map((e, i) => (
-                <div key={e.id ?? `${e.event_type}-${i}`} className="flex items-baseline justify-between gap-3 border-b border-border/40 pb-2 last:border-0">
-                  <span className="text-[13px] font-medium" title={e.event_type}>{humanizeEventType(e.event_type)}</span>
-                  <span className="text-xs text-muted-foreground">{formatEta(e.occurred_at)}</span>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          {/* Location */}
+          <Card>
+            <CardHeader><CardTitle>Location</CardTitle></CardHeader>
+            <CardContent>
+              <ShipmentLocationMap location={c.latest_location ?? null} />
+            </CardContent>
+          </Card>
+          {/* Milestone timeline */}
+          <Card>
+            <CardHeader><CardTitle>Milestone timeline</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {c.events.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No tracking milestones yet.</p>
+              ) : (
+                c.events.map((e, i) => (
+                  <div key={e.id ?? `${e.event_type}-${i}`} className="flex items-baseline justify-between gap-3 border-b border-border/40 pb-2 last:border-0">
+                    <span className="text-[13px] font-medium" title={e.event_type}>{humanizeEventType(e.event_type)}</span>
+                    <span className="text-xs text-muted-foreground">{formatEta(e.occurred_at)}</span>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {canWrite && (

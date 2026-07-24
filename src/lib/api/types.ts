@@ -366,6 +366,18 @@ export type EtaSource = "FEED" | "MANUAL" | "NONE";
  * `tracking_state`; untracked/subscribing/live are derivable today. */
 export type TrackingState = "untracked" | "subscribing" | "live" | "error" | "quota_reached";
 
+/** [additive] Latest resolvable port a tracked consignment reached, derived
+ * server-side from ShipmentEvents (ADR-0025). Null when untracked or no port
+ * is known yet. */
+export interface ConsignmentLocation {
+  locode: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  event_type: string;
+  occurred_at: string;
+}
+
 /** One row of `GET /api/v1/supply-chain/consignments/`. */
 export interface ConsignmentRow {
   id: string;
@@ -392,6 +404,9 @@ export interface ConsignmentRow {
   /** [FOLLOW-UP eudr-app] not on the PR-B contract — additive explicit tracking
    * state; when present it overrides deriveTrackingState(). */
   tracking_state?: TrackingState | null;
+  /** [additive, ADR-0025] Latest resolvable port for the shipment-location
+   * map/"Held at" column; null for untracked consignments or no port yet. */
+  latest_location?: ConsignmentLocation | null;
 }
 
 /** One entry of `ConsignmentDetail.lots`. `stage` is the read-model subset
