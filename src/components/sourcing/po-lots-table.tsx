@@ -2,8 +2,9 @@
 
 import { Fragment, type ReactNode } from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -141,15 +142,58 @@ function groupByShipment(lots: LotReadiness[]): ShipmentGroup[] {
 
 const COLUMN_COUNT = 5;
 
-function GroupHeaderRow({ group }: { group: ShipmentGroup }) {
-  if (group.label === null) return null;
+function GroupHeaderRow({
+  group,
+  canAssignUnassigned,
+  onAssignUnassigned,
+}: {
+  group: ShipmentGroup;
+  canAssignUnassigned?: boolean;
+  onAssignUnassigned?: (lots: LotReadiness[]) => void;
+}) {
+  const isUnassigned = group.key === "__unassigned__" || group.key === "__all__";
+  if (group.label === null) {
+    // The `__all__` fallback bucket (no lot carries a shipment_reference —
+    // today's live API, or a PO where every lot is unassigned) has no label
+    // to render — but a fully-unassigned PO is the canonical manual-journey
+    // start, so still surface the CTA alone: right-aligned, no label/chip.
+    if (!(canAssignUnassigned && onAssignUnassigned && group.lots.length > 0)) return null;
+    return (
+      <TableRow className="bg-foreground/4 hover:bg-foreground/4">
+        <TableCell colSpan={COLUMN_COUNT} className="py-1.5">
+          <span className="inline-flex w-full items-center justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1.5 text-xs"
+              onClick={() => onAssignUnassigned(group.lots)}
+            >
+              <Plus className="size-3.5" /> Assign to consignment
+            </Button>
+          </span>
+        </TableCell>
+      </TableRow>
+    );
+  }
   const days = daysUntil(group.deadline);
   return (
     <TableRow className="bg-foreground/4 hover:bg-foreground/4">
       <TableCell colSpan={COLUMN_COUNT} className="py-1.5">
-        <span className="inline-flex items-center gap-3">
+        <span className="inline-flex w-full items-center gap-3">
           <span className="text-[12.5px] font-semibold">{group.label}</span>
           {group.deadline && <DeadlineChip etaLabel={formatEta(group.deadline)} days={days} />}
+          {isUnassigned && canAssignUnassigned && onAssignUnassigned && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="ml-auto h-7 gap-1.5 text-xs"
+              onClick={() => onAssignUnassigned(group.lots)}
+            >
+              <Plus className="size-3.5" /> Assign to consignment
+            </Button>
+          )}
         </span>
       </TableCell>
     </TableRow>
@@ -163,6 +207,11 @@ interface PoLotsTableProps {
    * mixed-unit lots (a lot can use a different unit than its PO — see
    * `UNIT_MISMATCH`) would risk silently summing incompatible units. */
   allocatedLabel: string;
+  /** COMPLIANCE_OFFICER/ADMIN only — shows the "Assign to consignment" CTA on
+   * the `__unassigned__` bucket (shipments.md manual-management journey). The
+   * PO detail page owns the Sheet + role check. */
+  canAssignUnassigned?: boolean;
+  onAssignUnassigned?: (lots: LotReadiness[]) => void;
 }
 
 /** PO Detail "Lots fulfilling this order" card — a `Table` of the PO's
@@ -171,7 +220,7 @@ interface PoLotsTableProps {
  * prompt.md Prompt B minus the Shipment/ETA columns, which move to the
  * group header row instead (that's genuinely per-shipment data, not
  * per-lot). */
-export function PoLotsTable({ lots, allocatedLabel }: PoLotsTableProps) {
+export function PoLotsTable({ lots, allocatedLabel, canAssignUnassigned, onAssignUnassigned }: PoLotsTableProps) {
   const groups = groupByShipment(lots);
 
   return (
@@ -203,7 +252,11 @@ export function PoLotsTable({ lots, allocatedLabel }: PoLotsTableProps) {
             ) : (
               groups.map((group) => (
                 <Fragment key={group.key}>
-                  <GroupHeaderRow group={group} />
+                  <GroupHeaderRow
+                    group={group}
+                    canAssignUnassigned={canAssignUnassigned}
+                    onAssignUnassigned={onAssignUnassigned}
+                  />
                   {group.lots.map((lot) => (
                     <LotRow key={lot.id} lot={lot} />
                   ))}

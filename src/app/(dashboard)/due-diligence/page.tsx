@@ -105,6 +105,7 @@ function DueDiligencePageInner() {
   // wasted fetch while the composer is showing.
   const searchParams = useSearchParams();
   const poId = searchParams.get("po");
+  const consignmentId = searchParams.get("consignment");
 
   // #22 / ADR-0017: the badge must reflect the DDS's latest TRACES
   // submission once one exists, not just the internal DDS status (which
@@ -119,7 +120,7 @@ function DueDiligencePageInner() {
     queryKey: ["traces-submissions", "latest-by-dds"],
     queryFn: fetchLatestSubmissionsByDds,
     staleTime: 60_000,
-    enabled: !poId,
+    enabled: !poId && !consignmentId,
   });
 
   const pendingDetailIds = useMemo(
@@ -239,6 +240,9 @@ function DueDiligencePageInner() {
     [detailByDds, latestByDds],
   );
 
+  if (consignmentId) {
+    return <FileDdsComposer consignmentId={consignmentId} />;
+  }
   if (poId) {
     return <FileDdsComposer poId={poId} />;
   }

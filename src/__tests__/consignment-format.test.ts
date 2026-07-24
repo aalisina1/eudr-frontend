@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coveragePct, deriveTrackingState } from "@/lib/consignment-format";
+import { coveragePct, deriveTrackingState, humanizeEventType } from "@/lib/consignment-format";
 
 describe("deriveTrackingState", () => {
   const base = { tracking_number: null, t49_request_id: null, latest_eta: null };
@@ -26,5 +26,12 @@ describe("coveragePct", () => {
   });
   it("is 0 for an empty consignment (no divide-by-zero)", () => {
     expect(coveragePct(0, 0)).toBe(0);
+  });
+});
+
+describe("humanizeEventType", () => {
+  it("underscore-separates into a capitalized phrase", () => {
+    expect(humanizeEventType("vessel_departed")).toBe("Vessel departed");
+    expect(humanizeEventType("eta_changed")).toBe("Eta changed");
   });
 });

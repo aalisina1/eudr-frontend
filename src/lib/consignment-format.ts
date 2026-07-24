@@ -23,3 +23,9 @@ export function deriveTrackingState(c: {
   if (c.latest_eta) return "live";
   return "subscribing";
 }
+
+/** "vessel_departed" → "Vessel departed" — display label for feed event types. */
+export function humanizeEventType(s: string): string {
+  const t = s.replace(/[_-]+/g, " ").trim();
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
