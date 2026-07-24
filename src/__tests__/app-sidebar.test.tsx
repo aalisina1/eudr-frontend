@@ -79,6 +79,12 @@ describe("AppSidebar", () => {
     expect(screen.queryByText("Due Diligence")).toBeNull();
   });
 
+  it("renders the Shipments nav item linking to /shipments", () => {
+    renderWithProviders(<AppSidebar />);
+    const link = screen.getByRole("link", { name: /Shipments/i });
+    expect(link).toHaveAttribute("href", "/shipments");
+  });
+
   it("renders footer items (Settings, theme toggle, sign out)", () => {
     renderWithProviders(<AppSidebar />);
     expect(screen.getByText("Settings")).toBeInTheDocument();

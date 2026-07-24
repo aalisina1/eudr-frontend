@@ -348,6 +348,88 @@ export interface PayloadEstimateResponse {
   errors: PayloadEstimateError[];
 }
 
+// ── Supply Chain — Consignments (v0.3.0 Shipment Readiness) ──
+// Mirrors ConsignmentReadinessRowSerializer / ConsignmentDetail / summary from
+// eudr-app apps/supply_chain (spec plan 2026-07-20-shipment-readiness-backend.md
+// PR-B Task 8). Do not add fields the contract doesn't emit — optional
+// forward-compat fields below follow the LotReadiness.shipment_reference house
+// convention and render "—" until the backend serializer adds them.
+
+export type ConsignmentRag = "GREEN" | "AMBER" | "RED" | "GRAY";
+export type EtaSource = "FEED" | "MANUAL" | "NONE";
+
+/** Tracking state shown by TrackingBadge. Derived client-side by
+ * `deriveTrackingState()` from tracking_number/t49_request_id/latest_eta, OR —
+ * once the backend adds it — read verbatim from `ConsignmentRow.tracking_state`
+ * (which wins). The current PR-B row has no explicit tracking-state/error
+ * field, so "error"/"quota_reached" only surface when the backend supplies
+ * `tracking_state`; untracked/subscribing/live are derivable today. */
+export type TrackingState = "untracked" | "subscribing" | "live" | "error" | "quota_reached";
+
+/** One row of `GET /api/v1/supply-chain/consignments/`. */
+export interface ConsignmentRow {
+  id: string;
+  reference: string;
+  expected_clearance_date: string | null;
+  tracking_number: string | null;
+  t49_request_id: string | null;
+  latest_eta: string | null;
+  eta_source: EtaSource;
+  created_at: string;
+  rag: ConsignmentRag;
+  covered_count: number;
+  /** ALSO the consignment's lot count — the shipped serializer has no separate
+   * `lot_count` field (dropped as redundant); the "Lots" column reads this. */
+  total_count: number;
+  countdown_to: string | null;
+  /** [FOLLOW-UP eudr-app] not on the PR-B list serializer — additive. Latest
+   * ShipmentEvent for the "Latest milestone" column; renders "—" until added. */
+  latest_event_type?: string | null;
+  latest_event_at?: string | null;
+  /** [FOLLOW-UP eudr-app] not on the PR-B list serializer — additive. Distinct
+   * POs the consignment's lots touch ("POs touched" column); "—" until added. */
+  po_count?: number | null;
+  /** [FOLLOW-UP eudr-app] not on the PR-B contract — additive explicit tracking
+   * state; when present it overrides deriveTrackingState(). */
+  tracking_state?: TrackingState | null;
+}
+
+/** One entry of `ConsignmentDetail.lots`. `stage` is the read-model subset
+ * ALLOCATED | PLOTS_COMPLETE | FILED (a ReadinessStage value). */
+export interface ConsignmentLot {
+  id: string;
+  reference_number: string;
+  quantity: string;
+  unit: BatchUnit;
+  stage: ReadinessStage;
+  covered: boolean;
+  covering_dds_id: string | null;
+  covering_dds_reference: string;
+}
+
+/** One entry of `ConsignmentDetail.events` (ShipmentEventSerializer). */
+export interface ShipmentEvent {
+  id?: string;
+  event_type: string;
+  occurred_at: string;
+  payload?: Record<string, unknown>;
+}
+
+/** `GET /api/v1/supply-chain/consignments/{id}/`. */
+export interface ConsignmentDetail extends ConsignmentRow {
+  lots: ConsignmentLot[];
+  events: ShipmentEvent[];
+}
+
+/** `GET /api/v1/supply-chain/consignments/summary/`. */
+export interface ConsignmentSummary {
+  red: number;
+  amber: number;
+  gray: number;
+  green: number;
+  landing_within_red_window_uncovered: number;
+}
+
 // ── Due Diligence ──
 
 export type DDSStatus = "DRAFT" | "UNDER_REVIEW" | "APPROVED" | "SUBMITTED" | "REJECTED" | "WITHDRAWN";
