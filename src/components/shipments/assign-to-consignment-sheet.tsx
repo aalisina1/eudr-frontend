@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Sheet,
@@ -15,7 +18,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { authFetch } from "@/lib/api/client";
 import { getErrorMessage } from "@/lib/api/errors";
+import { cn } from "@/lib/utils";
 import type { ConsignmentRow, PaginatedResponse } from "@/lib/api/types";
+
+const newConsignmentSchema = z.object({
+  reference: z.string().min(1, "Reference is required"),
+  expected_clearance_date: z.string().optional(),
+});
+type NewConsignmentValues = z.infer<typeof newConsignmentSchema>;
 
 interface AssignToConsignmentSheetProps {
   open: boolean;
@@ -43,8 +53,22 @@ export function AssignToConsignmentSheet({ open, onOpenChange, lotIds, onSaved }
   const [mode, setMode] = useState<"existing" | "new">("existing");
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState("");
-  const [newRef, setNewRef] = useState("");
-  const [newDate, setNewDate] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    reset: resetNewForm,
+    formState: { errors },
+  } = useForm<NewConsignmentValues>({
+    resolver: zodResolver(newConsignmentSchema),
+    defaultValues: { reference: "", expected_clearance_date: "" },
+  });
+
+  // Create-then-attach retry safety: (org, reference) is unique server-side.
+  // If the create POST succeeds but the attach POST fails, a naive retry
+  // would re-run the create and 400 ("already exists"). Stash the id here so
+  // a retry reuses the consignment it already made instead of re-creating it.
+  const createdRef = useRef<{ reference: string; id: string } | null>(null);
 
   const { data: options } = useQuery<PaginatedResponse<ConsignmentRow>>({
     queryKey: ["shipments-picker", search],
@@ -59,32 +83,55 @@ export function AssignToConsignmentSheet({ open, onOpenChange, lotIds, onSaved }
   });
 
   const mutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (newValues?: NewConsignmentValues) => {
       let consignmentId = selectedId;
       if (mode === "new") {
-        const res = await authFetch("/api/v1/supply-chain/consignments/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reference: newRef, expected_clearance_date: newDate || null }),
-        });
-        if (!res.ok) throw new Error(getErrorMessage(await res.json().catch(() => ({}))));
-        consignmentId = (await res.json()).id;
+        const reference = newValues!.reference.trim();
+        if (createdRef.current?.reference === reference) {
+          // Retry after a failed attach: the consignment already exists from
+          // the prior attempt — reuse it instead of re-POSTing the create
+          // (which would 400 on the unique (org, reference) constraint).
+          consignmentId = createdRef.current.id;
+        } else {
+          const res = await authFetch("/api/v1/supply-chain/consignments/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              reference,
+              expected_clearance_date: newValues!.expected_clearance_date || null,
+            }),
+          });
+          if (!res.ok) throw new Error(getErrorMessage(await res.json().catch(() => ({}))));
+          const created = await res.json();
+          consignmentId = created.id;
+          createdRef.current = { reference, id: created.id };
+        }
       }
       return assignLots(consignmentId, lotIds);
     },
     onSuccess: () => {
+      createdRef.current = null;
       queryClient.invalidateQueries({ queryKey: ["shipments"] });
       queryClient.invalidateQueries({ queryKey: ["po-readiness"] });
       onSaved?.();
       onOpenChange(false);
-      setSelectedId(""); setNewRef(""); setNewDate(""); setSearch("");
+      setMode("existing");
+      setSelectedId("");
+      setSearch("");
+      resetNewForm();
     },
   });
 
   const canApply =
-    lotIds.length > 0 &&
-    (mode === "existing" ? !!selectedId : newRef.trim().length > 0) &&
-    !mutation.isPending;
+    lotIds.length > 0 && !mutation.isPending && (mode !== "existing" || !!selectedId);
+
+  const handleApply = () => {
+    if (mode === "new") {
+      handleSubmit((values) => mutation.mutate(values))();
+    } else {
+      mutation.mutate(undefined);
+    }
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -97,8 +144,24 @@ export function AssignToConsignmentSheet({ open, onOpenChange, lotIds, onSaved }
         </SheetHeader>
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4">
           <div className="flex gap-2">
-            <Button type="button" size="sm" variant={mode === "existing" ? "default" : "outline"} onClick={() => setMode("existing")}>Existing</Button>
-            <Button type="button" size="sm" variant={mode === "new" ? "default" : "outline"} onClick={() => setMode("new")}>New</Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={mode === "existing" ? "default" : "outline"}
+              aria-pressed={mode === "existing"}
+              onClick={() => setMode("existing")}
+            >
+              Existing
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={mode === "new" ? "default" : "outline"}
+              aria-pressed={mode === "new"}
+              onClick={() => setMode("new")}
+            >
+              New
+            </Button>
           </div>
           {mode === "existing" ? (
             <div className="space-y-2">
@@ -109,11 +172,17 @@ export function AssignToConsignmentSheet({ open, onOpenChange, lotIds, onSaved }
                   <button
                     key={c.id}
                     type="button"
+                    aria-pressed={selectedId === c.id}
                     onClick={() => setSelectedId(c.id)}
-                    className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-[13px] transition-colors ${selectedId === c.id ? "border-primary bg-primary/5" : "border-border/60"}`}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-[13px] transition-colors",
+                      selectedId === c.id ? "border-primary bg-primary/5" : "border-border/60"
+                    )}
                   >
                     <span className="font-mono">{c.reference}</span>
-                    <span className="text-xs text-muted-foreground">{c.total_count} lots</span>
+                    <span className="text-xs text-muted-foreground">
+                      {c.total_count} lot{c.total_count === 1 ? "" : "s"}
+                    </span>
                   </button>
                 ))}
                 {options && options.results.length === 0 && (
@@ -125,11 +194,12 @@ export function AssignToConsignmentSheet({ open, onOpenChange, lotIds, onSaved }
             <>
               <div className="space-y-1.5">
                 <Label htmlFor="new-ref">Reference *</Label>
-                <Input id="new-ref" value={newRef} onChange={(e) => setNewRef(e.target.value)} placeholder="e.g. BL-2026-4471" />
+                <Input id="new-ref" {...register("reference")} placeholder="e.g. BL-2026-4471" />
+                {errors.reference && <p className="text-xs text-destructive">{errors.reference.message}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="new-date">Expected clearance date</Label>
-                <Input id="new-date" type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
+                <Input id="new-date" type="date" {...register("expected_clearance_date")} />
               </div>
             </>
           )}
@@ -137,7 +207,7 @@ export function AssignToConsignmentSheet({ open, onOpenChange, lotIds, onSaved }
         </div>
         <SheetFooter>
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={() => mutation.mutate()} disabled={!canApply}>
+          <Button onClick={handleApply} disabled={!canApply}>
             {mutation.isPending ? "Assigning…" : "Assign"}
           </Button>
         </SheetFooter>

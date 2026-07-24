@@ -39,4 +39,84 @@ describe("AssignToConsignmentSheet", () => {
     expect(post?.url).toContain("/api/v1/supply-chain/consignments/c9/lots/");
     expect(JSON.parse(String(post?.init?.body))).toEqual({ add: ["lot-a"] });
   });
+
+  it("creates a new consignment then attaches lots to it", async () => {
+    const calls: { url: string; init?: RequestInit }[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input.toString();
+      calls.push({ url, init });
+      if (url.includes("/consignments/") && url.includes("/lots/"))
+        return Promise.resolve(new Response(JSON.stringify({ added: 1, removed: 0 }), { status: 200 }));
+      if (url.endsWith("/consignments/") && init?.method === "POST")
+        return Promise.resolve(
+          new Response(JSON.stringify({ id: "c-new", reference: "BL-NEW-1" }), { status: 201 })
+        );
+      if (url.includes("/consignments/"))
+        return Promise.resolve(new Response(JSON.stringify(mockPaginatedResponse([OPT])), { status: 200 }));
+      return Promise.resolve(new Response("{}", { status: 404 }));
+    }) as typeof fetch;
+    const onOpenChange = vi.fn();
+    renderWithProviders(<AssignToConsignmentSheet open onOpenChange={onOpenChange} lotIds={["lot-a"]} />);
+
+    await userEvent.click(screen.getByRole("button", { name: /^New$/i }));
+    await userEvent.type(screen.getByLabelText(/Reference/i), "BL-NEW-1");
+    await act(async () => { await userEvent.click(screen.getByRole("button", { name: /^Assign$/i })); });
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+
+    const createPost = calls.find(
+      (c) => c.url.endsWith("/api/v1/supply-chain/consignments/") && c.init?.method === "POST"
+    );
+    expect(createPost).toBeDefined();
+    expect(JSON.parse(String(createPost?.init?.body))).toMatchObject({ reference: "BL-NEW-1" });
+
+    const attachPost = calls.find((c) => c.url.includes("/lots/") && c.init?.method === "POST");
+    expect(attachPost?.url).toContain("/api/v1/supply-chain/consignments/c-new/lots/");
+    expect(JSON.parse(String(attachPost?.init?.body))).toEqual({ add: ["lot-a"] });
+  });
+
+  it("retries a failed attach without re-creating the consignment", async () => {
+    const calls: { url: string; init?: RequestInit }[] = [];
+    let attachAttempts = 0;
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input.toString();
+      calls.push({ url, init });
+      if (url.includes("/consignments/") && url.includes("/lots/")) {
+        attachAttempts += 1;
+        if (attachAttempts === 1) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ detail: "Attach failed" }), { status: 400 })
+          );
+        }
+        return Promise.resolve(new Response(JSON.stringify({ added: 1, removed: 0 }), { status: 200 }));
+      }
+      if (url.endsWith("/consignments/") && init?.method === "POST")
+        return Promise.resolve(
+          new Response(JSON.stringify({ id: "c-new", reference: "BL-NEW-1" }), { status: 201 })
+        );
+      if (url.includes("/consignments/"))
+        return Promise.resolve(new Response(JSON.stringify(mockPaginatedResponse([OPT])), { status: 200 }));
+      return Promise.resolve(new Response("{}", { status: 404 }));
+    }) as typeof fetch;
+    const onOpenChange = vi.fn();
+    renderWithProviders(<AssignToConsignmentSheet open onOpenChange={onOpenChange} lotIds={["lot-a"]} />);
+
+    await userEvent.click(screen.getByRole("button", { name: /^New$/i }));
+    await userEvent.type(screen.getByLabelText(/Reference/i), "BL-NEW-1");
+    await act(async () => { await userEvent.click(screen.getByRole("button", { name: /^Assign$/i })); });
+
+    await waitFor(() => expect(screen.getByText("Attach failed")).toBeInTheDocument());
+    await act(async () => { await userEvent.click(screen.getByRole("button", { name: /^Assign$/i })); });
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+
+    const createPosts = calls.filter(
+      (c) => c.url.endsWith("/api/v1/supply-chain/consignments/") && c.init?.method === "POST"
+    );
+    expect(createPosts).toHaveLength(1);
+
+    const attachPosts = calls.filter((c) => c.url.includes("/lots/") && c.init?.method === "POST");
+    expect(attachPosts).toHaveLength(2);
+    attachPosts.forEach((p) => expect(p.url).toContain("/api/v1/supply-chain/consignments/c-new/lots/"));
+  });
 });
