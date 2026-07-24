@@ -3,6 +3,7 @@
 import { AwaitingDataCard } from "@/components/dashboard/awaiting-data-card";
 import { NeedsFilingCard } from "@/components/dashboard/needs-filing-card";
 import { NeedsRemediationCard } from "@/components/dashboard/needs-remediation-card";
+import { ShipmentsLeadTimeCard } from "@/components/dashboard/shipments-lead-time-card";
 import { StatStrip } from "@/components/dashboard/stat-strip";
 import { formatDateLine, greeting } from "@/lib/dashboard-worklist";
 
@@ -29,6 +30,7 @@ export default function DashboardPage() {
 
       <div className="flex flex-col gap-[18px]">
         <NeedsFilingCard />
+        <ShipmentsLeadTimeCard />
         <NeedsRemediationCard />
         <AwaitingDataCard />
       </div>
