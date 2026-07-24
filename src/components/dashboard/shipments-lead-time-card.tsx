@@ -20,7 +20,7 @@ const CHIPS: { key: keyof ConsignmentSummary; label: string; className: string }
  * `landing_within_red_window_uncovered`, click-through to the RED-pre-filtered
  * list; a muted red/amber/gray/green chip strip beneath. */
 export function ShipmentsLeadTimeCard() {
-  const { data, isLoading } = useQuery<ConsignmentSummary>({
+  const { data, isLoading, isError } = useQuery<ConsignmentSummary>({
     queryKey: ["dashboard", "consignments-summary"],
     queryFn: async () => {
       const res = await authFetch("/api/v1/supply-chain/consignments/summary/");
@@ -43,11 +43,14 @@ export function ShipmentsLeadTimeCard() {
       <CardContent className="space-y-3">
         {isLoading ? (
           <Skeleton className="h-7 w-64" />
+        ) : isError ? (
+          <p className="text-sm text-muted-foreground">Shipments summary unavailable — see the Shipments page.</p>
         ) : (
           <Link href="/shipments?rag=RED" className="inline-flex items-baseline gap-2 hover:underline">
             <span className={`text-2xl font-semibold ${n > 0 ? "text-destructive" : "text-foreground"}`}>{n}</span>
+            {" "}
             <span className="text-sm text-muted-foreground">
-              consignment{n === 1 ? "" : "s"} land within 10 days with incomplete DDS
+              consignment{n === 1 ? "" : "s"} land{n === 1 ? "s" : ""} within 10 days with incomplete DDS
             </span>
           </Link>
         )}

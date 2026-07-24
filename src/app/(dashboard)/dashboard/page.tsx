@@ -11,10 +11,10 @@ import { formatDateLine, greeting } from "@/lib/dashboard-worklist";
  * Dashboard-as-worklist (#30, Prompt D) — the compliance officer's action
  * home. Replaces the old chart dashboard (DDS-by-status donut, plot
  * validation bar): a de-emphasised stat strip (context, not the headline)
- * plus three priority-ordered cards — Needs filing, Needs remediation,
- * Awaiting data — each backed by the readiness/submissions endpoints. No
- * charts anywhere; a clean state (every card's quiet check-mark line) reads
- * as good news, not a broken/empty page.
+ * plus four priority-ordered cards — Needs filing, Shipment lead time, Needs
+ * remediation, Awaiting data — each backed by the readiness/submissions/
+ * consignments-summary endpoints. No charts anywhere; a clean state (every
+ * card's quiet check-mark line) reads as good news, not a broken/empty page.
  *
  * `compliance-flow-reframe.md` Phase 3 / `10-Specs/UI-Workflows/dashboard.md`.
  */
