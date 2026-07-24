@@ -42,7 +42,7 @@ function DivergenceBadge({ manual, eta }: { manual: string | null; eta: string |
 export default function ShipmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const { data: currentUser, isLoading } = useCurrentUser();
+  const { data: currentUser } = useCurrentUser();
   const canWrite = currentUser?.role === "ADMIN" || currentUser?.role === "COMPLIANCE_OFFICER";
 
   const [editOpen, setEditOpen] = useState(false);
