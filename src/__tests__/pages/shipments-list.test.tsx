@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act } from "react";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders, mockPaginatedResponse } from "../helpers";
 import ShipmentsPage from "@/app/(dashboard)/shipments/page";
@@ -65,6 +65,29 @@ describe("/shipments list", () => {
     // day count varies with rounding around midnight — assert digits, not "4"
     expect(screen.getByText(/RED · \d+ d/)).toBeInTheDocument();
     expect(screen.getByText(/0\/2/)).toBeInTheDocument();
+  });
+
+  it("shows the port name in the Held-at cell when latest_location is set", async () => {
+    mockApi([row({
+      latest_location: {
+        locode: "NLRTM", name: "Rotterdam", latitude: 51.9225, longitude: 4.47917,
+        event_type: "port_arrival", occurred_at: "2026-07-21T09:00:00Z",
+      },
+    })]);
+    await renderPage();
+    await waitFor(() => expect(screen.getByText("Rotterdam")).toBeInTheDocument());
+  });
+
+  it("shows '—' in the Held-at cell when latest_location is absent", async () => {
+    mockApi([row()]);
+    await renderPage();
+    await waitFor(() => expect(screen.getByText("BL-RED-1")).toBeInTheDocument());
+    // "Held at" is the last column — scope to the row so the pre-existing
+    // "—" cells (Latest milestone / POs touched, also unset in this fixture)
+    // can't make this pass for the wrong reason.
+    const rowEl = screen.getByRole("row", { name: /BL-RED-1/ });
+    const cells = within(rowEl).getAllByRole("cell");
+    expect(cells[cells.length - 1]).toHaveTextContent("—");
   });
 
   it("shows the New consignment button for COMPLIANCE_OFFICER", async () => {

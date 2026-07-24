@@ -32,6 +32,7 @@ function detail(over: Partial<ConsignmentDetail> = {}): ConsignmentDetail {
     total_count: 1, countdown_to: "2026-07-25",
     lots: [{ id: "l1", reference_number: "LOT-1", quantity: "1000.0000", unit: "KG", stage: "ALLOCATED", covered: false, covering_dds_id: null, covering_dds_reference: "" }],
     events: [{ event_type: "eta_changed", occurred_at: "2026-07-21T09:00:00Z" }],
+    latest_location: null,
     ...over,
   };
 }
@@ -71,6 +72,24 @@ describe("/shipments/[id] detail", () => {
     mockApi(detail());
     await renderPage();
     await waitFor(() => expect(screen.getByText(/Date ≠ ETA/i)).toBeInTheDocument());
+  });
+
+  it("shows 'Currently at <port>' in the Location card when latest_location is set", async () => {
+    mockApi(detail({
+      latest_location: {
+        locode: "NLRTM", name: "Rotterdam", latitude: 51.9225, longitude: 4.47917,
+        event_type: "port_arrival", occurred_at: "2026-07-21T09:00:00Z",
+      },
+    }));
+    await renderPage();
+    await waitFor(() => expect(screen.getByText(/Currently at Rotterdam/)).toBeInTheDocument());
+  });
+
+  it("shows 'No location yet' in the Location card when latest_location is null", async () => {
+    mockApi(detail({ latest_location: null }));
+    await renderPage();
+    await waitFor(() => expect(screen.getByRole("heading", { name: "BL-RED-1" })).toBeInTheDocument());
+    expect(screen.getByText("No location yet")).toBeInTheDocument();
   });
 
   it("navigates to the composer with ?consignment= on Compose DDS", async () => {

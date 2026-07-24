@@ -116,6 +116,16 @@ function ShipmentsPageInner() {
       render: (c) => <TrackingBadge state={deriveTrackingState(c)} />,
       exportValue: (c) => deriveTrackingState(c),
     },
+    {
+      key: "latest_location", header: "Held at",
+      render: (c) =>
+        c.latest_location ? (
+          <span className="text-[13px]">{c.latest_location.name}</span>
+        ) : (
+          <span className="text-[12.5px] text-muted-foreground">—</span>
+        ),
+      exportValue: (c) => c.latest_location?.name ?? "",
+    },
   ];
 
   const toolbarExtra = (
