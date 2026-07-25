@@ -14,6 +14,7 @@ import { ShipmentsAgenda } from "@/components/shipments/shipments-agenda";
 import { coveragePct, deriveTrackingState, humanizeEventType } from "@/lib/consignment-format";
 import { daysUntil, formatEta } from "@/lib/readiness-format";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
 import type { ConsignmentRow } from "@/lib/api/types";
 
@@ -39,6 +40,7 @@ function ShipmentsPageInner() {
 
   const view = searchParams.get("view") === "calendar" ? "calendar" : "list";
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
 
   function setView(next: "list" | "calendar") {
     const params = new URLSearchParams(searchParams.toString());
@@ -228,7 +230,7 @@ function ShipmentsPageInner() {
               </Button>
             )}
           </div>
-          <ShipmentsAgenda rag={rag} search={search} canWrite={canWrite} />
+          <ShipmentsAgenda rag={rag} search={debouncedSearch} canWrite={canWrite} />
         </div>
       ) : (
         <DataTable<ConsignmentRow>

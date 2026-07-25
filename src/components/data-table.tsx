@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Search, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Download } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
+import { useDebounce } from "@/hooks/use-debounce";
 import type { PaginatedResponse } from "@/lib/api/types";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -99,17 +100,6 @@ interface DataTableProps<T> {
 // which broke every pre-existing consumer's pagination (eudr-frontend #44
 // QA finding).
 const EMPTY_EXTRA_PARAMS: Record<string, string> = {};
-
-// ── Hook: debounced value ────────────────────────────────────────────────────
-
-function useDebounce<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-  return debounced;
-}
 
 // ── Component ────────────────────────────────────────────────────────────────
 
