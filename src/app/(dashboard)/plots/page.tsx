@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -51,11 +52,21 @@ const STATUS_FILTER_OPTIONS: { label: string; value: ValidationStatus | "" }[] =
   { label: "Requires Review", value: "REQUIRES_REVIEW" },
 ];
 
-export default function PlotsPage() {
+function PlotsPageInner() {
+  const searchParams = useSearchParams();
+
+  // Dashboard Tier 4b's "Plots failing validation" doorway deep-links here as
+  // `/plots?validation_status=FAILED` — seed the existing client-side status
+  // filter from the URL (this page already filters `data.results` locally in
+  // `filteredPlots` below; no new fetch param needed). An absent or
+  // unrecognized value degrades to "" (all statuses), never a crash.
+  const statusParam = searchParams.get("validation_status") ?? "";
   const [selectedPlotId, setSelectedPlotId] = useState<string | null>(null);
   const [plotFormOpen, setPlotFormOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState(
+    STATUS_FILTER_OPTIONS.some((o) => o.value === statusParam) ? statusParam : ""
+  );
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const { data, isLoading, error } = useQuery({
@@ -126,6 +137,7 @@ export default function PlotsPage() {
               />
             </div>
             <select
+              aria-label="Validation status"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 transition-colors appearance-none cursor-pointer"
@@ -201,5 +213,13 @@ export default function PlotsPage() {
 
       <PlotForm open={plotFormOpen} onOpenChange={setPlotFormOpen} />
     </div>
+  );
+}
+
+export default function PlotsPage() {
+  return (
+    <Suspense fallback={<Skeleton className="h-10 w-72" />}>
+      <PlotsPageInner />
+    </Suspense>
   );
 }
