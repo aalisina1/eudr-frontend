@@ -7,15 +7,20 @@
 import { describe, it, expect } from "vitest";
 import {
   bucketReadiness,
+  countDdsExpiringWithin90Days,
   daysUntil,
+  EUDR_ENFORCEMENT_DATE,
+  EUDR_ENFORCEMENT_DATE_LABEL,
   formatDateLine,
   formatEtaLabel,
   getQuarterBounds,
   greeting,
   kgToTonnesLabel,
   isWithinQuarter,
+  shouldShowDashboardCtas,
+  VIEWER_SEES_DASHBOARD_CTAS,
 } from "@/lib/dashboard-worklist";
-import type { BatchReadiness } from "@/lib/api/types";
+import type { BatchReadiness, DueDiligenceStatement, User } from "@/lib/api/types";
 
 function po(overrides: Partial<BatchReadiness> = {}): BatchReadiness {
   return {
@@ -38,6 +43,29 @@ function po(overrides: Partial<BatchReadiness> = {}): BatchReadiness {
     },
     lot_count: 0,
     next_deadline: null,
+    ...overrides,
+  };
+}
+
+function dds(overrides: Partial<DueDiligenceStatement> = {}): DueDiligenceStatement {
+  return {
+    id: "dds-1",
+    reference_number: "DDS-2026-0001",
+    traces_reference: "",
+    status: "SUBMITTED",
+    statement_type: "OPERATOR",
+    activity_type: "IMPORT",
+    batch_ids: [],
+    risk_conclusion: null,
+    conclusion_justification: "",
+    operator_id: "op-1",
+    created_by_id: "u1",
+    reviewed_by_id: null,
+    submitted_at: "2026-01-01T00:00:00Z",
+    valid_until: null,
+    archived_until: null,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
     ...overrides,
   };
 }
@@ -161,5 +189,65 @@ describe("bucketReadiness", () => {
     expect(filing).toEqual([]);
     expect(blocked).toEqual([]);
     expect(awaiting).toEqual([]);
+  });
+});
+
+describe("EUDR_ENFORCEMENT_DATE", () => {
+  it("is the fixed statutory date with a matching display label", () => {
+    expect(EUDR_ENFORCEMENT_DATE).toBe("2026-12-30");
+    expect(EUDR_ENFORCEMENT_DATE_LABEL).toBe("30 Dec 2026");
+  });
+});
+
+describe("countDdsExpiringWithin90Days", () => {
+  const now = new Date(2026, 6, 8); // 8 July 2026
+
+  it("counts a SUBMITTED statement expiring within 90 days", () => {
+    const s = dds({ status: "SUBMITTED", valid_until: "2026-09-01" }); // 55 days out
+    expect(countDdsExpiringWithin90Days([s], now)).toBe(1);
+  });
+
+  it("excludes a SUBMITTED statement expiring well beyond 90 days", () => {
+    const s = dds({ status: "SUBMITTED", valid_until: "2026-12-01" });
+    expect(countDdsExpiringWithin90Days([s], now)).toBe(0);
+  });
+
+  it("includes the 90-day boundary", () => {
+    const s = dds({ status: "SUBMITTED", valid_until: "2026-10-06" }); // exactly 90 days
+    expect(countDdsExpiringWithin90Days([s], now)).toBe(1);
+  });
+
+  it("includes an already-lapsed statement (the most urgent case, not excluded)", () => {
+    const s = dds({ status: "SUBMITTED", valid_until: "2026-06-01" });
+    expect(countDdsExpiringWithin90Days([s], now)).toBe(1);
+  });
+
+  it("excludes a non-SUBMITTED statement even with a near valid_until", () => {
+    const s = dds({ status: "DRAFT", valid_until: "2026-08-01" });
+    expect(countDdsExpiringWithin90Days([s], now)).toBe(0);
+  });
+
+  it("excludes a statement with no valid_until", () => {
+    const s = dds({ status: "SUBMITTED", valid_until: null });
+    expect(countDdsExpiringWithin90Days([s], now)).toBe(0);
+  });
+});
+
+describe("shouldShowDashboardCtas", () => {
+  it("always shows CTAs for non-VIEWER roles regardless of the flag", () => {
+    expect(shouldShowDashboardCtas("COMPLIANCE_OFFICER", false)).toBe(true);
+    expect(shouldShowDashboardCtas("ADMIN", false)).toBe(true);
+  });
+
+  it("shows CTAs for VIEWER when the flag is true", () => {
+    expect(shouldShowDashboardCtas("VIEWER", true)).toBe(true);
+  });
+
+  it("hides CTAs for VIEWER when the flag is false", () => {
+    expect(shouldShowDashboardCtas("VIEWER", false)).toBe(false);
+  });
+
+  it("defaults to the module-level VIEWER_SEES_DASHBOARD_CTAS constant when the flag arg is omitted", () => {
+    expect(shouldShowDashboardCtas("VIEWER")).toBe(VIEWER_SEES_DASHBOARD_CTAS);
   });
 });

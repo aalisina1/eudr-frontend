@@ -6,7 +6,7 @@
  * hooks in `src/hooks/use-dashboard-data.ts` and the card components under
  * `src/components/dashboard/` are the only callers.
  */
-import type { BatchReadiness } from "@/lib/api/types";
+import type { BatchReadiness, DueDiligenceStatement, User } from "@/lib/api/types";
 
 // ── Greeting + date line ──
 
@@ -136,4 +136,62 @@ export function bucketReadiness(rows: BatchReadiness[]): ReadinessBuckets {
   );
 
   return { filing, blocked, awaiting };
+}
+
+// ── EUDR enforcement countdown (Tier 1) ──
+
+/** EU Deforestation Regulation enforcement date — fixed by statute, no
+ * backend field carries it (dashboard-redesign.md Design decisions: "a new
+ * hardcoded client constant... if the regulation date or a grace period
+ * ever changes, this needs a manual code change"). Paired with a fixed
+ * display label rather than a formatter since it's a single date that will
+ * never need reformatting. Use THIS file's `daysUntil` (UTC-calendar-day
+ * pair) for the countdown, not `readiness-format.ts`'s — this is a pure
+ * calendar date, not a timestamp. */
+export const EUDR_ENFORCEMENT_DATE = "2026-12-30";
+export const EUDR_ENFORCEMENT_DATE_LABEL = "30 Dec 2026";
+
+// ── Tier 4d: DDS expiring soon ──
+
+/** Count of SUBMITTED statements whose `valid_until` falls within (or
+ * before) 90 days of `now` — Tier 4 metric 4d. Rides on `useDdsStatements()`,
+ * already fetched elsewhere on the dashboard, so this needs zero new network
+ * requests (dashboard-redesign.md 4d). A `valid_until` in the past (already
+ * lapsed) still counts — it's the most urgent member of "expiring soon", not
+ * a state to quietly exclude. */
+export function countDdsExpiringWithin90Days(
+  statements: DueDiligenceStatement[],
+  now: Date = new Date()
+): number {
+  return statements.filter(
+    (s) => s.status === "SUBMITTED" && s.valid_until != null && daysUntil(s.valid_until, now) <= 90
+  ).length;
+}
+
+// ── VIEWER CTA-visibility gate ──
+
+/** Single flip point for whether VIEWER sees the dashboard's action CTAs
+ * ("Cover it now", "Cover now", "Remediate", "Review", "File DDS") as live
+ * navigation links, or has them hidden. Per dashboard-redesign.md Journeys
+ * (VIEWER section), VIEWER sees the identical cockpit including every CTA —
+ * each one is a navigation link into a page that enforces its own
+ * read-only posture, never a dashboard-native mutation — so this defaults
+ * to `true`. Product is re-confirming this decision; if it flips to
+ * hidden-for-VIEWER, changing this ONE constant is the entire change —
+ * every CTA-rendering site calls `shouldShowDashboardCtas()`, never
+ * compares `role === "VIEWER"` directly. Does not gate plain row/reference
+ * navigation (Tier 1/2/3's `RefLink`s, Tier 4's row-level list links) —
+ * those aren't action-button CTAs, matching the rest of the app's
+ * unrestricted row-click-through convention. */
+export const VIEWER_SEES_DASHBOARD_CTAS = true;
+
+/** `viewerSeesCtas` defaults to the module constant above; accepting it as
+ * an optional param (rather than reading the constant directly inside the
+ * function body) keeps this independently unit-testable for both flag
+ * states without needing to mock the module. */
+export function shouldShowDashboardCtas(
+  role: User["role"],
+  viewerSeesCtas: boolean = VIEWER_SEES_DASHBOARD_CTAS
+): boolean {
+  return role !== "VIEWER" || viewerSeesCtas;
 }
