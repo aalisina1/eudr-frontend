@@ -45,4 +45,12 @@ describe("/shipments Calendar view", () => {
     await waitFor(() => expect(screen.getByText("BL-CAL")).toBeInTheDocument());
     expect(screen.getByText("This week")).toBeInTheDocument();
   });
+
+  it("hides the List view's date-range inputs in Calendar view", async () => {
+    mockApi([agendaRow()]);
+    await act(async () => { renderWithProviders(<ShipmentsPage />); });
+    await waitFor(() => expect(screen.getByText("BL-CAL")).toBeInTheDocument());
+    expect(screen.queryByLabelText(/Lands after/i)).toBeNull();
+    expect(screen.queryByLabelText(/Lands before/i)).toBeNull();
+  });
 });

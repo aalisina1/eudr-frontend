@@ -26,9 +26,9 @@ function mockAgenda(rows: ConsignmentRow[]) {
     new Response(JSON.stringify(rows), { status: 200 })
   ) as typeof fetch;
 }
-async function renderAgenda() {
+async function renderAgenda(rag = "", search = "") {
   await act(async () => {
-    renderWithProviders(<ShipmentsAgenda rag="" search="" canWrite />);
+    renderWithProviders(<ShipmentsAgenda rag={rag} search={search} canWrite />);
   });
 }
 
@@ -49,5 +49,24 @@ describe("ShipmentsAgenda", () => {
     await renderAgenda();
     await waitFor(() =>
       expect(screen.getByText("Nothing arriving that needs a DDS")).toBeInTheDocument());
+  });
+
+  it("shows the filtered zero-results state (not the first-run empty state) when a filter is active", async () => {
+    mockAgenda([]);
+    await renderAgenda("RED", "");
+    await waitFor(() =>
+      expect(screen.getByText("No consignments match these filters")).toBeInTheDocument());
+    expect(screen.queryByText("Nothing arriving that needs a DDS")).toBeNull();
+  });
+
+  it("sends rag and search as query params to the agenda endpoint", async () => {
+    mockAgenda([]);
+    await renderAgenda("RED", "BL-9");
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());
+    const [requested] = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    const url = typeof requested === "string" ? requested : requested.toString();
+    expect(url).toContain("/consignments/agenda/");
+    expect(url).toContain("rag=RED");
+    expect(url).toContain("search=BL-9");
   });
 });
