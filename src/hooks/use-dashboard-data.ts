@@ -27,6 +27,8 @@ const SUPPLIERS_LOOKUP_KEY = ["dashboard", "suppliers-lookup"];
 const DDS_STATEMENTS_KEY = ["dashboard", "dds-statements"];
 const LATEST_TRACES_SUBMISSIONS_KEY = ["dashboard", "traces-submissions-latest"];
 const PLOTS_PENDING_KEY = ["dashboard", "plots-pending-validation-count"];
+const HIGH_RISK_SUPPLIERS_KEY = ["dashboard", "high-risk-suppliers"];
+const PLOTS_FAILING_KEY = ["dashboard", "plots-failing-validation-count"];
 const CONSIGNMENT_SUMMARY_KEY = ["dashboard", "consignments-summary"];
 const RED_CONSIGNMENT_ROWS_KEY = ["dashboard", "red-consignment-rows"];
 
@@ -115,6 +117,39 @@ export function usePlotsPendingValidationCount() {
     queryKey: PLOTS_PENDING_KEY,
     queryFn: async (): Promise<number> => {
       const res = await authFetch("/api/v1/geolocation/plots/?validation_status=PENDING&page_size=1");
+      if (!res.ok) throw new Error("Failed to load plot validation counts");
+      const body: PaginatedResponse<unknown> = await res.json();
+      return body.count;
+    },
+    staleTime: 60_000,
+  });
+}
+
+/** Suppliers flagged HIGH risk — Tier 4a's join input against the already-
+ * fetched readiness rows (`computeHighRiskConcentration` in
+ * `dashboard-worklist.ts`). `risk_rating` is an exact-match, server-side
+ * `filterset_fields` entry (dashboard-redesign.md 4a). */
+export function useHighRiskSuppliers() {
+  return useQuery({
+    queryKey: HIGH_RISK_SUPPLIERS_KEY,
+    queryFn: async (): Promise<Supplier[]> => {
+      const res = await authFetch("/api/v1/suppliers/?risk_rating=HIGH&page_size=100");
+      if (!res.ok) throw new Error("Failed to load high-risk suppliers");
+      const body: PaginatedResponse<Supplier> = await res.json();
+      return body.results;
+    },
+    staleTime: 60_000,
+  });
+}
+
+/** Plots that have FAILED validation — a literal copy of
+ * `usePlotsPendingValidationCount()` with one query-param swap
+ * (dashboard-redesign.md 4b, "trivial", zero new backend work). */
+export function usePlotsFailingValidationCount() {
+  return useQuery({
+    queryKey: PLOTS_FAILING_KEY,
+    queryFn: async (): Promise<number> => {
+      const res = await authFetch("/api/v1/geolocation/plots/?validation_status=FAILED&page_size=1");
       if (!res.ok) throw new Error("Failed to load plot validation counts");
       const body: PaginatedResponse<unknown> = await res.json();
       return body.count;
