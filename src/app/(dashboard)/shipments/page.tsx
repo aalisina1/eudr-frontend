@@ -10,9 +10,12 @@ import { DataTable, type ColumnDef } from "@/components/data-table";
 import { RagBadge } from "@/components/shipments/rag-badge";
 import { TrackingBadge } from "@/components/shipments/tracking-badge";
 import { ConsignmentForm } from "@/components/forms/consignment-form";
+import { ShipmentsAgenda } from "@/components/shipments/shipments-agenda";
 import { coveragePct, deriveTrackingState, humanizeEventType } from "@/lib/consignment-format";
 import { daysUntil, formatEta } from "@/lib/readiness-format";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useDebounce } from "@/hooks/use-debounce";
+import { cn } from "@/lib/utils";
 import type { ConsignmentRow } from "@/lib/api/types";
 
 const RAG_OPTIONS = [
@@ -34,6 +37,18 @@ function ShipmentsPageInner() {
   const [after, setAfter] = useState("");
   const [before, setBefore] = useState("");
   const [formOpen, setFormOpen] = useState(false);
+
+  const view = searchParams.get("view") === "calendar" ? "calendar" : "list";
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
+
+  function setView(next: "list" | "calendar") {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "calendar") params.set("view", "calendar");
+    else params.delete("view");
+    const qs = params.toString();
+    router.replace(`/shipments${qs ? `?${qs}` : ""}`);
+  }
 
   const extraParams = useMemo(() => {
     const p: Record<string, string> = {};
@@ -155,51 +170,106 @@ function ShipmentsPageInner() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-display text-3xl font-light italic">Shipments</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Which arriving consignments still lack a ready DDS — and when they land.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-display text-3xl font-light italic">Shipments</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Which arriving consignments still lack a ready DDS — and when they land.
+          </p>
+        </div>
+        {/* List ⇄ Calendar toggle (no Tabs primitive exists — minimal segmented control) */}
+        <div className="inline-flex rounded-xl border border-border/60 bg-secondary/40 p-0.5" role="tablist" aria-label="Shipments view">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={view === "list"}
+            onClick={() => setView("list")}
+            className={cn(
+              "rounded-lg px-3 py-1 text-[13px] transition-colors",
+              view === "list" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            List
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={view === "calendar"}
+            onClick={() => setView("calendar")}
+            className={cn(
+              "rounded-lg px-3 py-1 text-[13px] transition-colors",
+              view === "calendar" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Calendar
+          </button>
+        </div>
       </header>
-      <DataTable<ConsignmentRow>
-        queryKey="shipments"
-        endpoint="/api/v1/supply-chain/consignments/"
-        columns={columns}
-        extraParams={extraParams}
-        toolbarExtra={toolbarExtra}
-        searchable
-        searchPlaceholder="Search reference or tracking #…"
-        rowKey={(c) => c.id}
-        onRowClick={(c) => router.push(`/shipments/${c.id}`)}
-        exportable
-        exportFilename="shipments"
-        emptyIcon={<Ship className="size-5 text-muted-foreground" />}
-        emptyTitle={filtersActive ? "No shipments match these filters" : "No shipments tracked yet"}
-        emptyDescription={
-          filtersActive
-            ? "Try adjusting the status or date range."
-            : "Consignments are created automatically when a lot gets a shipment reference, or set one up manually."
-        }
-        emptyAction={
-          filtersActive ? (
-            <Button variant="ghost" size="sm" onClick={() => { setRag(""); setAfter(""); setBefore(""); }}>
-              Clear filters
-            </Button>
-          ) : canWrite ? (
-            // BOTH first-run CTAs from the shipments.md States table: primary
-            // create + ghost deep-link toward the PO lots tables (the manual
-            // "Assign to consignment" path lives on PO detail → sourcing list).
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <Button size="sm" onClick={() => setFormOpen(true)} className="gap-1.5">
+
+      {view === "calendar" ? (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              aria-label="RAG status"
+              value={rag}
+              onChange={(e) => setRag(e.target.value)}
+              className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+            >
+              {RAG_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <Input
+              aria-label="Search"
+              placeholder="Search reference or tracking #…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-9 w-[240px] rounded-xl bg-secondary/50 text-[13px]"
+            />
+            {canWrite && (
+              <Button size="sm" onClick={() => setFormOpen(true)} className="h-9 gap-1.5 rounded-xl">
                 <Plus className="size-3.5" /> New consignment
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => router.push("/supply-chains")}>
-                Assign lots to a consignment
+            )}
+          </div>
+          <ShipmentsAgenda rag={rag} search={debouncedSearch} canWrite={canWrite} />
+        </div>
+      ) : (
+        <DataTable<ConsignmentRow>
+          queryKey="shipments"
+          endpoint="/api/v1/supply-chain/consignments/"
+          columns={columns}
+          extraParams={extraParams}
+          toolbarExtra={toolbarExtra}
+          searchable
+          searchPlaceholder="Search reference or tracking #…"
+          rowKey={(c) => c.id}
+          onRowClick={(c) => router.push(`/shipments/${c.id}`)}
+          exportable
+          exportFilename="shipments"
+          emptyIcon={<Ship className="size-5 text-muted-foreground" />}
+          emptyTitle={filtersActive ? "No shipments match these filters" : "No shipments tracked yet"}
+          emptyDescription={
+            filtersActive
+              ? "Try adjusting the status or date range."
+              : "Consignments are created automatically when a lot gets a shipment reference, or set one up manually."
+          }
+          emptyAction={
+            filtersActive ? (
+              <Button variant="ghost" size="sm" onClick={() => { setRag(""); setAfter(""); setBefore(""); }}>
+                Clear filters
               </Button>
-            </div>
-          ) : undefined
-        }
-      />
+            ) : canWrite ? (
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button size="sm" onClick={() => setFormOpen(true)} className="gap-1.5">
+                  <Plus className="size-3.5" /> New consignment
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => router.push("/supply-chains")}>
+                  Assign lots to a consignment
+                </Button>
+              </div>
+            ) : undefined
+          }
+        />
+      )}
       <ConsignmentForm open={formOpen} onOpenChange={setFormOpen} />
     </div>
   );
