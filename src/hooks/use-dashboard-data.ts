@@ -6,6 +6,8 @@ import { authFetch } from "@/lib/api/client";
 import { isWithinQuarter } from "@/lib/dashboard-worklist";
 import type {
   BatchReadiness,
+  ConsignmentRow,
+  ConsignmentSummary,
   DueDiligenceStatement,
   PaginatedResponse,
   ReadinessSummary,
@@ -25,6 +27,8 @@ const SUPPLIERS_LOOKUP_KEY = ["dashboard", "suppliers-lookup"];
 const DDS_STATEMENTS_KEY = ["dashboard", "dds-statements"];
 const LATEST_TRACES_SUBMISSIONS_KEY = ["dashboard", "traces-submissions-latest"];
 const PLOTS_PENDING_KEY = ["dashboard", "plots-pending-validation-count"];
+const CONSIGNMENT_SUMMARY_KEY = ["dashboard", "consignments-summary"];
+const RED_CONSIGNMENT_ROWS_KEY = ["dashboard", "red-consignment-rows"];
 
 /** Every PO's derived readiness — no `stage`/`blocked` filter, so this hits
  * the readiness endpoint's fast DB-paginated path (see
@@ -114,6 +118,38 @@ export function usePlotsPendingValidationCount() {
       if (!res.ok) throw new Error("Failed to load plot validation counts");
       const body: PaginatedResponse<unknown> = await res.json();
       return body.count;
+    },
+    staleTime: 60_000,
+  });
+}
+
+/** Org-wide RAG rollup — Tier 1's headline count and RAG strip. Same
+ * endpoint/key the pre-redesign `ShipmentsLeadTimeCard` used; kept here
+ * (not inlined in the component) so the key/queryFn live in one place. */
+export function useConsignmentSummary() {
+  return useQuery({
+    queryKey: CONSIGNMENT_SUMMARY_KEY,
+    queryFn: async (): Promise<ConsignmentSummary> => {
+      const res = await authFetch("/api/v1/supply-chain/consignments/summary/");
+      if (!res.ok) throw new Error("Failed to load shipments summary");
+      return res.json();
+    },
+    staleTime: 60_000,
+  });
+}
+
+/** RED consignments, server-sorted by `expected_clearance_date` ascending
+ * (nulls last) — shared by Tier 1's exemplar line and Tier 2's "land-soon
+ * uncovered" group (dashboard-redesign.md Tier 1: "Shared with Tier 2's
+ * ... group, one fetch, two consumers"). */
+export function useRedConsignmentRows() {
+  return useQuery({
+    queryKey: RED_CONSIGNMENT_ROWS_KEY,
+    queryFn: async (): Promise<ConsignmentRow[]> => {
+      const res = await authFetch("/api/v1/supply-chain/consignments/?rag=RED&page_size=100");
+      if (!res.ok) throw new Error("Failed to load RED consignments");
+      const body: PaginatedResponse<ConsignmentRow> = await res.json();
+      return body.results;
     },
     staleTime: 60_000,
   });
