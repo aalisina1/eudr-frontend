@@ -7,8 +7,10 @@
 import { describe, it, expect } from "vitest";
 import {
   bucketReadiness,
+  computeHighRiskConcentration,
   countDdsExpiringWithin90Days,
   daysUntil,
+  dedupeCountryNames,
   EUDR_ENFORCEMENT_DATE,
   EUDR_ENFORCEMENT_DATE_LABEL,
   formatDateLine,
@@ -20,7 +22,7 @@ import {
   shouldShowDashboardCtas,
   VIEWER_SEES_DASHBOARD_CTAS,
 } from "@/lib/dashboard-worklist";
-import type { BatchReadiness, DueDiligenceStatement, User } from "@/lib/api/types";
+import type { BatchReadiness, DueDiligenceStatement, Supplier, User } from "@/lib/api/types";
 
 function po(overrides: Partial<BatchReadiness> = {}): BatchReadiness {
   return {
@@ -230,6 +232,95 @@ describe("countDdsExpiringWithin90Days", () => {
   it("excludes a statement with no valid_until", () => {
     const s = dds({ status: "SUBMITTED", valid_until: null });
     expect(countDdsExpiringWithin90Days([s], now)).toBe(0);
+  });
+});
+
+function supplier(overrides: Partial<Supplier> = {}): Supplier {
+  return {
+    id: "sup-high",
+    name: "Ivoire Cocoa",
+    country_of_origin: "CI",
+    kyc_status: "VERIFIED",
+    risk_rating: "HIGH",
+    external_id: "",
+    managed_by_id: "u1",
+    supplier_organization_id: null,
+    kyc_verified_at: null,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+    ...overrides,
+  };
+}
+
+describe("computeHighRiskConcentration", () => {
+  it("counts distinct HIGH-risk sellers that appear among the readiness rows", () => {
+    const rows = [
+      po({ id: "a", seller_id: "sup-high" }),
+      po({ id: "b", seller_id: "sup-standard" }),
+    ];
+    const result = computeHighRiskConcentration(rows, [supplier()]);
+    expect(result.supplierCount).toBe(1);
+  });
+
+  it("does not count a HIGH-risk supplier with no matching readiness rows", () => {
+    const rows = [po({ id: "a", seller_id: "sup-standard" })];
+    const result = computeHighRiskConcentration(rows, [supplier()]);
+    expect(result.supplierCount).toBe(0);
+    expect(result.countryNames).toEqual([]);
+  });
+
+  it("computes KG-normalised volume share (TONNES x1000), excluding M3/PIECES from both sums", () => {
+    const rows = [
+      po({
+        id: "a",
+        seller_id: "sup-high",
+        funnel: { unit: "TONNES", ordered_quantity: "1.0000", allocated_quantity: "0", geolocated_quantity: "0", filed_quantity: "0", uncovered_quantity: "1.0000" },
+      }), // 1000kg
+      po({
+        id: "b",
+        seller_id: "sup-standard",
+        funnel: { unit: "KG", ordered_quantity: "3000.0000", allocated_quantity: "0", geolocated_quantity: "0", filed_quantity: "0", uncovered_quantity: "3000.0000" },
+      }), // 3000kg
+      po({
+        id: "c",
+        seller_id: "sup-standard",
+        funnel: { unit: "M3", ordered_quantity: "999.0000", allocated_quantity: "0", geolocated_quantity: "0", filed_quantity: "0", uncovered_quantity: "999.0000" },
+      }), // excluded from both sums
+    ];
+    const result = computeHighRiskConcentration(rows, [supplier()]);
+    expect(result.volumePct).toBe(25); // 1000 / (1000 + 3000) = 25%
+  });
+
+  it("returns a null volumePct when there is no mass-unit volume at all", () => {
+    const rows = [
+      po({
+        id: "a",
+        seller_id: "sup-standard",
+        funnel: { unit: "M3", ordered_quantity: "5.0000", allocated_quantity: "0", geolocated_quantity: "0", filed_quantity: "0", uncovered_quantity: "5.0000" },
+      }),
+    ];
+    expect(computeHighRiskConcentration(rows, [supplier()]).volumePct).toBeNull();
+  });
+
+  it("dedupes matched suppliers' countries in first-seen order", () => {
+    const supplier2 = supplier({ id: "sup-high-2", country_of_origin: "CM" });
+    const rows = [
+      po({ id: "a", seller_id: "sup-high" }),
+      po({ id: "b", seller_id: "sup-high-2" }),
+      po({ id: "c", seller_id: "sup-high" }),
+    ];
+    const result = computeHighRiskConcentration(rows, [supplier(), supplier2]);
+    expect(result.countryNames).toEqual(["Côte d’Ivoire", "Cameroon"]);
+  });
+});
+
+describe("dedupeCountryNames", () => {
+  it("maps ISO 3166-1 alpha-2 codes to display names and dedupes", () => {
+    expect(dedupeCountryNames(["GH", "GH", "CM"])).toEqual(["Ghana", "Cameroon"]);
+  });
+
+  it("falls back to the raw code for an unresolvable private-use code", () => {
+    expect(dedupeCountryNames(["XX"])).toEqual(["XX"]);
   });
 });
 

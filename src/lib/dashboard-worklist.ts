@@ -6,7 +6,8 @@
  * hooks in `src/hooks/use-dashboard-data.ts` and the card components under
  * `src/components/dashboard/` are the only callers.
  */
-import type { BatchReadiness, DueDiligenceStatement, User } from "@/lib/api/types";
+import { KG_PER_UNIT } from "@/lib/readiness-format";
+import type { BatchReadiness, DueDiligenceStatement, Supplier, User } from "@/lib/api/types";
 
 // ── Greeting + date line ──
 
@@ -194,4 +195,80 @@ export function shouldShowDashboardCtas(
   viewerSeesCtas: boolean = VIEWER_SEES_DASHBOARD_CTAS
 ): boolean {
   return role !== "VIEWER" || viewerSeesCtas;
+}
+
+// ── Tier 4a: high-risk-country sourcing ──
+
+export interface HighRiskConcentration {
+  /** Distinct HIGH-risk-rated `seller_id`s that actually appear among the
+   * readiness rows — a HIGH-risk supplier with no open/tracked POs doesn't
+   * count (dashboard-redesign.md 4a). */
+  supplierCount: number;
+  /** KG-normalised share of total ordered volume sourced from HIGH-risk
+   * suppliers, rounded to a whole percent; `null` when there's no volume to
+   * divide by (avoids a 0/0 -> NaN reading as "0%"). */
+  volumePct: number | null;
+  /** Deduped display names of the matched suppliers' countries of origin,
+   * in first-seen order. */
+  countryNames: string[];
+}
+
+/** Joins the already-fetched readiness rows against the HIGH-risk supplier
+ * list client-side (`useHighRiskSuppliers()` + `useReadinessRows()`) —
+ * `risk_rating` isn't on `BatchReadiness`, so this is the only way to know
+ * which POs belong to a high-risk supplier. Mirrors
+ * `supplier-sourcing-card.tsx`'s KG-normalised tonnage rollup (mass units
+ * only; M3/PIECES excluded from both the numerator and denominator). */
+export function computeHighRiskConcentration(
+  readinessRows: BatchReadiness[],
+  highRiskSuppliers: Supplier[]
+): HighRiskConcentration {
+  const highRiskById = new Map(highRiskSuppliers.map((s) => [s.id, s]));
+  const matchedSellerIds = new Set<string>();
+  let highRiskKg = 0;
+  let totalKg = 0;
+
+  for (const row of readinessRows) {
+    const factor = KG_PER_UNIT[row.funnel.unit];
+    if (factor == null) continue;
+    const kg = Number(row.funnel.ordered_quantity) * factor;
+    totalKg += kg;
+    if (highRiskById.has(row.seller_id)) {
+      highRiskKg += kg;
+      matchedSellerIds.add(row.seller_id);
+    }
+  }
+
+  const countryCodes = Array.from(matchedSellerIds)
+    .map((id) => highRiskById.get(id)?.country_of_origin)
+    .filter((c): c is string => !!c);
+
+  return {
+    supplierCount: matchedSellerIds.size,
+    volumePct: totalKg > 0 ? Math.round((highRiskKg / totalKg) * 100) : null,
+    countryNames: dedupeCountryNames(countryCodes),
+  };
+}
+
+const regionDisplayNames = new Intl.DisplayNames(["en"], { type: "region" });
+
+/** ISO 3166-1 alpha-2 codes -> deduped display names, first-seen order.
+ * `Intl.DisplayNames` is a real platform API (no invented country-name
+ * table to maintain/drift) — falls back to the raw code if the runtime
+ * can't resolve it. */
+export function dedupeCountryNames(codes: string[]): string[] {
+  const seen = new Set<string>();
+  const names: string[] = [];
+  for (const code of codes) {
+    if (seen.has(code)) continue;
+    seen.add(code);
+    let name: string;
+    try {
+      name = regionDisplayNames.of(code) ?? code;
+    } catch {
+      name = code;
+    }
+    names.push(name);
+  }
+  return names;
 }
