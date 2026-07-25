@@ -18,6 +18,14 @@
 /** Batch/lot/funnel quantity unit -> short display label. */
 export const UNIT_LABELS: Record<string, string> = { KG: "kg", TONNES: "t", M3: "m³", PIECES: "pcs" };
 
+/** kg-per-unit for the mass units convertible to a common denominator —
+ * mirrors the backend's own `_KG_PER_UNIT` in `apps/supply_chain/readiness.py`
+ * (M3/PIECES are not mass units and are excluded, not converted). Single
+ * shared export — previously duplicated in `supplier-sourcing-card.tsx` and
+ * `file-dds-composer.ts`; the dashboard redesign's Tier 4 high-risk-sourcing
+ * volume-share join (`dashboard-worklist.ts`) is a third consumer. */
+export const KG_PER_UNIT: Record<string, number> = { KG: 1, TONNES: 1000 };
+
 /** Whole days between now and `dateStr` (negative = overdue); `null` when
  * there's no date to measure against. */
 export function daysUntil(dateStr: string | null | undefined): number | null {
