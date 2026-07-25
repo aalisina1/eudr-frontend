@@ -322,6 +322,14 @@ describe("dedupeCountryNames", () => {
   it("falls back to the raw code for an unresolvable private-use code", () => {
     expect(dedupeCountryNames(["XX"])).toEqual(["XX"]);
   });
+
+  it("falls back to the raw code when Intl.DisplayNames throws on a malformed code", () => {
+    // Digit-containing 2-char codes throw RangeError in Intl.DisplayNames —
+    // this exercises the catch branch (the "XX" case above only hits the
+    // resolve-and-echo path). Real data: Supplier.country_of_origin is an
+    // unvalidated CharField(max_length=2), so bad import data can reach here.
+    expect(dedupeCountryNames(["12"])).toEqual(["12"]);
+  });
 });
 
 describe("shouldShowDashboardCtas", () => {
