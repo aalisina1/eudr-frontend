@@ -3,6 +3,20 @@ import { screen, waitFor } from "@testing-library/react";
 import { renderWithProviders, mockPaginatedResponse, createMockFetch } from "../helpers";
 import DueDiligencePage from "@/app/(dashboard)/due-diligence/page";
 
+// File-level mock (house pattern — see file-dds-composer-routing.test.tsx):
+// the global next/navigation mock in setup.ts always returns an EMPTY
+// URLSearchParams, so the `?status=` seeding tests below need a mutable
+// `searchParams` this file can reassign per test.
+let searchParams = new URLSearchParams();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn(), prefetch: vi.fn() }),
+  usePathname: () => "/due-diligence",
+  useParams: () => ({}),
+  useSearchParams: () => searchParams,
+  redirect: vi.fn(),
+}));
+
 const originalFetch = globalThis.fetch;
 
 function makeMockFetch(status: string) {
@@ -33,6 +47,7 @@ describe("DueDiligencePage", () => {
 
   afterEach(() => {
     globalThis.fetch = originalFetch;
+    searchParams = new URLSearchParams();
   });
 
   it("renders the page title as Submissions (not Due Diligence)", () => {
@@ -163,6 +178,7 @@ function tracesDetail(overrides: Partial<Record<string, unknown>>) {
 describe("DueDiligencePage — TRACES-derived status badge (#22, ADR-0017)", () => {
   afterEach(() => {
     globalThis.fetch = originalFetch;
+    searchParams = new URLSearchParams();
   });
 
   it("shows Available derived from the latest TRACES submission, not the internal Submitted status", async () => {
@@ -264,5 +280,71 @@ describe("DueDiligencePage — TRACES-derived status badge (#22, ADR-0017)", () 
       (el) => el.closest('[role="cell"]') !== null
     );
     expect(approvedBadges.length).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Dashboard Tier 4d filtered doorway (dashboard-redesign-phase1 filtering
+// addendum, Task 7.3): `/due-diligence?status=SUBMITTED` must land
+// pre-filtered. Soonest-`valid_until` ordering is NOT attempted here — see
+// the plan's Global Constraints for why (backend `ordering_fields` doesn't
+// include `valid_until`; frontend-only Phase 1 can't work around that).
+// ---------------------------------------------------------------------------
+
+function mockDueDiligenceApi(ddsBody: ReturnType<typeof mockPaginatedResponse>) {
+  const calls: string[] = [];
+  globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+    const url = typeof input === "string" ? input : input.toString();
+    calls.push(url);
+    if (url.includes("/due-diligence/statements/")) {
+      return Promise.resolve(new Response(JSON.stringify(ddsBody), { status: 200 }));
+    }
+    if (url.includes("/traces/submissions/")) {
+      return Promise.resolve(new Response(JSON.stringify(mockPaginatedResponse([])), { status: 200 }));
+    }
+    return Promise.resolve(new Response(JSON.stringify({ detail: "not found" }), { status: 404 }));
+  }) as typeof fetch;
+  return calls;
+}
+
+describe("DueDiligencePage — status URL param (dashboard filtered doorway)", () => {
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    searchParams = new URLSearchParams();
+  });
+
+  it("requests status=SUBMITTED from the API when ?status=SUBMITTED is present", async () => {
+    searchParams = new URLSearchParams("status=SUBMITTED");
+    const calls = mockDueDiligenceApi(ddsListResponse({ status: "SUBMITTED" }));
+    renderWithProviders(<DueDiligencePage />);
+    await waitFor(() => expect(screen.getByText("DDS-2026-001")).toBeInTheDocument());
+    expect(calls.some((url) => url.includes("/due-diligence/statements/") && url.includes("status=SUBMITTED"))).toBe(true);
+  });
+
+  it("pre-selects Submitted in the status filter when ?status=SUBMITTED is present", async () => {
+    searchParams = new URLSearchParams("status=SUBMITTED");
+    mockDueDiligenceApi(ddsListResponse({ status: "SUBMITTED" }));
+    renderWithProviders(<DueDiligencePage />);
+    await waitFor(() => {
+      const select = screen.getByLabelText(/^Status$/i) as HTMLSelectElement;
+      expect(select.value).toBe("SUBMITTED");
+    });
+  });
+
+  it("degrades to the unfiltered list when status is absent", async () => {
+    const calls = mockDueDiligenceApi(ddsListResponse());
+    renderWithProviders(<DueDiligencePage />);
+    await waitFor(() => expect(screen.getByText("DDS-2026-001")).toBeInTheDocument());
+    expect(calls.some((url) => url.includes("status="))).toBe(false);
+    expect((screen.getByLabelText(/^Status$/i) as HTMLSelectElement).value).toBe("");
+  });
+
+  it("degrades to the unfiltered list when status is an unrecognized value", async () => {
+    searchParams = new URLSearchParams("status=BOGUS");
+    const calls = mockDueDiligenceApi(ddsListResponse());
+    renderWithProviders(<DueDiligencePage />);
+    await waitFor(() => expect(screen.getByText("DDS-2026-001")).toBeInTheDocument());
+    expect(calls.some((url) => url.includes("status="))).toBe(false);
+    expect((screen.getByLabelText(/^Status$/i) as HTMLSelectElement).value).toBe("");
   });
 });
