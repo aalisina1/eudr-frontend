@@ -59,6 +59,27 @@ describe("ledgerToCsv", () => {
     expect(lines[1]).toContain("BL-4471");
   });
 
+  it("exports the TRACES reference with a blank verification cell for a submitted-but-pending DDS", () => {
+    // Reference arrives at SUBMITTED; verification only at AVAILABLE — a row
+    // can legitimately carry one without the other, never the reverse.
+    const csv = ledgerToCsv(
+      ledger({
+        dds_rows: [
+          {
+            dds_id: "d1", reference_number: "DDS-PENDING", covered_lot_count: 1,
+            traces_reference_number: "REF-PENDING", verification_number: "",
+            traces_status: "SUBMITTED", submitted_at: "2026-07-10T12:00:00Z",
+          },
+        ],
+      }),
+    );
+    const lines = csv.split("\n");
+    expect(lines).toHaveLength(2);
+    expect(lines[1]).toContain("REF-PENDING");
+    const verificationIndex = lines[0].split(",").indexOf("Verification number");
+    expect(lines[1].split(",")[verificationIndex]).toBe("");
+  });
+
   it("quotes values containing commas (the multi-PO case)", () => {
     // po_references join with "; " to stay single-cell, but any value that
     // does contain a comma or quote must be CSV-escaped.

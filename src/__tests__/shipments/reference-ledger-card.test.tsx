@@ -129,22 +129,24 @@ describe("ReferenceLedgerCard", () => {
     clickSpy.mockRestore();
   });
 
-  it("shows 'Not submitted to TRACES' and no chips when only the reference half of the pair is present", async () => {
+  it("renders the reference chip and a pending note when only the reference half of the pair is present (SUBMITTED, not yet AVAILABLE)", async () => {
     mockLedger(ledger({
       dds_rows: [{
         dds_id: "d1", reference_number: "DDS-HALF", covered_lot_count: 1,
         traces_reference_number: "REF-ONLY", verification_number: "",
-        traces_status: "AVAILABLE", submitted_at: null,
+        traces_status: "SUBMITTED", submitted_at: "2026-07-10T12:00:00Z",
       }],
     }));
     await renderCard();
     await waitFor(() => expect(screen.getByText("DDS-HALF")).toBeInTheDocument());
-    expect(screen.getByText(/Not submitted to TRACES/i)).toBeInTheDocument();
-    expect(screen.queryByText("REF-ONLY")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Copy TRACES reference" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Copy TRACES reference" })).toHaveTextContent("REF-ONLY");
+    expect(screen.getByText("Verification number pending")).toBeInTheDocument();
+    expect(screen.getByText("SUBMITTED")).toBeInTheDocument();
+    expect(screen.queryByText(/Not submitted to TRACES/i)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Copy Verification number" })).toBeNull();
   });
 
-  it("shows 'Not submitted to TRACES' and no chips when only the verification half of the pair is present", async () => {
+  it("defensively treats a verification number without a reference as not submitted (should never happen, but never render a lone verification chip)", async () => {
     mockLedger(ledger({
       dds_rows: [{
         dds_id: "d1", reference_number: "DDS-HALF2", covered_lot_count: 1,

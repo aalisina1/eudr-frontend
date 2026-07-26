@@ -439,9 +439,12 @@ export interface ConsignmentDetail extends ConsignmentRow {
   events: ShipmentEvent[];
 }
 
-/** One covering DDS on the Customs Reference Ledger. `traces_reference_number`
- * and `verification_number` are a LINKED PAIR — both empty until TRACES accepts
- * the DDS; never render or export one without the other. */
+/** One covering DDS on the Customs Reference Ledger. TRACES issues these two
+ * fields at different lifecycle stages, not together: `traces_reference_number`
+ * arrives at SUBMITTED, `verification_number` only once the DDS reaches
+ * AVAILABLE. So a legitimate row can carry a reference with no verification
+ * number yet — but never the reverse; treat verification-without-reference as
+ * not submitted. */
 export interface ConsignmentLedgerDdsRow {
   dds_id: string;
   reference_number: string;

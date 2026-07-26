@@ -33,8 +33,11 @@ function downloadCsv(ledger: ConsignmentLedger) {
 
 /** Customs Reference Ledger — the per-consignment audit record: B/L → PO(s) →
  * covering DDS(s) with their TRACES reference+verification pair → the customs
- * declaration. The pair is rendered only when BOTH halves are present (spec:
- * one without the other is meaningless). */
+ * declaration. TRACES issues the two halves at different lifecycle stages —
+ * the reference at SUBMITTED, the verification number only at AVAILABLE — so
+ * a reference-without-verification row is the normal pending state, not an
+ * error. A verification without a reference should never happen; treat it
+ * defensively as not submitted. */
 export function ReferenceLedgerCard({
   consignmentId,
   canWrite,
@@ -116,11 +119,19 @@ export function ReferenceLedgerCard({
                     </span>
                     {d.traces_status && <Badge variant="outline">{d.traces_status}</Badge>}
                   </div>
-                  {/* Linked pair: rendered only when BOTH halves exist. */}
+                  {/* Reference arrives at SUBMITTED, verification only at AVAILABLE —
+                      a reference without a verification number is the normal pending
+                      state. A verification without a reference should never happen;
+                      treat it as not submitted rather than rendering a lone chip. */}
                   {d.traces_reference_number && d.verification_number ? (
                     <div className="flex flex-wrap gap-4">
                       <CopyChip label="TRACES reference" value={d.traces_reference_number} />
                       <CopyChip label="Verification number" value={d.verification_number} />
+                    </div>
+                  ) : d.traces_reference_number ? (
+                    <div className="flex flex-wrap items-center gap-4">
+                      <CopyChip label="TRACES reference" value={d.traces_reference_number} />
+                      <p className="text-xs text-muted-foreground">Verification number pending</p>
                     </div>
                   ) : (
                     <p className="text-xs text-muted-foreground">Not submitted to TRACES</p>
