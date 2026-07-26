@@ -7,13 +7,9 @@
  * is the only caller.
  */
 import type { LotReadiness, PayloadEstimateBatchRow } from "@/lib/api/types";
+import { KG_PER_UNIT } from "@/lib/readiness-format";
 
 // ── Declaration summary: net mass + harvest-period range ──
-
-/** kg-per-unit for the mass units convertible to a common denominator —
- * mirrors the backend's own `_KG_PER_UNIT` in `apps/supply_chain/readiness.py`
- * (M3/PIECES are not mass units and are excluded, not converted). */
-const KG_PER_UNIT: Record<string, number> = { KG: 1, TONNES: 1000 };
 
 export interface NetMassSummary {
   /** Total net mass of CHECKED lots, in kg, across mass-unit lots only. */

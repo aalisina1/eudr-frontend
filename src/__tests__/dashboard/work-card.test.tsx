@@ -56,3 +56,21 @@ describe("WorkRow / RefLink", () => {
     expect(link).toHaveAttribute("href", "/supply-chains/po-1");
   });
 });
+
+describe("WorkRow tone", () => {
+  it("adds no left-border override by default", () => {
+    const { container } = render(<WorkRow>content</WorkRow>);
+    expect(container.firstChild).not.toHaveClass("border-l-destructive");
+    expect(container.firstChild).not.toHaveClass("border-l-primary");
+  });
+
+  it("applies a destructive left border for tone='critical'", () => {
+    const { container } = render(<WorkRow tone="critical">content</WorkRow>);
+    expect(container.firstChild).toHaveClass("border-l-4", "border-l-destructive");
+  });
+
+  it("applies a primary left border for tone='ready'", () => {
+    const { container } = render(<WorkRow tone="ready">content</WorkRow>);
+    expect(container.firstChild).toHaveClass("border-l-4", "border-l-primary");
+  });
+});

@@ -61,11 +61,25 @@ function EmptyLine({ text }: { text: string }) {
   );
 }
 
-export function WorkRow({ className, children }: { className?: string; children: React.ReactNode }) {
+export function WorkRow({
+  tone,
+  className,
+  children,
+}: {
+  /** Urgency-color left-border variant (dashboard-redesign.md Design
+   * decisions: "A left-border urgency-color variant on WorkRow... satisfies
+   * the mockup's hierarchy without duplicating the row primitive"). Omit for
+   * the plain boxed look every pre-existing WorkRow usage still gets. */
+  tone?: "critical" | "ready";
+  className?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div
       className={cn(
         "flex flex-wrap items-center gap-3 rounded-[10px] border border-border px-3 py-2.5",
+        tone === "critical" && "border-l-4 border-l-destructive",
+        tone === "ready" && "border-l-4 border-l-primary",
         className
       )}
     >

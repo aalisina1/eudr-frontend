@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Users, Plus } from "lucide-react";
 import { DataTable, type ColumnDef, type FilterDef } from "@/components/data-table";
 import { SupplierForm } from "@/components/forms/supplier-form";
@@ -99,20 +100,58 @@ const filters: FilterDef[] = [
       { label: "Expired", value: "EXPIRED" },
     ],
   },
-  {
-    key: "risk_rating",
-    label: "All Risk Levels",
-    options: [
-      { label: "Low", value: "LOW" },
-      { label: "Standard", value: "STANDARD" },
-      { label: "High", value: "HIGH" },
-    ],
-  },
 ];
 
-export default function SuppliersPage() {
+// Risk rating moves out of the generic `FilterDef` array (dashboard-redesign
+// filtering addendum, Task 7.1): FilterDef's `activeFilters` state lives
+// inside `DataTable` with no way to pass an initial value in, so it can't be
+// seeded from a URL param (verified against `data-table.tsx`). Mirrors
+// `/shipments`'s own `?rag=RED` deep-link pattern exactly
+// (`src/app/(dashboard)/shipments/page.tsx`'s `RAG_OPTIONS`/`rag` state) —
+// a plain toolbar `<select>` backed by page-level state, fed into
+// `extraParams` instead of the shared component's own filter mechanism.
+const RISK_OPTIONS: { value: RiskRating | ""; label: string }[] = [
+  { value: "", label: "All Risk Levels" },
+  { value: "LOW", label: "Low" },
+  { value: "STANDARD", label: "Standard" },
+  { value: "HIGH", label: "High" },
+];
+
+function SuppliersPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [formOpen, setFormOpen] = useState(false);
+
+  // Dashboard Tier 4a's "Suppliers flagged high-risk" doorway deep-links here
+  // as `/suppliers?risk_rating=HIGH` — seed the toolbar filter from the URL
+  // so the destination lands pre-filtered instead of showing every supplier.
+  // An absent or unrecognized value degrades to "" (no filter, full list),
+  // never a crash.
+  const riskParam = searchParams.get("risk_rating") ?? "";
+  const [riskRating, setRiskRating] = useState(
+    RISK_OPTIONS.some((o) => o.value === riskParam) ? riskParam : ""
+  );
+
+  const extraParams = useMemo(() => {
+    const p: Record<string, string> = {};
+    if (riskRating) p.risk_rating = riskRating;
+    return p;
+  }, [riskRating]);
+
+  const toolbarExtra = (
+    <select
+      aria-label="Risk rating"
+      value={riskRating}
+      onChange={(e) => setRiskRating(e.target.value)}
+      className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+    >
+      {RISK_OPTIONS.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  );
 
   return (
     <div className="space-y-6">
@@ -132,6 +171,8 @@ export default function SuppliersPage() {
         endpoint="/api/v1/suppliers/"
         columns={columns}
         filters={filters}
+        extraParams={extraParams}
+        toolbarExtra={toolbarExtra}
         searchPlaceholder="Search suppliers..."
         exportable
         rowKey={(s) => s.id}
@@ -143,5 +184,13 @@ export default function SuppliersPage() {
 
       <SupplierForm open={formOpen} onOpenChange={setFormOpen} />
     </div>
+  );
+}
+
+export default function SuppliersPage() {
+  return (
+    <Suspense fallback={<Skeleton className="h-10 w-72" />}>
+      <SuppliersPageInner />
+    </Suspense>
   );
 }

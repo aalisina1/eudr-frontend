@@ -7,15 +7,22 @@
 import { describe, it, expect } from "vitest";
 import {
   bucketReadiness,
+  computeHighRiskConcentration,
+  countDdsExpiringWithin90Days,
   daysUntil,
+  dedupeCountryNames,
+  EUDR_ENFORCEMENT_DATE,
+  EUDR_ENFORCEMENT_DATE_LABEL,
   formatDateLine,
   formatEtaLabel,
   getQuarterBounds,
   greeting,
   kgToTonnesLabel,
   isWithinQuarter,
+  shouldShowDashboardCtas,
+  VIEWER_SEES_DASHBOARD_CTAS,
 } from "@/lib/dashboard-worklist";
-import type { BatchReadiness } from "@/lib/api/types";
+import type { BatchReadiness, DueDiligenceStatement, Supplier, User } from "@/lib/api/types";
 
 function po(overrides: Partial<BatchReadiness> = {}): BatchReadiness {
   return {
@@ -38,6 +45,29 @@ function po(overrides: Partial<BatchReadiness> = {}): BatchReadiness {
     },
     lot_count: 0,
     next_deadline: null,
+    ...overrides,
+  };
+}
+
+function dds(overrides: Partial<DueDiligenceStatement> = {}): DueDiligenceStatement {
+  return {
+    id: "dds-1",
+    reference_number: "DDS-2026-0001",
+    traces_reference: "",
+    status: "SUBMITTED",
+    statement_type: "OPERATOR",
+    activity_type: "IMPORT",
+    batch_ids: [],
+    risk_conclusion: null,
+    conclusion_justification: "",
+    operator_id: "op-1",
+    created_by_id: "u1",
+    reviewed_by_id: null,
+    submitted_at: "2026-01-01T00:00:00Z",
+    valid_until: null,
+    archived_until: null,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
     ...overrides,
   };
 }
@@ -161,5 +191,162 @@ describe("bucketReadiness", () => {
     expect(filing).toEqual([]);
     expect(blocked).toEqual([]);
     expect(awaiting).toEqual([]);
+  });
+});
+
+describe("EUDR_ENFORCEMENT_DATE", () => {
+  it("is the fixed statutory date with a matching display label", () => {
+    expect(EUDR_ENFORCEMENT_DATE).toBe("2026-12-30");
+    expect(EUDR_ENFORCEMENT_DATE_LABEL).toBe("30 Dec 2026");
+  });
+});
+
+describe("countDdsExpiringWithin90Days", () => {
+  const now = new Date(2026, 6, 8); // 8 July 2026
+
+  it("counts a SUBMITTED statement expiring within 90 days", () => {
+    const s = dds({ status: "SUBMITTED", valid_until: "2026-09-01" }); // 55 days out
+    expect(countDdsExpiringWithin90Days([s], now)).toBe(1);
+  });
+
+  it("excludes a SUBMITTED statement expiring well beyond 90 days", () => {
+    const s = dds({ status: "SUBMITTED", valid_until: "2026-12-01" });
+    expect(countDdsExpiringWithin90Days([s], now)).toBe(0);
+  });
+
+  it("includes the 90-day boundary", () => {
+    const s = dds({ status: "SUBMITTED", valid_until: "2026-10-06" }); // exactly 90 days
+    expect(countDdsExpiringWithin90Days([s], now)).toBe(1);
+  });
+
+  it("includes an already-lapsed statement (the most urgent case, not excluded)", () => {
+    const s = dds({ status: "SUBMITTED", valid_until: "2026-06-01" });
+    expect(countDdsExpiringWithin90Days([s], now)).toBe(1);
+  });
+
+  it("excludes a non-SUBMITTED statement even with a near valid_until", () => {
+    const s = dds({ status: "DRAFT", valid_until: "2026-08-01" });
+    expect(countDdsExpiringWithin90Days([s], now)).toBe(0);
+  });
+
+  it("excludes a statement with no valid_until", () => {
+    const s = dds({ status: "SUBMITTED", valid_until: null });
+    expect(countDdsExpiringWithin90Days([s], now)).toBe(0);
+  });
+});
+
+function supplier(overrides: Partial<Supplier> = {}): Supplier {
+  return {
+    id: "sup-high",
+    name: "Ivoire Cocoa",
+    country_of_origin: "CI",
+    kyc_status: "VERIFIED",
+    risk_rating: "HIGH",
+    external_id: "",
+    managed_by_id: "u1",
+    supplier_organization_id: null,
+    kyc_verified_at: null,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+    ...overrides,
+  };
+}
+
+describe("computeHighRiskConcentration", () => {
+  it("counts distinct HIGH-risk sellers that appear among the readiness rows", () => {
+    const rows = [
+      po({ id: "a", seller_id: "sup-high" }),
+      po({ id: "b", seller_id: "sup-standard" }),
+    ];
+    const result = computeHighRiskConcentration(rows, [supplier()]);
+    expect(result.supplierCount).toBe(1);
+  });
+
+  it("does not count a HIGH-risk supplier with no matching readiness rows", () => {
+    const rows = [po({ id: "a", seller_id: "sup-standard" })];
+    const result = computeHighRiskConcentration(rows, [supplier()]);
+    expect(result.supplierCount).toBe(0);
+    expect(result.countryNames).toEqual([]);
+  });
+
+  it("computes KG-normalised volume share (TONNES x1000), excluding M3/PIECES from both sums", () => {
+    const rows = [
+      po({
+        id: "a",
+        seller_id: "sup-high",
+        funnel: { unit: "TONNES", ordered_quantity: "1.0000", allocated_quantity: "0", geolocated_quantity: "0", filed_quantity: "0", uncovered_quantity: "1.0000" },
+      }), // 1000kg
+      po({
+        id: "b",
+        seller_id: "sup-standard",
+        funnel: { unit: "KG", ordered_quantity: "3000.0000", allocated_quantity: "0", geolocated_quantity: "0", filed_quantity: "0", uncovered_quantity: "3000.0000" },
+      }), // 3000kg
+      po({
+        id: "c",
+        seller_id: "sup-standard",
+        funnel: { unit: "M3", ordered_quantity: "999.0000", allocated_quantity: "0", geolocated_quantity: "0", filed_quantity: "0", uncovered_quantity: "999.0000" },
+      }), // excluded from both sums
+    ];
+    const result = computeHighRiskConcentration(rows, [supplier()]);
+    expect(result.volumePct).toBe(25); // 1000 / (1000 + 3000) = 25%
+  });
+
+  it("returns a null volumePct when there is no mass-unit volume at all", () => {
+    const rows = [
+      po({
+        id: "a",
+        seller_id: "sup-standard",
+        funnel: { unit: "M3", ordered_quantity: "5.0000", allocated_quantity: "0", geolocated_quantity: "0", filed_quantity: "0", uncovered_quantity: "5.0000" },
+      }),
+    ];
+    expect(computeHighRiskConcentration(rows, [supplier()]).volumePct).toBeNull();
+  });
+
+  it("dedupes matched suppliers' countries in first-seen order", () => {
+    const supplier2 = supplier({ id: "sup-high-2", country_of_origin: "CM" });
+    const rows = [
+      po({ id: "a", seller_id: "sup-high" }),
+      po({ id: "b", seller_id: "sup-high-2" }),
+      po({ id: "c", seller_id: "sup-high" }),
+    ];
+    const result = computeHighRiskConcentration(rows, [supplier(), supplier2]);
+    expect(result.countryNames).toEqual(["Côte d’Ivoire", "Cameroon"]);
+  });
+});
+
+describe("dedupeCountryNames", () => {
+  it("maps ISO 3166-1 alpha-2 codes to display names and dedupes", () => {
+    expect(dedupeCountryNames(["GH", "GH", "CM"])).toEqual(["Ghana", "Cameroon"]);
+  });
+
+  it("falls back to the raw code for an unresolvable private-use code", () => {
+    expect(dedupeCountryNames(["XX"])).toEqual(["XX"]);
+  });
+
+  it("falls back to the raw code when Intl.DisplayNames throws on a malformed code", () => {
+    // Digit-containing 2-char codes throw RangeError in Intl.DisplayNames —
+    // this exercises the catch branch (the "XX" case above only hits the
+    // resolve-and-echo path). Real data: Supplier.country_of_origin is an
+    // unvalidated CharField(max_length=2), so bad import data can reach here.
+    expect(dedupeCountryNames(["12"])).toEqual(["12"]);
+  });
+});
+
+describe("shouldShowDashboardCtas", () => {
+  it("always shows CTAs for non-VIEWER roles regardless of the flag", () => {
+    expect(shouldShowDashboardCtas("COMPLIANCE_OFFICER", false)).toBe(true);
+    expect(shouldShowDashboardCtas("ADMIN", false)).toBe(true);
+  });
+
+  it("shows CTAs for VIEWER when the flag is true", () => {
+    expect(shouldShowDashboardCtas("VIEWER", true)).toBe(true);
+  });
+
+  it("hides CTAs for VIEWER when the flag is false", () => {
+    expect(shouldShowDashboardCtas("VIEWER", false)).toBe(false);
+  });
+
+  it("defaults to the module-level VIEWER_SEES_DASHBOARD_CTAS constant when the flag arg is omitted", () => {
+    expect(shouldShowDashboardCtas("VIEWER")).toBe(VIEWER_SEES_DASHBOARD_CTAS);
   });
 });

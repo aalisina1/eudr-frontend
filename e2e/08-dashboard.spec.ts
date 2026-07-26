@@ -1,12 +1,18 @@
 /**
- * Dashboard-as-worklist (#30, Prompt D) — replaces the old chart dashboard.
- * Live seeded data is sparse until #84 seeds richer readiness/TRACES-reject
- * fixtures, so the "busy" (something in every card) state is stubbed with
- * `page.route`, following the same pattern `10-submissions.spec.ts` uses for
- * TRACES: stubs registered BEFORE navigation, real backend for auth/nav.
- * The "all clear" state is also stubbed explicitly so the quiet empty-state
- * lines (and the absence of any chart) are locked in regardless of what's
- * actually seeded right now.
+ * Dashboard "Decision Ladder" (dashboard-redesign-phase1) — four
+ * severity-ranked tiers (Priority Alert -> Action Queue -> Awaiting Data ->
+ * Risk Concentration) replacing the flat four-card worklist (#30). Live
+ * seeded data is sparse, so the "busy" (something in every tier) state is
+ * stubbed with `page.route`, following the same pattern `10-submissions.spec.ts`
+ * uses for TRACES: stubs registered BEFORE navigation, real backend for
+ * auth/nav. The "all clear" state is also stubbed explicitly so the quiet
+ * empty-state lines (and the absence of any chart) are locked in regardless
+ * of what's actually seeded right now.
+ *
+ * This is a minimal smoke-level parity check only — the full 17-criterion
+ * role-matrix Playwright suite (dashboard-redesign-phase1's own hand-off:
+ * "the 17 criteria above become the per-role Playwright journeys") is a
+ * separate follow-up.
  */
 import { test, expect, type Page } from "@playwright/test";
 
@@ -112,7 +118,21 @@ function summary(overrides: Record<string, unknown> = {}) {
   };
 }
 
-/** Stubs every endpoint the worklist reads, BEFORE navigation. */
+/** `GET /api/v1/supply-chain/consignments/summary/` shape — backs Tier 1's
+ * headline count and RAG strip. Defaults to all-zero/uncovered so tests that
+ * don't care about Tier 1's content still get a well-formed response. */
+function consignmentSummary(overrides: Record<string, unknown> = {}) {
+  return {
+    red: 0,
+    amber: 0,
+    gray: 0,
+    green: 0,
+    landing_within_red_window_uncovered: 0,
+    ...overrides,
+  };
+}
+
+/** Stubs every endpoint the decision-ladder tiers read, BEFORE navigation. */
 async function stubWorklist(
   page: Page,
   opts: {
@@ -122,6 +142,9 @@ async function stubWorklist(
     latestSubmissions?: { id: string; dds_id: string; status: string }[];
     submissionDetail?: unknown;
     plotsPendingCount?: number;
+    plotsFailingCount?: number;
+    redConsignmentRows?: unknown[];
+    consignmentSummaryBody?: unknown;
   }
 ) {
   await page.route("**/api/v1/supply-chain/batches/readiness/summary/**", async (route) => {
@@ -132,6 +155,18 @@ async function stubWorklist(
     await route.fulfill({
       json: { count: opts.readinessResults.length, next: null, previous: null, results: opts.readinessResults },
     });
+  });
+  // Tier 1 (Priority Alert) + Tier 2's land-soon group — org-wide RAG rollup
+  // and the RED consignment rows themselves. Same summary-then-general
+  // registration order as the readiness endpoints above (the general route
+  // falls back to the summary-specific one for `/summary/` URLs).
+  await page.route("**/api/v1/supply-chain/consignments/summary/**", async (route) => {
+    await route.fulfill({ json: opts.consignmentSummaryBody ?? consignmentSummary() });
+  });
+  await page.route("**/api/v1/supply-chain/consignments/**", async (route) => {
+    if (route.request().url().includes("/summary/")) return route.fallback();
+    const rows = opts.redConsignmentRows ?? [];
+    await route.fulfill({ json: { count: rows.length, next: null, previous: null, results: rows } });
   });
   await page.route("**/api/v1/suppliers/**", async (route) => {
     await route.fulfill({ json: { count: 0, next: null, previous: null, results: [] } });
@@ -157,27 +192,36 @@ async function stubWorklist(
       },
     });
   });
+  // Tier 4b (Risk Concentration's "Plots failing validation") shares this
+  // same endpoint with the stat strip's "Plots pending validation" — routed
+  // by `validation_status` in the URL, mirroring the vitest mocks for
+  // `usePlotsPendingValidationCount`/`usePlotsFailingValidationCount`.
   await page.route("**/api/v1/geolocation/plots/**", async (route) => {
-    await route.fulfill({ json: { count: opts.plotsPendingCount ?? 0, next: null, previous: null, results: [] } });
+    const url = route.request().url();
+    const count = url.includes("validation_status=FAILED")
+      ? (opts.plotsFailingCount ?? 0)
+      : (opts.plotsPendingCount ?? 0);
+    await route.fulfill({ json: { count, next: null, previous: null, results: [] } });
   });
 }
 
-test.describe("Dashboard worklist (#30)", () => {
-  test("loads with a greeting header and no chart elements", async ({ page }) => {
+test.describe("Dashboard decision ladder (dashboard-redesign-phase1)", () => {
+  test("loads with a greeting header and the four decision-ladder tiers", async ({ page }) => {
+    await stubWorklist(page, { readinessResults: [], summaryBody: summary(), ddsResults: [] });
     await page.goto("/dashboard");
     await expect(page).toHaveURL(/\/dashboard/);
     await expect(page.getByRole("heading", { name: /Good (morning|afternoon|evening)/ })).toBeVisible({
       timeout: 15_000,
     });
-    await expect(page.getByText("Needs filing")).toBeVisible();
-    await expect(page.getByText("Needs remediation")).toBeVisible();
+    await expect(page.getByText("Priority Alert")).toBeVisible();
+    await expect(page.getByText("Action Queue")).toBeVisible();
     await expect(page.getByText("Awaiting data")).toBeVisible();
-    // No donut/bar charts anywhere on the page (the old dashboard).
+    await expect(page.getByText("Risk Concentration")).toBeVisible();
     await expect(page.getByText("Due Diligence by Status")).toHaveCount(0);
     await expect(page.getByText("Welcome to Canopy")).toHaveCount(0);
   });
 
-  test("busy state — populates all three cards and the stat strip", async ({ page }) => {
+  test("busy state — populates the action queue and awaiting-data tiers, plus the stat strip", async ({ page }) => {
     await stubWorklist(page, {
       readinessResults: [readinessRow(), BLOCKED_PO, OPEN_PO, PLOTS_COMPLETE_PO],
       summaryBody: summary(),
@@ -194,11 +238,12 @@ test.describe("Dashboard worklist (#30)", () => {
 
     await page.goto("/dashboard");
 
-    // Needs filing
+    // Action Queue — ready-to-file row
     await expect(page.getByText("PO-2026-0141")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("link", { name: /File DDS/i })).toBeVisible();
 
-    // Needs remediation
+    // Action Queue — rejected DDS + blocked PO (same group order as the
+    // pre-redesign Needs Remediation card it absorbed)
     await expect(page.getByText("DDS-2026-0089")).toBeVisible();
     await expect(page.getByText("PO-2026-0138")).toBeVisible();
     await expect(page.getByRole("link", { name: /Remediate/i })).toBeVisible();
@@ -214,11 +259,11 @@ test.describe("Dashboard worklist (#30)", () => {
     await expect(page.getByText("Plots complete")).toBeVisible();
     await expect(page.getByText("1 lot missing harvest period")).toBeVisible();
 
-    // Stat strip
+    // Stat strip (Tier footer, unchanged/repositioned)
     await expect(page.getByText("1,240 t")).toBeVisible();
   });
 
-  test("all-clear state — every card shows its quiet single-line empty state", async ({ page }) => {
+  test("all-clear state — every tier shows its quiet single-line empty state", async ({ page }) => {
     await stubWorklist(page, {
       readinessResults: [],
       summaryBody: summary({
@@ -239,8 +284,7 @@ test.describe("Dashboard worklist (#30)", () => {
 
     await page.goto("/dashboard");
 
-    await expect(page.getByText("Nothing needs filing — all covered")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText("Nothing rejected or blocked — no remediation open")).toBeVisible();
+    await expect(page.getByText("Nothing needs action — you're caught up.")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("No orders waiting on data — syncs are up to date")).toBeVisible();
     await expect(page.getByText("0 t")).toBeVisible();
   });

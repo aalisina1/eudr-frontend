@@ -59,18 +59,6 @@ async function fetchSubmissionDetail(id: string): Promise<TracesSubmission | nul
 
 const filters: FilterDef[] = [
   {
-    key: "status",
-    label: "All Statuses",
-    options: [
-      { label: "Draft", value: "DRAFT" },
-      { label: "Under Review", value: "UNDER_REVIEW" },
-      { label: "Approved", value: "APPROVED" },
-      { label: "Submitted", value: "SUBMITTED" },
-      { label: "Rejected", value: "REJECTED" },
-      { label: "Withdrawn", value: "WITHDRAWN" },
-    ],
-  },
-  {
     key: "risk_conclusion",
     label: "All Risk Levels",
     options: [
@@ -78,6 +66,22 @@ const filters: FilterDef[] = [
       { label: "Not Negligible", value: "NOT_NEGLIGIBLE" },
     ],
   },
+];
+
+// `status` moves out of the generic `FilterDef` array (dashboard-redesign
+// filtering addendum, Task 7.3): FilterDef's `activeFilters` state lives
+// inside `DataTable` with no way to pass an initial value in, so it can't be
+// seeded from a URL param. Mirrors `/shipments`'s own `?rag=RED` deep-link
+// pattern — a plain toolbar `<select>` backed by page-level state, fed into
+// `extraParams` instead.
+const STATUS_OPTIONS: { value: DueDiligenceStatement["status"] | ""; label: string }[] = [
+  { value: "", label: "All Statuses" },
+  { value: "DRAFT", label: "Draft" },
+  { value: "UNDER_REVIEW", label: "Under Review" },
+  { value: "APPROVED", label: "Approved" },
+  { value: "SUBMITTED", label: "Submitted" },
+  { value: "REJECTED", label: "Rejected" },
+  { value: "WITHDRAWN", label: "Withdrawn" },
 ];
 
 /** `useSearchParams()` requires a Suspense boundary to avoid a full
@@ -106,6 +110,38 @@ function DueDiligencePageInner() {
   const searchParams = useSearchParams();
   const poId = searchParams.get("po");
   const consignmentId = searchParams.get("consignment");
+
+  // Dashboard Tier 4d's "Filed DDS expiring < 90 days" doorway deep-links
+  // here as `/due-diligence?status=SUBMITTED` — seed the status toolbar
+  // filter from the URL. An absent or unrecognized value degrades to ""
+  // (no filter, full list), never a crash. Sorting toward the soonest
+  // `valid_until` was evaluated and found infeasible frontend-only — see
+  // this task's docstring above and the plan's Global Constraints.
+  const statusParam = searchParams.get("status") ?? "";
+  const [status, setStatus] = useState(
+    STATUS_OPTIONS.some((o) => o.value === statusParam) ? statusParam : ""
+  );
+
+  const extraParams = useMemo(() => {
+    const p: Record<string, string> = {};
+    if (status) p.status = status;
+    return p;
+  }, [status]);
+
+  const toolbarExtra = (
+    <select
+      aria-label="Status"
+      value={status}
+      onChange={(e) => setStatus(e.target.value)}
+      className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+    >
+      {STATUS_OPTIONS.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  );
 
   // #22 / ADR-0017: the badge must reflect the DDS's latest TRACES
   // submission once one exists, not just the internal DDS status (which
@@ -265,6 +301,8 @@ function DueDiligencePageInner() {
         endpoint="/api/v1/due-diligence/statements/"
         columns={columns}
         filters={filters}
+        extraParams={extraParams}
+        toolbarExtra={toolbarExtra}
         searchPlaceholder="Search by reference number..."
         exportable
         rowKey={(stmt) => stmt.id}
