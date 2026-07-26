@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Tier-less terminal state for SUPPLIER_CONTACT (dashboard-redesign.md
  * Journeys: "explicitly not the cockpit" — every tier is cross-supplier,
