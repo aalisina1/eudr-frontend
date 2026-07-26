@@ -1,24 +1,48 @@
 "use client";
 
+import { PriorityAlertBanner } from "@/components/dashboard/priority-alert-banner";
+import { ActionQueueCard } from "@/components/dashboard/action-queue-card";
 import { AwaitingDataCard } from "@/components/dashboard/awaiting-data-card";
-import { NeedsFilingCard } from "@/components/dashboard/needs-filing-card";
-import { NeedsRemediationCard } from "@/components/dashboard/needs-remediation-card";
-import { ShipmentsLeadTimeCard } from "@/components/dashboard/shipments-lead-time-card";
+import { RiskConcentrationCard } from "@/components/dashboard/risk-concentration-card";
 import { StatStrip } from "@/components/dashboard/stat-strip";
-import { formatDateLine, greeting } from "@/lib/dashboard-worklist";
+import { SupplierContactPlaceholder } from "@/components/dashboard/supplier-contact-placeholder";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { formatDateLine, greeting, shouldShowDashboardCtas } from "@/lib/dashboard-worklist";
 
 /**
- * Dashboard-as-worklist (#30, Prompt D) — the compliance officer's action
- * home. Replaces the old chart dashboard (DDS-by-status donut, plot
- * validation bar): a de-emphasised stat strip (context, not the headline)
- * plus four priority-ordered cards — Needs filing, Shipment lead time, Needs
- * remediation, Awaiting data — each backed by the readiness/submissions/
- * consignments-summary endpoints. No charts anywhere; a clean state (every
- * card's quiet check-mark line) reads as good news, not a broken/empty page.
+ * The "Decision Ladder" compliance cockpit (dashboard-redesign.md) —
+ * replaces the flat four-card worklist (#30) with four severity-ranked
+ * tiers: Priority Alert -> Action Queue -> Awaiting Data -> Risk
+ * Concentration, then the demoted `StatStrip` context footer.
  *
- * `compliance-flow-reframe.md` Phase 3 / `10-Specs/UI-Workflows/dashboard.md`.
+ * COMPLIANCE_OFFICER/ADMIN/VIEWER see the identical cockpit (every control
+ * here is a navigation link, never a dashboard-native mutation — Journeys,
+ * VIEWER section). SUPPLIER_CONTACT sees a minimal placeholder instead,
+ * gated by role on this SAME route (not a redirect — `/shipments`'s own
+ * SUPPLIER_CONTACT block already redirects here, so this has to be a
+ * landing spot, not another bounce).
+ *
+ * `showCta` is computed ONCE, here, via `shouldShowDashboardCtas()` (Task 3)
+ * — the single flip point for VIEWER's CTA visibility (Global Constraints)
+ * — and threaded down to every tier that has action-button CTAs. This is
+ * the ONLY place `currentUser.role` is compared against `"VIEWER"`
+ * anywhere in the dashboard tree; no tier component repeats that check.
  */
 export default function DashboardPage() {
+  const { data: currentUser } = useCurrentUser();
+
+  // Fail closed while the role loads — mirrors `/shipments`'s content gate.
+  if (!currentUser) {
+    return <Skeleton className="h-40 w-full" />;
+  }
+
+  if (currentUser.role === "SUPPLIER_CONTACT") {
+    return <SupplierContactPlaceholder />;
+  }
+
+  const showCta = shouldShowDashboardCtas(currentUser.role);
+
   return (
     <div>
       <header className="mb-[22px]">
@@ -26,14 +50,14 @@ export default function DashboardPage() {
         <p className="mt-2.5 text-[15px] text-muted-foreground">{formatDateLine()}</p>
       </header>
 
-      <StatStrip />
-
       <div className="flex flex-col gap-[18px]">
-        <NeedsFilingCard />
-        <ShipmentsLeadTimeCard />
-        <NeedsRemediationCard />
+        <PriorityAlertBanner showCta={showCta} />
+        <ActionQueueCard showCta={showCta} />
         <AwaitingDataCard />
+        <RiskConcentrationCard />
       </div>
+
+      <StatStrip />
     </div>
   );
 }

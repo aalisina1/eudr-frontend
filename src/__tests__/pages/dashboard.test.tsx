@@ -1,21 +1,39 @@
 /**
- * Dashboard-as-worklist (#30, Prompt D) — replaces the old chart dashboard.
- * "Good morning" + date, a de-emphasised 4-stat strip, and three
- * priority-ordered WorkCards (Needs filing / Needs remediation / Awaiting
- * data), each with a quiet single-line empty state. No charts anywhere.
- *
- * Covers both demo states from the design snapshot
- * (`eudr-vault/99-Attachments/design-snapshots/2026-07-11/dashboard/worklist.jsx`):
- * "Worklist" (busy — something in every card) and "All clear" (every card
- * empty).
+ * The "Decision Ladder" compliance cockpit (dashboard-redesign.md) —
+ * replaces the flat four-card worklist (#30). Four severity-ranked tiers
+ * (Priority Alert -> Action Queue -> Awaiting Data -> Risk Concentration)
+ * plus the demoted StatStrip footer, gated by `currentUser.role`.
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import { renderWithProviders, mockPaginatedResponse } from "../helpers";
 import DashboardPage from "@/app/(dashboard)/dashboard/page";
-import type { BatchReadiness, DueDiligenceStatement, ReadinessSummary } from "@/lib/api/types";
+import type {
+  BatchReadiness,
+  ConsignmentRow,
+  ConsignmentSummary,
+  DueDiligenceStatement,
+  ReadinessSummary,
+  Supplier,
+  User,
+} from "@/lib/api/types";
 
 const originalFetch = globalThis.fetch;
+
+function user(overrides: Partial<User> = {}): User {
+  return {
+    id: "u1",
+    email: "officer@canopy.test",
+    username: "officer",
+    first_name: "Ali",
+    last_name: "S",
+    role: "COMPLIANCE_OFFICER",
+    organization_id: "org-1",
+    organization_name: "Canopy",
+    is_staff: false,
+    ...overrides,
+  };
+}
 
 function readinessRow(overrides: Partial<BatchReadiness> = {}): BatchReadiness {
   return {
@@ -28,114 +46,52 @@ function readinessRow(overrides: Partial<BatchReadiness> = {}): BatchReadiness {
     stage: "READY",
     blocked: false,
     blockers: [],
-    funnel: {
-      unit: "KG",
-      ordered_quantity: "500000.0000",
-      allocated_quantity: "500000.0000",
-      geolocated_quantity: "500000.0000",
-      filed_quantity: "250000.0000",
-      uncovered_quantity: "250000.0000",
-    },
+    funnel: { unit: "KG", ordered_quantity: "500000.0000", allocated_quantity: "500000.0000", geolocated_quantity: "500000.0000", filed_quantity: "250000.0000", uncovered_quantity: "250000.0000" },
     lot_count: 2,
     next_deadline: "2026-07-20",
     ...overrides,
   };
 }
 
-const BUSY_READINESS: BatchReadiness[] = [
-  readinessRow(),
-  readinessRow({
-    id: "po-blocked",
-    reference_number: "PO-2026-0138",
-    stage: "ALLOCATED",
-    blocked: true,
-    blockers: [{ code: "PLOTS_FAILED_VALIDATION", message: "3 plots failed deforestation validation", count: 3 }],
-    next_deadline: null,
-  }),
-  readinessRow({
-    id: "po-open",
-    reference_number: "PO-2026-0156",
-    stage: "OPEN",
-    blockers: [{ code: "NO_LOTS_LINKED", message: "No lots linked yet", count: null }],
-    funnel: {
-      unit: "KG",
-      ordered_quantity: "90000.0000",
-      allocated_quantity: "0.0000",
-      geolocated_quantity: "0.0000",
-      filed_quantity: "0.0000",
-      uncovered_quantity: "90000.0000",
-    },
-    lot_count: 0,
-    next_deadline: null,
-  }),
-];
-
-const BUSY_SUMMARY: ReadinessSummary = {
-  po_count: 9,
-  stage_counts: { OPEN: 1, ALLOCATED: 1, PLOTS_COMPLETE: 5, READY: 1, FILED: 1 },
-  blocked_count: 1,
-  funnel: {
-    unit: "KG",
-    ordered_quantity: "5000000.0000",
-    allocated_quantity: "3000000.0000",
-    geolocated_quantity: "2500000.0000",
-    filed_quantity: "3760000.0000",
-    uncovered_quantity: "1240000.0000",
-  },
-};
-
-const ALL_CLEAR_SUMMARY: ReadinessSummary = {
+const READINESS_SUMMARY: ReadinessSummary = {
   po_count: 9,
   stage_counts: { OPEN: 0, ALLOCATED: 0, PLOTS_COMPLETE: 8, READY: 0, FILED: 1 },
   blocked_count: 0,
-  funnel: {
-    unit: "KG",
-    ordered_quantity: "5000000.0000",
-    allocated_quantity: "5000000.0000",
-    geolocated_quantity: "5000000.0000",
-    filed_quantity: "5000000.0000",
-    uncovered_quantity: "0.0000",
-  },
+  funnel: { unit: "KG", ordered_quantity: "5000000.0000", allocated_quantity: "5000000.0000", geolocated_quantity: "5000000.0000", filed_quantity: "5000000.0000", uncovered_quantity: "0.0000" },
 };
 
-function ddsStatement(overrides: Partial<DueDiligenceStatement> = {}): DueDiligenceStatement {
-  return {
-    id: "dds-1",
-    reference_number: "DDS-2026-0089",
-    traces_reference: "",
-    status: "SUBMITTED",
-    statement_type: "OPERATOR",
-    activity_type: "IMPORT",
-    batch_ids: [],
-    risk_conclusion: null,
-    conclusion_justification: "",
-    operator_id: "op-1",
-    created_by_id: "u1",
-    reviewed_by_id: null,
-    submitted_at: new Date().toISOString(),
-    valid_until: null,
-    archived_until: null,
-    created_at: "2026-01-01T00:00:00Z",
-    updated_at: "2026-01-01T00:00:00Z",
-    ...overrides,
-  };
-}
+const CONSIGNMENT_SUMMARY: ConsignmentSummary = { red: 0, amber: 0, gray: 0, green: 1, landing_within_red_window_uncovered: 0 };
 
 function mockApi({
+  currentUser = user(),
   readinessResults = [] as BatchReadiness[],
-  summary = ALL_CLEAR_SUMMARY,
+  readinessSummary = READINESS_SUMMARY,
+  consignmentSummary = CONSIGNMENT_SUMMARY,
+  redConsignmentRows = [] as ConsignmentRow[],
   ddsResults = [] as DueDiligenceStatement[],
-  latestSubmissions = [] as { id: string; dds_id: string; status: string }[],
-  submissionDetails = {} as Record<string, unknown>,
+  highRiskSuppliers = [] as Supplier[],
   plotsPendingCount = 0,
+  plotsFailingCount = 0,
 }) {
   globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
     const url = typeof input === "string" ? input : input.toString();
+    if (url.includes("/auth/users/me/")) {
+      return Promise.resolve(new Response(JSON.stringify(currentUser), { status: 200 }));
+    }
+    if (url.includes("/supply-chain/consignments/summary/")) {
+      return Promise.resolve(new Response(JSON.stringify(consignmentSummary), { status: 200 }));
+    }
+    if (url.includes("/supply-chain/consignments/") && url.includes("rag=RED")) {
+      return Promise.resolve(new Response(JSON.stringify(mockPaginatedResponse(redConsignmentRows)), { status: 200 }));
+    }
     if (url.includes("/supply-chain/batches/readiness/summary/")) {
-      return Promise.resolve(new Response(JSON.stringify(summary), { status: 200 }));
+      return Promise.resolve(new Response(JSON.stringify(readinessSummary), { status: 200 }));
     }
     if (url.includes("/supply-chain/batches/readiness/")) {
       return Promise.resolve(new Response(JSON.stringify(mockPaginatedResponse(readinessResults)), { status: 200 }));
+    }
+    if (url.includes("/suppliers/") && url.includes("risk_rating=HIGH")) {
+      return Promise.resolve(new Response(JSON.stringify(mockPaginatedResponse(highRiskSuppliers)), { status: 200 }));
     }
     if (url.includes("/suppliers/")) {
       return Promise.resolve(new Response(JSON.stringify(mockPaginatedResponse([])), { status: 200 }));
@@ -143,101 +99,92 @@ function mockApi({
     if (url.includes("/due-diligence/statements/")) {
       return Promise.resolve(new Response(JSON.stringify(mockPaginatedResponse(ddsResults)), { status: 200 }));
     }
-    if (/\/traces\/submissions\/[^/?]+\/?$/.test(url)) {
-      const id = url.match(/\/traces\/submissions\/([^/?]+)\/?/)?.[1] ?? "";
-      return Promise.resolve(new Response(JSON.stringify(submissionDetails[id] ?? {}), { status: 200 }));
-    }
     if (url.includes("/traces/submissions/")) {
-      return Promise.resolve(new Response(JSON.stringify(mockPaginatedResponse(latestSubmissions)), { status: 200 }));
+      return Promise.resolve(new Response(JSON.stringify(mockPaginatedResponse([])), { status: 200 }));
+    }
+    if (url.includes("/geolocation/plots/") && url.includes("validation_status=FAILED")) {
+      return Promise.resolve(new Response(JSON.stringify(mockPaginatedResponse([], plotsFailingCount)), { status: 200 }));
     }
     if (url.includes("/geolocation/plots/")) {
-      return Promise.resolve(
-        new Response(JSON.stringify(mockPaginatedResponse([], plotsPendingCount)), { status: 200 })
-      );
+      return Promise.resolve(new Response(JSON.stringify(mockPaginatedResponse([], plotsPendingCount)), { status: 200 }));
     }
     return Promise.resolve(new Response(JSON.stringify({ detail: "not found" }), { status: 404 }));
   }) as typeof fetch;
 }
 
-describe("DashboardPage — worklist", () => {
+describe("DashboardPage — decision ladder cockpit", () => {
   afterEach(() => {
     globalThis.fetch = originalFetch;
     vi.restoreAllMocks();
   });
 
-  it("renders a greeting header and no chart elements", async () => {
+  it("renders the four tiers in priority order, footer last, for COMPLIANCE_OFFICER", async () => {
     mockApi({});
+    renderWithProviders(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("Priority Alert")).toBeInTheDocument());
+    const tierTitles = ["Priority Alert", "Action Queue", "Awaiting data", "Risk Concentration"];
+    const elements = tierTitles.map((t) => screen.getByText(t));
+    for (let i = 1; i < elements.length; i++) {
+      expect(elements[i - 1].compareDocumentPosition(elements[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+    await waitFor(() => expect(screen.getByText("POs in flight")).toBeInTheDocument());
+    expect(
+      elements[3].compareDocumentPosition(screen.getByText("POs in flight")) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("populates busy-state content across tiers", async () => {
+    mockApi({
+      consignmentSummary: { red: 1, amber: 0, gray: 0, green: 0, landing_within_red_window_uncovered: 1 },
+      redConsignmentRows: [
+        {
+          id: "con-1",
+          reference: "MSCU-884210",
+          expected_clearance_date: "2026-07-27",
+          tracking_number: null,
+          t49_request_id: null,
+          latest_eta: null,
+          eta_source: "NONE",
+          created_at: "2026-07-01T00:00:00Z",
+          rag: "RED",
+          covered_count: 3,
+          total_count: 4,
+          countdown_to: "2026-07-27",
+        },
+      ],
+      readinessResults: [readinessRow()],
+    });
+    renderWithProviders(<DashboardPage />);
+
+    await waitFor(() => expect(screen.getByText("MSCU-884210")).toBeInTheDocument());
+    expect(screen.getAllByText("PO-2026-0141").length).toBeGreaterThan(0); // Action Queue's filing group
+  });
+
+  it("shows the SUPPLIER_CONTACT placeholder with zero org-wide numbers, not the cockpit", async () => {
+    mockApi({ currentUser: user({ role: "SUPPLIER_CONTACT" }) });
     renderWithProviders(<DashboardPage />);
 
     await waitFor(() =>
-      expect(screen.getByRole("heading", { name: /Good (morning|afternoon|evening)/ })).toBeInTheDocument()
+      expect(screen.getByText(/You don't have access to organization-wide compliance data/i)).toBeInTheDocument()
     );
-    // The old dashboard's donut/bar charts lived under these headings —
-    // assert they're gone entirely (design prompt: "no charts anywhere").
-    expect(screen.queryByText("Due Diligence by Status")).not.toBeInTheDocument();
-    expect(screen.queryByText("Plot Validation Status")).not.toBeInTheDocument();
-    expect(screen.queryByText("Welcome to Canopy")).not.toBeInTheDocument();
+    expect(screen.queryByText("Priority Alert")).not.toBeInTheDocument();
+    expect(screen.queryByText("Action Queue")).not.toBeInTheDocument();
+    expect(screen.queryByText("Risk Concentration")).not.toBeInTheDocument();
+    expect(screen.queryByText("POs in flight")).not.toBeInTheDocument();
   });
 
-  it("renders the three worklist card titles in priority order", async () => {
-    mockApi({});
+  it("renders the identical cockpit for VIEWER, with every CTA visible (current VIEWER_SEES_DASHBOARD_CTAS=true default)", async () => {
+    mockApi({ currentUser: user({ role: "VIEWER" }), readinessResults: [readinessRow()] });
     renderWithProviders(<DashboardPage />);
 
-    await waitFor(() => expect(screen.getByText("Needs filing")).toBeInTheDocument());
-    const headings = screen
-      .getAllByText(/^(Needs filing|Needs remediation|Awaiting data)$/)
-      .map((el) => el.textContent);
-    expect(headings).toEqual(["Needs filing", "Needs remediation", "Awaiting data"]);
+    await waitFor(() => expect(screen.getByText("PO-2026-0141")).toBeInTheDocument());
+    expect(screen.getByRole("link", { name: /File DDS/i })).toBeInTheDocument();
   });
 
-  describe("busy state", () => {
-    it("populates all three cards and the stat strip", async () => {
-      mockApi({
-        readinessResults: BUSY_READINESS,
-        summary: BUSY_SUMMARY,
-        ddsResults: [ddsStatement()],
-        latestSubmissions: [{ id: "sub-1", dds_id: "dds-1", status: "SUBMITTED" }],
-        submissionDetails: {
-          "sub-1": {
-            id: "sub-1",
-            dds_id: "dds-1",
-            traces_status: "REJECTED",
-            status: "SUBMITTED",
-            error_message: "Geolocation error on 3 plots.",
-          },
-        },
-        plotsPendingCount: 61,
-      });
-      renderWithProviders(<DashboardPage />);
-
-      // Needs filing
-      await waitFor(() => expect(screen.getByText("PO-2026-0141")).toBeInTheDocument());
-      expect(screen.getByRole("link", { name: /File DDS/i })).toBeInTheDocument();
-
-      // Needs remediation — both the rejected DDS and the blocked PO
-      expect(screen.getByText("DDS-2026-0089")).toBeInTheDocument();
-      expect(screen.getByText("PO-2026-0138")).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: /Remediate/i })).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: /Review/i })).toBeInTheDocument();
-
-      // Awaiting data
-      expect(screen.getByText("PO-2026-0156")).toBeInTheDocument();
-      expect(screen.getByText("No lots linked yet")).toBeInTheDocument();
-
-      // Stat strip
-      expect(screen.getByText("1,240 t")).toBeInTheDocument();
-    });
-  });
-
-  describe("all-clear state", () => {
-    it("shows the quiet empty line for all three cards, with no rows", async () => {
-      mockApi({ readinessResults: [], summary: ALL_CLEAR_SUMMARY, ddsResults: [], plotsPendingCount: 0 });
-      renderWithProviders(<DashboardPage />);
-
-      await waitFor(() => expect(screen.getByText("Nothing needs filing — all covered")).toBeInTheDocument());
-      expect(screen.getByText("Nothing rejected or blocked — no remediation open")).toBeInTheDocument();
-      expect(screen.getByText("No orders waiting on data — syncs are up to date")).toBeInTheDocument();
-      expect(screen.getByText("0 t")).toBeInTheDocument();
-    });
+  it("shows a skeleton while the role is still resolving", () => {
+    globalThis.fetch = vi.fn().mockImplementation(() => new Promise(() => {})) as typeof fetch;
+    const { container } = renderWithProviders(<DashboardPage />);
+    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
   });
 });
