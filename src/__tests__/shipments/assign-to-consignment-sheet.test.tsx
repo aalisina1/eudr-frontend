@@ -10,7 +10,8 @@ const originalFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = originalFetch; vi.restoreAllMocks(); });
 
 const OPT: ConsignmentRow = {
-  id: "c9", reference: "BL-EXIST", expected_clearance_date: null, tracking_number: null,
+  id: "c9", reference: "BL-EXIST", expected_clearance_date: null,
+  customs_declaration_reference: "", tracking_number: null,
   t49_request_id: null, latest_eta: null, eta_source: "NONE", created_at: "2026-07-20T00:00:00Z",
   rag: "GRAY", covered_count: 0, total_count: 0, countdown_to: null,
 };

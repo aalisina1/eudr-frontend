@@ -5,7 +5,8 @@ import type { ConsignmentRow } from "@/lib/api/types";
 
 function row(over: Partial<ConsignmentRow> = {}): ConsignmentRow {
   return {
-    id: "c1", reference: "BL-1", expected_clearance_date: null, tracking_number: null,
+    id: "c1", reference: "BL-1", expected_clearance_date: null,
+    customs_declaration_reference: "", tracking_number: null,
     t49_request_id: null, latest_eta: null, eta_source: "NONE",
     created_at: "2026-07-01T00:00:00Z", rag: "RED", covered_count: 1, total_count: 3,
     countdown_to: "2026-08-01", ...over,

@@ -25,7 +25,10 @@ describe("ConsignmentForm (create)", () => {
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
     const post = calls.find((c) => c.init?.method === "POST");
     expect(post?.url).toContain("/api/v1/supply-chain/consignments/");
-    expect(JSON.parse(String(post?.init?.body))).toEqual({ reference: "BL-NEW", expected_clearance_date: null, tracking_number: null });
+    expect(JSON.parse(String(post?.init?.body))).toEqual({
+      reference: "BL-NEW", expected_clearance_date: null, tracking_number: null,
+      customs_declaration_reference: "",
+    });
   });
 
   it("blocks submit when reference is empty", async () => {
@@ -50,6 +53,7 @@ describe("ConsignmentForm (edit)", () => {
       id: "c7",
       reference: "BL-OLD",
       expected_clearance_date: "2026-08-15",
+      customs_declaration_reference: "",
       tracking_number: "CONT-123",
       t49_request_id: null,
       latest_eta: null,
@@ -72,5 +76,39 @@ describe("ConsignmentForm (edit)", () => {
     const patch = calls.find((c) => c.init?.method === "PATCH");
     expect(patch?.url).toContain("/api/v1/supply-chain/consignments/c7/");
     expect(JSON.parse(String(patch?.init?.body))).toMatchObject({ reference: "BL-UPDATED" });
+  });
+
+  it("includes an entered customs declaration reference in the PATCH body", async () => {
+    const calls: { url: string; init?: RequestInit }[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input.toString();
+      calls.push({ url, init });
+      return Promise.resolve(new Response(JSON.stringify({ id: "c7", reference: "BL-OLD" }), { status: 200 }));
+    }) as typeof fetch;
+    const existingConsignment = {
+      id: "c7",
+      reference: "BL-OLD",
+      expected_clearance_date: "2026-08-15",
+      customs_declaration_reference: "",
+      tracking_number: "CONT-123",
+      t49_request_id: null,
+      latest_eta: null,
+      eta_source: "NONE" as const,
+      created_at: "2026-07-01",
+      rag: "GREEN" as const,
+      covered_count: 2,
+      total_count: 3,
+      countdown_to: null,
+    };
+    renderWithProviders(<ConsignmentForm open onOpenChange={vi.fn()} consignment={existingConsignment} />);
+
+    await userEvent.type(screen.getByLabelText(/Customs declaration ref/i), "MRN-26FR1234567890");
+    await act(async () => { await userEvent.click(screen.getByRole("button", { name: /Save/i })); });
+
+    await waitFor(() => expect(calls.some((c) => c.init?.method === "PATCH")).toBe(true));
+    const patch = calls.find((c) => c.init?.method === "PATCH");
+    expect(JSON.parse(String(patch?.init?.body))).toMatchObject({
+      customs_declaration_reference: "MRN-26FR1234567890",
+    });
   });
 });

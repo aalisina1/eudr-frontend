@@ -12,6 +12,7 @@ import { RagBadge } from "@/components/shipments/rag-badge";
 import { TrackingBadge } from "@/components/shipments/tracking-badge";
 import { ConsignmentLotsTable } from "@/components/shipments/consignment-lots-table";
 import { ShipmentLocationMap } from "@/components/shipments/shipment-location-map";
+import { ReferenceLedgerCard } from "@/components/shipments/reference-ledger-card";
 import { ConsignmentForm } from "@/components/forms/consignment-form";
 import { AssignLotsSheet } from "@/components/shipments/assign-lots-sheet";
 import { coveragePct, deriveTrackingState, humanizeEventType } from "@/lib/consignment-format";
@@ -196,6 +197,12 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
           </Card>
         </div>
       </div>
+
+      <ReferenceLedgerCard
+        consignmentId={c.id}
+        canWrite={canWrite}
+        onEdit={() => setEditOpen(true)}
+      />
 
       {canWrite && (
         <>

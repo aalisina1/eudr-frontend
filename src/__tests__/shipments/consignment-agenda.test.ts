@@ -7,7 +7,8 @@ const NOW = new Date("2026-07-25T12:00:00Z");
 function row(over: Partial<ConsignmentRow>): ConsignmentRow {
   return {
     id: Math.random().toString(36).slice(2), reference: "REF",
-    expected_clearance_date: null, tracking_number: null, t49_request_id: null,
+    expected_clearance_date: null, customs_declaration_reference: "",
+    tracking_number: null, t49_request_id: null,
     latest_eta: null, eta_source: "NONE", created_at: "2026-07-01T00:00:00Z",
     rag: "RED", covered_count: 0, total_count: 1, countdown_to: null, ...over,
   };

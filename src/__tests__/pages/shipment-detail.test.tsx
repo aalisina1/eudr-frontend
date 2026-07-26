@@ -27,6 +27,7 @@ afterEach(() => { globalThis.fetch = originalFetch; vi.clearAllMocks(); });
 function detail(over: Partial<ConsignmentDetail> = {}): ConsignmentDetail {
   return {
     id: "c1", reference: "BL-RED-1", expected_clearance_date: "2026-07-25",
+    customs_declaration_reference: "",
     tracking_number: "MSCU1", t49_request_id: "treq_1", latest_eta: "2026-08-10T00:00:00Z",
     eta_source: "FEED", created_at: "2026-07-20T00:00:00Z", rag: "RED", covered_count: 0,
     total_count: 1, countdown_to: "2026-07-25",
@@ -42,6 +43,18 @@ function mockApi(d: ConsignmentDetail, role: User["role"] = "COMPLIANCE_OFFICER"
     const url = typeof input === "string" ? input : input.toString();
     if (url.includes("/auth/users/me/"))
       return Promise.resolve(new Response(JSON.stringify({ id: "u1", role } as Partial<User>), { status: 200 }));
+    // Must be checked BEFORE the plain consignment-detail match below — the
+    // ledger URL (`/consignments/{id}/ledger/`) also contains
+    // `/supply-chain/consignments/{id}/`, so without this the ledger fetch
+    // would resolve with the ConsignmentDetail shape instead (no
+    // `po_references`) and crash ReferenceLedgerCard, which every one of
+    // these page tests now mounts.
+    if (url.includes(`/supply-chain/consignments/${d.id}/ledger/`))
+      return Promise.resolve(new Response(JSON.stringify({
+        id: d.id, reference: d.reference, customs_declaration_reference: d.customs_declaration_reference,
+        expected_clearance_date: d.expected_clearance_date, created_at: d.created_at,
+        po_references: [], dds_rows: [], uncovered_lot_count: 0,
+      }), { status: 200 }));
     if (url.includes(`/supply-chain/consignments/${d.id}/`))
       return Promise.resolve(new Response(JSON.stringify(d), { status: 200 }));
     return Promise.resolve(new Response("{}", { status: 404 }));

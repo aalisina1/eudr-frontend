@@ -31,6 +31,7 @@ const IN_4_DAYS = new Date(Date.now() + 4 * 86_400_000).toISOString().slice(0, 1
 function row(over: Partial<ConsignmentRow> = {}): ConsignmentRow {
   return {
     id: "c1", reference: "BL-RED-1", expected_clearance_date: IN_4_DAYS,
+    customs_declaration_reference: "",
     tracking_number: null, t49_request_id: null, latest_eta: null, eta_source: "NONE",
     created_at: "2026-07-20T00:00:00Z", rag: "RED", covered_count: 0, total_count: 2,
     countdown_to: IN_4_DAYS, ...over,
