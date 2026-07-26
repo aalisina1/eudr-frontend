@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act } from "react";
 import { cleanup, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../helpers";
 import { ReferenceLedgerCard } from "@/components/shipments/reference-ledger-card";
 import type { ConsignmentLedger } from "@/lib/api/types";
@@ -100,5 +101,90 @@ describe("ReferenceLedgerCard", () => {
     await renderCard(false);
     await waitFor(() => expect(screen.getByText("BL-4471")).toBeInTheDocument());
     expect(screen.getByRole("button", { name: /export csv/i })).toBeInTheDocument();
+  });
+
+  it("downloads a CSV filename carrying the B/L reference on Export CSV click", async () => {
+    mockLedger(ledger());
+    const createObjectURL = vi.fn().mockReturnValue("blob:mock-url");
+    const revokeObjectURL = vi.fn();
+    Object.assign(URL, { createObjectURL, revokeObjectURL });
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+
+    await renderCard(false);
+    await waitFor(() => expect(screen.getByText("BL-4471")).toBeInTheDocument());
+    await act(async () => {
+      await userEvent.click(screen.getByRole("button", { name: /export csv/i }));
+    });
+
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    const [blob] = createObjectURL.mock.calls[0];
+    expect(blob.type).toContain("text/csv");
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+    // The anchor's `download` attribute is set before .click() — inspect the
+    // element the spy was invoked on rather than a fresh createElement("a").
+    const anchor = clickSpy.mock.instances[0] as unknown as HTMLAnchorElement;
+    expect(anchor.download).toBe("ledger-BL-4471.csv");
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
+
+    clickSpy.mockRestore();
+  });
+
+  it("shows 'Not submitted to TRACES' and no chips when only the reference half of the pair is present", async () => {
+    mockLedger(ledger({
+      dds_rows: [{
+        dds_id: "d1", reference_number: "DDS-HALF", covered_lot_count: 1,
+        traces_reference_number: "REF-ONLY", verification_number: "",
+        traces_status: "AVAILABLE", submitted_at: null,
+      }],
+    }));
+    await renderCard();
+    await waitFor(() => expect(screen.getByText("DDS-HALF")).toBeInTheDocument());
+    expect(screen.getByText(/Not submitted to TRACES/i)).toBeInTheDocument();
+    expect(screen.queryByText("REF-ONLY")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Copy TRACES reference" })).toBeNull();
+  });
+
+  it("shows 'Not submitted to TRACES' and no chips when only the verification half of the pair is present", async () => {
+    mockLedger(ledger({
+      dds_rows: [{
+        dds_id: "d1", reference_number: "DDS-HALF2", covered_lot_count: 1,
+        traces_reference_number: "", verification_number: "VERIF-ONLY",
+        traces_status: "AVAILABLE", submitted_at: null,
+      }],
+    }));
+    await renderCard();
+    await waitFor(() => expect(screen.getByText("DDS-HALF2")).toBeInTheDocument());
+    expect(screen.getByText(/Not submitted to TRACES/i)).toBeInTheDocument();
+    expect(screen.queryByText("VERIF-ONLY")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Copy Verification number" })).toBeNull();
+  });
+
+  it("renders one row per covering DDS when a consignment has multiple", async () => {
+    mockLedger(ledger({
+      dds_rows: [
+        {
+          dds_id: "d1", reference_number: "DDS-A", covered_lot_count: 1,
+          traces_reference_number: "REF-A", verification_number: "V-A",
+          traces_status: "AVAILABLE", submitted_at: "2026-07-05T00:00:00Z",
+        },
+        {
+          dds_id: "d2", reference_number: "DDS-B", covered_lot_count: 2,
+          traces_reference_number: "", verification_number: "",
+          traces_status: "", submitted_at: null,
+        },
+      ],
+    }));
+    await renderCard();
+    await waitFor(() => expect(screen.getByText("DDS-A")).toBeInTheDocument());
+    expect(screen.getByText("DDS-B")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Copy TRACES reference" })).toHaveTextContent("REF-A");
+    expect(screen.getByText(/Not submitted to TRACES/i)).toBeInTheDocument();
+  });
+
+  it("shows the error state when the ledger fetch fails", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(new Response("{}", { status: 500 })) as typeof fetch;
+    await renderCard();
+    await waitFor(() =>
+      expect(screen.getByText(/Failed to load the reference ledger/i)).toBeInTheDocument());
   });
 });
