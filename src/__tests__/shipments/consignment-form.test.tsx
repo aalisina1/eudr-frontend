@@ -25,7 +25,10 @@ describe("ConsignmentForm (create)", () => {
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
     const post = calls.find((c) => c.init?.method === "POST");
     expect(post?.url).toContain("/api/v1/supply-chain/consignments/");
-    expect(JSON.parse(String(post?.init?.body))).toEqual({ reference: "BL-NEW", expected_clearance_date: null, tracking_number: null });
+    expect(JSON.parse(String(post?.init?.body))).toEqual({
+      reference: "BL-NEW", expected_clearance_date: null, tracking_number: null,
+      customs_declaration_reference: "",
+    });
   });
 
   it("blocks submit when reference is empty", async () => {

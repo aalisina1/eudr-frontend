@@ -24,6 +24,7 @@ const schema = z.object({
   reference: z.string().min(1, "Reference is required"),
   expected_clearance_date: z.string().optional(),
   tracking_number: z.string().optional(),
+  customs_declaration_reference: z.string().max(100).optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -49,6 +50,7 @@ export function ConsignmentForm({ open, onOpenChange, consignment, onSaved }: Co
       reference: consignment?.reference ?? "",
       expected_clearance_date: consignment?.expected_clearance_date ?? "",
       tracking_number: consignment?.tracking_number ?? "",
+      customs_declaration_reference: consignment?.customs_declaration_reference ?? "",
     },
   });
 
@@ -58,6 +60,7 @@ export function ConsignmentForm({ open, onOpenChange, consignment, onSaved }: Co
       reference: consignment?.reference ?? "",
       expected_clearance_date: consignment?.expected_clearance_date ?? "",
       tracking_number: consignment?.tracking_number ?? "",
+      customs_declaration_reference: consignment?.customs_declaration_reference ?? "",
     });
   }, [consignment, reset]);
 
@@ -69,6 +72,7 @@ export function ConsignmentForm({ open, onOpenChange, consignment, onSaved }: Co
         reference: values.reference,
         expected_clearance_date: values.expected_clearance_date || null,
         tracking_number: values.tracking_number || null,
+        customs_declaration_reference: values.customs_declaration_reference ?? "",
       };
       const url = isEditing
         ? `/api/v1/supply-chain/consignments/${consignment!.id}/`
@@ -86,7 +90,10 @@ export function ConsignmentForm({ open, onOpenChange, consignment, onSaved }: Co
     },
     onSuccess: (saved) => {
       queryClient.invalidateQueries({ queryKey: ["shipments"] });
-      if (isEditing) queryClient.invalidateQueries({ queryKey: ["consignment", consignment!.id] });
+      if (isEditing) {
+        queryClient.invalidateQueries({ queryKey: ["consignment", consignment!.id] });
+        queryClient.invalidateQueries({ queryKey: ["consignment-ledger", consignment!.id] });
+      }
       onSaved?.(saved);
       onOpenChange(false);
       reset();
@@ -120,6 +127,14 @@ export function ConsignmentForm({ open, onOpenChange, consignment, onSaved }: Co
           <div className="space-y-1.5">
             <Label htmlFor="tracking_number">Tracking number</Label>
             <Input id="tracking_number" {...register("tracking_number")} placeholder="Container # or B/L" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="customs_declaration_reference">Customs declaration ref</Label>
+            <Input
+              id="customs_declaration_reference"
+              {...register("customs_declaration_reference")}
+              placeholder="e.g. MRN-26FR1234567890"
+            />
           </div>
           {mutation.error && (
             <p className="text-xs text-destructive">{(mutation.error as Error).message}</p>
