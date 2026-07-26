@@ -383,6 +383,9 @@ export interface ConsignmentRow {
   id: string;
   reference: string;
   expected_clearance_date: string | null;
+  /** Customs import-declaration reference / MRN the DDS reference was lodged
+   * against. Blank string when not yet recorded (never null). */
+  customs_declaration_reference: string;
   tracking_number: string | null;
   t49_request_id: string | null;
   latest_eta: string | null;
@@ -434,6 +437,32 @@ export interface ShipmentEvent {
 export interface ConsignmentDetail extends ConsignmentRow {
   lots: ConsignmentLot[];
   events: ShipmentEvent[];
+}
+
+/** One covering DDS on the Customs Reference Ledger. `traces_reference_number`
+ * and `verification_number` are a LINKED PAIR — both empty until TRACES accepts
+ * the DDS; never render or export one without the other. */
+export interface ConsignmentLedgerDdsRow {
+  dds_id: string;
+  reference_number: string;
+  covered_lot_count: number;
+  traces_reference_number: string;
+  verification_number: string;
+  traces_status: string;
+  submitted_at: string | null;
+}
+
+/** Mirrors ConsignmentLedgerSerializer — the per-consignment audit record
+ * (GET /api/v1/supply-chain/consignments/{id}/ledger/). */
+export interface ConsignmentLedger {
+  id: string;
+  reference: string;
+  customs_declaration_reference: string;
+  expected_clearance_date: string | null;
+  created_at: string;
+  po_references: string[];
+  dds_rows: ConsignmentLedgerDdsRow[];
+  uncovered_lot_count: number;
 }
 
 /** `GET /api/v1/supply-chain/consignments/summary/`. */

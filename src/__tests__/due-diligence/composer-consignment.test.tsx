@@ -10,7 +10,8 @@ afterEach(() => { globalThis.fetch = originalFetch; vi.restoreAllMocks(); });
 
 const CONSIGNMENT: ConsignmentDetail = {
   id: "c1", reference: "BL-RED-1", expected_clearance_date: "2026-07-25",
-  tracking_number: null, t49_request_id: null, latest_eta: null, eta_source: "NONE",
+  customs_declaration_reference: "", tracking_number: null, t49_request_id: null,
+  latest_eta: null, eta_source: "NONE",
   created_at: "2026-07-20T00:00:00Z", rag: "RED", covered_count: 0, total_count: 2,
   countdown_to: "2026-07-25",
   lots: [

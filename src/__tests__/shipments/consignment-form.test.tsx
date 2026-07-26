@@ -50,6 +50,7 @@ describe("ConsignmentForm (edit)", () => {
       id: "c7",
       reference: "BL-OLD",
       expected_clearance_date: "2026-08-15",
+      customs_declaration_reference: "",
       tracking_number: "CONT-123",
       t49_request_id: null,
       latest_eta: null,

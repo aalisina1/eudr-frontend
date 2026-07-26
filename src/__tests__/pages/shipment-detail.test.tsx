@@ -27,6 +27,7 @@ afterEach(() => { globalThis.fetch = originalFetch; vi.clearAllMocks(); });
 function detail(over: Partial<ConsignmentDetail> = {}): ConsignmentDetail {
   return {
     id: "c1", reference: "BL-RED-1", expected_clearance_date: "2026-07-25",
+    customs_declaration_reference: "",
     tracking_number: "MSCU1", t49_request_id: "treq_1", latest_eta: "2026-08-10T00:00:00Z",
     eta_source: "FEED", created_at: "2026-07-20T00:00:00Z", rag: "RED", covered_count: 0,
     total_count: 1, countdown_to: "2026-07-25",
