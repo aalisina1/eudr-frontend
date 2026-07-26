@@ -80,6 +80,27 @@ describe("ledgerToCsv", () => {
     expect(lines[1].split(",")[verificationIndex]).toBe("");
   });
 
+  it("exports a reference with no verification (the SUBMITTED pending state) as-is", () => {
+    const csv = ledgerToCsv(
+      ledger({
+        dds_rows: [{ dds_id: "d1", reference_number: "DDS-P", covered_lot_count: 1, traces_reference_number: "REF-PENDING", verification_number: "", traces_status: "SUBMITTED", submitted_at: null }],
+      }),
+    );
+    expect(csv).toContain("REF-PENDING");
+  });
+
+  it("never exports a verification number without its reference (suppresses both)", () => {
+    // Should never occur, but a dangling verification number on a 5-year audit
+    // record is meaningless — nothing for it to verify. Mirrors the card's guard.
+    const csv = ledgerToCsv(
+      ledger({
+        dds_rows: [{ dds_id: "d1", reference_number: "DDS-X", covered_lot_count: 1, traces_reference_number: "", verification_number: "VERIF-ONLY-LEAK", traces_status: "AVAILABLE", submitted_at: null }],
+      }),
+    );
+    expect(csv).not.toContain("VERIF-ONLY-LEAK");
+    expect(csv).toContain("DDS-X");
+  });
+
   it("quotes values containing commas (the multi-PO case)", () => {
     // po_references join with "; " to stay single-cell, but any value that
     // does contain a comma or quote must be CSV-escaped.

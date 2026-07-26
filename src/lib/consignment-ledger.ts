@@ -34,14 +34,24 @@ export function ledgerToCsv(ledger: ConsignmentLedger): string {
 
   const rows =
     ledger.dds_rows.length > 0
-      ? ledger.dds_rows.map((d) => [
-          ...base,
-          d.reference_number,
-          d.traces_reference_number,
-          d.verification_number,
-          d.traces_status,
-          d.covered_lot_count,
-        ])
+      ? ledger.dds_rows.map((d) => {
+          // Directional pair invariant, mirroring the card's guard. TRACES
+          // issues the reference at SUBMITTED and the verification number only
+          // at AVAILABLE, so a reference WITHOUT a verification is the normal
+          // pending state and exports as-is. The reverse never legitimately
+          // occurs and is meaningless on an audit record: without a reference
+          // there is nothing for a verification number to verify, so suppress
+          // both rather than exporting a dangling value into the 5-year record.
+          const hasReference = !!d.traces_reference_number;
+          return [
+            ...base,
+            d.reference_number,
+            hasReference ? d.traces_reference_number : "",
+            hasReference ? d.verification_number : "",
+            d.traces_status,
+            d.covered_lot_count,
+          ];
+        })
       : [[...base, "", "", "", "", ""]];
 
   return [HEADERS, ...rows].map((r) => r.map(cell).join(",")).join("\n");
