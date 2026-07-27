@@ -4,7 +4,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../helpers";
 import PoDetailPage from "@/app/(dashboard)/supply-chains/[id]/page";
-import type { POReadinessDetail, Product, Supplier } from "@/lib/api/types";
+import type { POReadinessDetail, Product, Supplier, User } from "@/lib/api/types";
 
 const originalFetch = globalThis.fetch;
 
@@ -93,10 +93,22 @@ function readinessDetail(overrides: Partial<POReadinessDetail> = {}): POReadines
 /** Routes the PO Detail page's several concurrent fetches by URL — the
  * readiness detail (eudr-app PR #83/#85's documented contract, mirrored
  * exactly here rather than depending on a live backend), plus the existing/
- * shipped supplier and product single-item lookups it joins client-side. */
-function mockApi({ detail = readinessDetail() }: { detail?: POReadinessDetail } = {}) {
+ * shipped supplier and product single-item lookups it joins client-side.
+ *
+ * Also mocks `/auth/users/me/` (defaulting to COMPLIANCE_OFFICER) — the page
+ * gates its write-only affordances (Assign to consignment, and #78's
+ * Review-plots assign-plots action) on `useCurrentUser()`'s role, so an
+ * unmocked current-user fetch would 404 and silently collapse every one of
+ * these tests to a read-only/VIEWER-equivalent render. */
+function mockApi({
+  detail = readinessDetail(),
+  role = "COMPLIANCE_OFFICER",
+}: { detail?: POReadinessDetail; role?: User["role"] } = {}) {
   globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
     const url = typeof input === "string" ? input : input.toString();
+    if (url.includes("/auth/users/me/")) {
+      return Promise.resolve(new Response(JSON.stringify({ id: "u1", role } as Partial<User>), { status: 200 }));
+    }
     if (url.includes("/supply-chain/batches/") && url.includes("/readiness/")) {
       return Promise.resolve(new Response(JSON.stringify(detail), { status: 200 }));
     }
@@ -293,15 +305,39 @@ describe("PoDetailPage", () => {
       expect(badgeTexts).toContain("3 failed");
     });
 
-    it("clicking a deep-link ghost button navigates (e.g. Review plots -> /plots)", async () => {
+    it("clicking a plain deep-link ghost button scrolls to its section (e.g. Fix -> #lots)", async () => {
+      mockApi({ detail: gapsDetail() });
+      await renderPage();
+      await waitFor(() => expect(screen.getByText("PO-2026-0141")).toBeInTheDocument());
+
+      // jsdom doesn't implement scrollIntoView — stub it on the real element
+      // (same convention as supplier-data-gaps-card.test.tsx).
+      const scrollIntoView = vi.fn();
+      document.getElementById("lots")!.scrollIntoView = scrollIntoView;
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("button", { name: /Fix/ }));
+      expect(scrollIntoView).toHaveBeenCalled();
+    });
+
+    it("clicking Review plots opens the assign-plots Sheet in place (issue #78 — no more dead /plots link)", async () => {
       mockApi({ detail: gapsDetail() });
       await renderPage();
       await waitFor(() => expect(screen.getByText("PO-2026-0141")).toBeInTheDocument());
 
       const user = userEvent.setup();
       await user.click(screen.getByRole("button", { name: /Review plots/ }));
-      // Routing itself is exercised via the mocked useRouter (setup.ts); no
-      // navigation assertion needed beyond "it didn't throw".
+      expect(await screen.findByText("Assign plots")).toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: /Review plots/ })).not.toBeInTheDocument();
+    });
+
+    it("hides the Review plots action for VIEWER", async () => {
+      mockApi({ detail: gapsDetail(), role: "VIEWER" });
+      await renderPage();
+      await waitFor(() => expect(screen.getByText("PO-2026-0141")).toBeInTheDocument());
+      expect(screen.queryByRole("button", { name: /Review plots/ })).not.toBeInTheDocument();
+      // The blocker message itself still surfaces — only the write action is gated.
+      expect(screen.getByText("3 plots failed deforestation validation")).toBeInTheDocument();
     });
   });
 

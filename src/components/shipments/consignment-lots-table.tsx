@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { StageBadge } from "@/components/sourcing/stage-badge";
 import { UNIT_LABELS } from "@/lib/readiness-format";
 import type { ConsignmentLot } from "@/lib/api/types";
@@ -33,20 +34,46 @@ function DdsCell({ lot }: { lot: ConsignmentLot }) {
   return <span className="text-[12.5px] text-muted-foreground">Not covered</span>;
 }
 
-/** Deep-link to the blocker for an uncovered lot (shipments.md journey step 5,
- * same intent as po-lots-table's BLOCKER_ACTIONS). An ALLOCATED lot's blocker
- * is incomplete plots → /plots; a PLOTS_COMPLETE-but-uncovered lot just needs a
- * DDS (the header's Compose DDS button handles that), so no per-row link. */
-function ResolveCell({ lot }: { lot: ConsignmentLot }) {
-  if (lot.covered || lot.stage !== "ALLOCATED") return null;
+/** Resolve action for an uncovered lot (shipments.md journey step 5, same
+ * intent as po-lots-table's BLOCKER_ACTIONS). An ALLOCATED lot's blocker is
+ * incomplete plots — opens `AssignPlotsSheet` in place (issue #78: this used
+ * to `<Link href="/plots">`, a dead end — a plot LIST with no way to assign a
+ * plot to this lot and no way back). A PLOTS_COMPLETE-but-uncovered lot just
+ * needs a DDS (the header's Compose DDS button handles that), so no per-row
+ * action. Write-only affordance: absent from the DOM (not disabled) unless
+ * `canWrite`. */
+function ResolveCell({
+  lot,
+  canWrite,
+  onCompletePlots,
+}: {
+  lot: ConsignmentLot;
+  canWrite: boolean;
+  onCompletePlots: (lot: ConsignmentLot) => void;
+}) {
+  if (lot.covered || lot.stage !== "ALLOCATED" || !canWrite) return null;
   return (
-    <Link href="/plots" className="text-[12.5px] font-medium text-primary hover:underline">
+    <Button
+      type="button"
+      variant="link"
+      size="sm"
+      className="h-auto p-0 text-[12.5px] font-medium"
+      onClick={() => onCompletePlots(lot)}
+    >
       Complete plots
-    </Link>
+    </Button>
   );
 }
 
-export function ConsignmentLotsTable({ lots }: { lots: ConsignmentLot[] }) {
+interface ConsignmentLotsTableProps {
+  lots: ConsignmentLot[];
+  /** Write-only affordance gate (ADMIN/COMPLIANCE_OFFICER) — the "Complete
+   * plots" action is absent from the DOM entirely for VIEWER. */
+  canWrite: boolean;
+  onCompletePlots: (lot: ConsignmentLot) => void;
+}
+
+export function ConsignmentLotsTable({ lots, canWrite, onCompletePlots }: ConsignmentLotsTableProps) {
   return (
     <Card id="lots">
       <CardHeader>
@@ -86,7 +113,9 @@ export function ConsignmentLotsTable({ lots }: { lots: ConsignmentLot[] }) {
                     </TableCell>
                     <TableCell><StageBadge stage={lot.stage} /></TableCell>
                     <TableCell><DdsCell lot={lot} /></TableCell>
-                    <TableCell className="text-right"><ResolveCell lot={lot} /></TableCell>
+                    <TableCell className="text-right">
+                      <ResolveCell lot={lot} canWrite={canWrite} onCompletePlots={onCompletePlots} />
+                    </TableCell>
                   </TableRow>
                 );
               })

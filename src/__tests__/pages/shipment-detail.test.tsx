@@ -120,6 +120,17 @@ describe("/shipments/[id] detail", () => {
     expect(screen.queryByRole("button", { name: /Compose DDS/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Edit/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Assign lots/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Complete plots/i })).not.toBeInTheDocument();
+  });
+
+  it("opens the assign-plots Sheet (no navigation to /plots) when Complete plots is clicked", async () => {
+    mockApi(detail());
+    await renderPage();
+    const btn = await screen.findByRole("button", { name: /Complete plots/i });
+    await act(async () => { await userEvent.click(btn); });
+    expect(await screen.findByText("Assign plots")).toBeInTheDocument();
+    // The dead-end href is gone — this is a Sheet, not a link.
+    expect(screen.queryByRole("link", { name: /Complete plots/i })).not.toBeInTheDocument();
   });
 
   it("renders the standard 404 for a missing/cross-org consignment", async () => {
