@@ -6,6 +6,7 @@ import { authFetch } from "@/lib/api/client";
 import { isWithinQuarter } from "@/lib/dashboard-worklist";
 import type {
   BatchReadiness,
+  CertificationExpiring,
   ConsignmentRow,
   ConsignmentSummary,
   DueDiligenceStatement,
@@ -29,6 +30,7 @@ const LATEST_TRACES_SUBMISSIONS_KEY = ["dashboard", "traces-submissions-latest"]
 const PLOTS_PENDING_KEY = ["dashboard", "plots-pending-validation-count"];
 const HIGH_RISK_SUPPLIERS_KEY = ["dashboard", "high-risk-suppliers"];
 const PLOTS_FAILING_KEY = ["dashboard", "plots-failing-validation-count"];
+const CERTS_EXPIRING_KEY = ["dashboard", "certifications-expiring"];
 const CONSIGNMENT_SUMMARY_KEY = ["dashboard", "consignments-summary"];
 const RED_CONSIGNMENT_ROWS_KEY = ["dashboard", "red-consignment-rows"];
 
@@ -153,6 +155,47 @@ export function usePlotsFailingValidationCount() {
       if (!res.ok) throw new Error("Failed to load plot validation counts");
       const body: PaginatedResponse<unknown> = await res.json();
       return body.count;
+    },
+    staleTime: 60_000,
+  });
+}
+
+/** The one window shared by Tier 4c's label, its badge query, and its
+ * click-through href. A row that reads "< 30 days" and lands on a list
+ * filtered to a different horizon is a lie on a compliance surface, so all
+ * three derive from this constant rather than repeating the literal. */
+export const CERTS_EXPIRING_WINDOW_DAYS = 30;
+
+export interface CertificationsExpiringSoon {
+  /** The paginator's total — the truth even when `rows` is a truncated
+   * page, so the badge can never understate exposure. */
+  count: number;
+  /** Rows backing the sub-label only (supplier names + certification
+   * types), capped at the same pilot-scale `page_size=100` every other
+   * lookup in this file uses. */
+  rows: CertificationExpiring[];
+}
+
+/** Certifications lapsing inside the window — Tier 4c (dashboard-redesign.md).
+ * One fetch serves both halves of the row: `count` for the badge,
+ * `results` for the "N suppliers · <types>" sub-label, so the sub-label
+ * costs nothing extra.
+ *
+ * NOTE the window's forward-looking semantics, set by the backend
+ * (eudr-app#139): `today <= valid_until <= today + N`. An **already-lapsed**
+ * certification is deliberately excluded — it is a distinct, more severe
+ * state, and this metric is a warning, not an inventory. It therefore does
+ * NOT appear anywhere in this card. */
+export function useCertificationsExpiringSoon() {
+  return useQuery({
+    queryKey: CERTS_EXPIRING_KEY,
+    queryFn: async (): Promise<CertificationsExpiringSoon> => {
+      const res = await authFetch(
+        `/api/v1/suppliers/certifications/?expiring_within=${CERTS_EXPIRING_WINDOW_DAYS}&page_size=100`
+      );
+      if (!res.ok) throw new Error("Failed to load expiring certifications");
+      const body: PaginatedResponse<CertificationExpiring> = await res.json();
+      return { count: body.count, rows: body.results };
     },
     staleTime: 60_000,
   });

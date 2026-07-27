@@ -67,6 +67,23 @@ export interface SupplierCertification {
   created_at: string;
 }
 
+/** Mirrors `CertificationExpiringSerializer` — the row shape of
+ * `GET /api/v1/suppliers/certifications/?expiring_within=N` (eudr-app#139),
+ * which backs the dashboard's Tier-4 "Certifications expiring" metric.
+ * Distinct from `SupplierCertification`: rows here can come from any of the
+ * org's suppliers, so the supplier is denormalised onto each row rather than
+ * being implied by the URL. It carries neither `issuing_body`, `valid_from`,
+ * `document_id` nor `is_valid` — this is a summary feed, not the detail
+ * nested under one supplier. */
+export interface CertificationExpiring {
+  id: string;
+  supplier_id: string;
+  supplier_name: string;
+  certification_type: string;
+  certificate_number: string;
+  valid_until: string;
+}
+
 // ── Geolocation ──
 
 export type GeometrySource = "GPS_DEVICE" | "SATELLITE_IMAGERY" | "MANUAL_ENTRY" | "THIRD_PARTY" | "DATA_IMPORT";

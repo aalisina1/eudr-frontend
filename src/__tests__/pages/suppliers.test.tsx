@@ -182,3 +182,80 @@ describe("SuppliersPage — risk_rating URL param (dashboard filtered doorway)",
     expect((screen.getByLabelText(/Risk rating/i) as HTMLSelectElement).value).toBe("");
   });
 });
+
+// ---------------------------------------------------------------------------
+// Dashboard Tier 4c filtered doorway (eudr-app#148):
+// `/suppliers?certifications_expiring=30` must land pre-filtered, exactly as
+// 4a's `?risk_rating=HIGH` does.
+// ---------------------------------------------------------------------------
+describe("SuppliersPage — certifications_expiring URL param (dashboard filtered doorway)", () => {
+  function trackingFetch(calls: string[], results = mockSuppliers) {
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input.toString();
+      calls.push(url);
+      return Promise.resolve(new Response(JSON.stringify(mockPaginatedResponse(results)), { status: 200 }));
+    }) as typeof fetch;
+  }
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    searchParams = new URLSearchParams();
+    vi.restoreAllMocks();
+  });
+
+  it("requests certifications_expiring=30 from the API when the param is present", async () => {
+    searchParams = new URLSearchParams("certifications_expiring=30");
+    const calls: string[] = [];
+    trackingFetch(calls, [mockSuppliers[0]]);
+
+    renderWithProviders(<SuppliersPage />);
+    await waitFor(() => expect(screen.getByText("Green Farm Co")).toBeInTheDocument());
+    expect(calls.some((url) => url.includes("certifications_expiring=30"))).toBe(true);
+  });
+
+  it("pre-selects the 30-day window in the toolbar", async () => {
+    searchParams = new URLSearchParams("certifications_expiring=30");
+    renderWithProviders(<SuppliersPage />);
+    await waitFor(() => {
+      const select = screen.getByLabelText(/Certification expiry/i) as HTMLSelectElement;
+      expect(select.value).toBe("30");
+    });
+  });
+
+  it("degrades to the unfiltered list when the param is absent", async () => {
+    const calls: string[] = [];
+    trackingFetch(calls);
+
+    renderWithProviders(<SuppliersPage />);
+    await waitFor(() => expect(screen.getByText("Green Farm Co")).toBeInTheDocument());
+    expect(calls.some((url) => url.includes("certifications_expiring="))).toBe(false);
+    expect((screen.getByLabelText(/Certification expiry/i) as HTMLSelectElement).value).toBe("");
+  });
+
+  it("degrades to the unfiltered list for an unrecognized window", async () => {
+    // An arbitrary window must not be passed through to the API — the toolbar
+    // could not represent it, so the page would show a filtered list while the
+    // control claims "Any", which is the state a compliance officer would
+    // misread as "nothing else to chase".
+    searchParams = new URLSearchParams("certifications_expiring=7");
+    const calls: string[] = [];
+    trackingFetch(calls);
+
+    renderWithProviders(<SuppliersPage />);
+    await waitFor(() => expect(screen.getByText("Green Farm Co")).toBeInTheDocument());
+    expect(calls.some((url) => url.includes("certifications_expiring="))).toBe(false);
+    expect((screen.getByLabelText(/Certification expiry/i) as HTMLSelectElement).value).toBe("");
+  });
+
+  it("composes with risk_rating rather than replacing it", async () => {
+    searchParams = new URLSearchParams("risk_rating=HIGH&certifications_expiring=30");
+    const calls: string[] = [];
+    trackingFetch(calls, [mockSuppliers[1]]);
+
+    renderWithProviders(<SuppliersPage />);
+    await waitFor(() => expect(screen.getByText("Timber Ltd")).toBeInTheDocument());
+    expect(calls.some((url) => url.includes("risk_rating=HIGH") && url.includes("certifications_expiring=30"))).toBe(
+      true
+    );
+  });
+});

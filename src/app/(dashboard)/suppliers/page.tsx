@@ -117,6 +117,19 @@ const RISK_OPTIONS: { value: RiskRating | ""; label: string }[] = [
   { value: "HIGH", label: "High" },
 ];
 
+// Dashboard Tier 4c's "Certifications expiring < 30 days" doorway lands here
+// as `/suppliers?certifications_expiring=30` (eudr-app#148). Same toolbar-
+// select pattern as RISK_OPTIONS above, for the same DataTable reason. The
+// wider windows are not reachable from the dashboard — they exist because
+// "who do I need to chase this quarter" is a real question once you are on
+// this page.
+const CERTS_EXPIRING_OPTIONS: { value: string; label: string }[] = [
+  { value: "", label: "Any Certification Status" },
+  { value: "30", label: "Certs expiring ≤ 30 days" },
+  { value: "60", label: "Certs expiring ≤ 60 days" },
+  { value: "90", label: "Certs expiring ≤ 90 days" },
+];
+
 function SuppliersPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -132,25 +145,48 @@ function SuppliersPageInner() {
     RISK_OPTIONS.some((o) => o.value === riskParam) ? riskParam : ""
   );
 
+  // Tier 4c's doorway, same seed-from-URL contract as risk_rating above. An
+  // unrecognized window degrades to "" (no filter) rather than passing an
+  // arbitrary value through to the API.
+  const certsParam = searchParams.get("certifications_expiring") ?? "";
+  const [certsExpiring, setCertsExpiring] = useState(
+    CERTS_EXPIRING_OPTIONS.some((o) => o.value === certsParam) ? certsParam : ""
+  );
+
   const extraParams = useMemo(() => {
     const p: Record<string, string> = {};
     if (riskRating) p.risk_rating = riskRating;
+    if (certsExpiring) p.certifications_expiring = certsExpiring;
     return p;
-  }, [riskRating]);
+  }, [riskRating, certsExpiring]);
 
   const toolbarExtra = (
-    <select
-      aria-label="Risk rating"
-      value={riskRating}
-      onChange={(e) => setRiskRating(e.target.value)}
-      className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
-    >
-      {RISK_OPTIONS.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
+    <>
+      <select
+        aria-label="Risk rating"
+        value={riskRating}
+        onChange={(e) => setRiskRating(e.target.value)}
+        className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+      >
+        {RISK_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <select
+        aria-label="Certification expiry"
+        value={certsExpiring}
+        onChange={(e) => setCertsExpiring(e.target.value)}
+        className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+      >
+        {CERTS_EXPIRING_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </>
   );
 
   return (
