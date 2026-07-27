@@ -127,10 +127,28 @@ describe("RiskConcentrationCard", () => {
   });
 
   it("counts SUBMITTED DDS expiring within 90 days from the already-fetched statements", async () => {
-    mockApi({ ddsResults: [ddsStatement({ status: "SUBMITTED", valid_until: "2026-08-01" })] });
+    // Dates are relative to the real clock on purpose. The component calls
+    // `countDdsExpiringWithin90Days(statements)` without an injected `now`, so a
+    // hardcoded `valid_until` would silently drift out of the 90-day window as
+    // real-world time passes and turn this into a time bomb. Fake timers are the
+    // usual answer but deadlock against React Query's `waitFor` polling, and this
+    // suite has no fake-timer precedent — relative fixtures need neither.
+    const isoDate = (offsetDays: number) =>
+      new Date(Date.now() + offsetDays * 86_400_000).toISOString().slice(0, 10);
+    mockApi({
+      ddsResults: [
+        ddsStatement({ status: "SUBMITTED", valid_until: isoDate(30) }), // inside the window
+        ddsStatement({ status: "SUBMITTED", valid_until: isoDate(180) }), // outside it
+      ],
+    });
     renderWithProviders(<RiskConcentrationCard />);
     await waitFor(() => expect(screen.getByText("Filed DDS expiring < 90 days")).toBeInTheDocument());
     const row = screen.getByText("Filed DDS expiring < 90 days").closest("a");
+    // Assert the rendered COUNT, not just the label: with one statement inside
+    // the window and one outside, "1" fails for a broken filter, a stuck "—", and
+    // a stuck loading state alike. Asserting only the label/href (as this test
+    // originally did) passes for all three.
+    expect(row).toHaveTextContent("1");
     // Filtered doorway (dashboard-redesign-phase1 filtering addendum, Task 8
     // amendment): the click-through opens `/due-diligence` pre-filtered to
     // SUBMITTED (soonest-`valid_until` ordering was evaluated and found
