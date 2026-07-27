@@ -85,6 +85,62 @@ describe("AssignPlotsSheet", () => {
     expect(screen.getByText("FAILED")).toBeInTheDocument();
   });
 
+  it("a FAILED plot is still selectable, not just visible", async () => {
+    const calls = mockFetch({
+      batch: batch({ land_plot_ids: [] }),
+      plots: [plot({ id: "plot-c", external_id: "PLOT-C", validation_status: "FAILED" })],
+    });
+    renderWithProviders(<AssignPlotsSheet open onOpenChange={vi.fn()} lotId="lot-1" />);
+
+    const checkbox = await screen.findByRole("checkbox", { name: /PLOT-C/i });
+    await waitFor(() => expect(checkbox).toHaveAttribute("aria-checked", "false"));
+    await userEvent.click(checkbox);
+    expect(checkbox).toHaveAttribute("aria-checked", "true");
+
+    await act(async () => { await userEvent.click(screen.getByRole("button", { name: /Save/i })); });
+    await waitFor(() => {
+      const patch = calls.find((c) => c.init?.method === "PATCH");
+      expect(patch).toBeDefined();
+      expect(JSON.parse(String(patch?.init?.body))).toEqual({ land_plot_ids: ["plot-c"] });
+    });
+  });
+
+  it("keeps Save disabled until the authoritative batch fetch resolves (guards against a premature PATCH)", async () => {
+    mockFetch({
+      batch: batch({ land_plot_ids: ["plot-a"] }),
+      plots: [plot({ id: "plot-a", external_id: "PLOT-A" })],
+    });
+    renderWithProviders(<AssignPlotsSheet open onOpenChange={vi.fn()} lotId="lot-1" />);
+
+    // Immediately after mount the batch GET is still in flight — Save must
+    // not be clickable yet, or a fast click could PATCH an empty array and
+    // wipe the lot's plots before we know what they actually are.
+    expect(screen.getByRole("button", { name: /Save/i })).toBeDisabled();
+    expect(screen.getByText(/Loading current plots/i)).toBeInTheDocument();
+
+    await waitFor(() => expect(screen.getByRole("button", { name: /Save/i })).not.toBeDisabled());
+  });
+
+  it("keeps Save disabled and surfaces an error if the batch fetch fails (never PATCHes without knowing current plots)", async () => {
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url.includes("/geolocation/plots/")) {
+        return Promise.resolve(new Response(JSON.stringify(mockPaginatedResponse([plot()])), { status: 200 }));
+      }
+      if (url.includes("/supply-chain/batches/lot-1/")) {
+        return Promise.resolve(new Response(JSON.stringify({ detail: "server error" }), { status: 500 }));
+      }
+      return Promise.resolve(new Response("{}", { status: 404 }));
+    }) as typeof fetch;
+
+    renderWithProviders(<AssignPlotsSheet open onOpenChange={vi.fn()} lotId="lot-1" />);
+
+    await waitFor(() =>
+      expect(screen.getByText(/Failed to load this lot's current plots/i)).toBeInTheDocument()
+    );
+    expect(screen.getByRole("button", { name: /Save/i })).toBeDisabled();
+  });
+
   it("PATCHes the full selected land_plot_ids array on save and closes", async () => {
     const calls = mockFetch({
       batch: batch({ land_plot_ids: ["plot-a"] }),
