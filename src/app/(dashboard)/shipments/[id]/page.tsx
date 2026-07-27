@@ -15,12 +15,13 @@ import { ShipmentLocationMap } from "@/components/shipments/shipment-location-ma
 import { ReferenceLedgerCard } from "@/components/shipments/reference-ledger-card";
 import { ConsignmentForm } from "@/components/forms/consignment-form";
 import { AssignLotsSheet } from "@/components/shipments/assign-lots-sheet";
+import { AssignPlotsSheet } from "@/components/shipments/assign-plots-sheet";
 import { coveragePct, deriveTrackingState, humanizeEventType } from "@/lib/consignment-format";
 import { daysUntil, formatEta } from "@/lib/readiness-format";
 import { authFetch } from "@/lib/api/client";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { cn } from "@/lib/utils";
-import type { ConsignmentDetail } from "@/lib/api/types";
+import type { ConsignmentDetail, ConsignmentLot } from "@/lib/api/types";
 
 /** Divergence badge: manual clearance date vs feed ETA (shipments.md [UX
  * decision]). Destructive when the manual date is LATER than the feed ETA (risk
@@ -49,6 +50,8 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
 
   const [editOpen, setEditOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [assignPlotsOpen, setAssignPlotsOpen] = useState(false);
+  const [assignPlotsLotId, setAssignPlotsLotId] = useState<string | null>(null);
 
   const { data: c, isLoading: isLoadingConsignment, error } = useQuery<ConsignmentDetail>({
     queryKey: ["consignment", id],
@@ -169,7 +172,14 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <ConsignmentLotsTable lots={c.lots} />
+          <ConsignmentLotsTable
+            lots={c.lots}
+            canWrite={canWrite}
+            onCompletePlots={(lot: ConsignmentLot) => {
+              setAssignPlotsLotId(lot.id);
+              setAssignPlotsOpen(true);
+            }}
+          />
         </div>
         <div className="space-y-4">
           {/* Location */}
@@ -212,6 +222,11 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
             onOpenChange={setAssignOpen}
             consignmentId={c.id}
             currentLots={c.lots}
+          />
+          <AssignPlotsSheet
+            open={assignPlotsOpen}
+            onOpenChange={setAssignPlotsOpen}
+            lotId={assignPlotsLotId ?? ""}
           />
         </>
       )}

@@ -13,6 +13,7 @@ import { ReadinessChecklistCard } from "@/components/sourcing/readiness-checklis
 import { PoLotsTable } from "@/components/sourcing/po-lots-table";
 import { PoProvenanceCard } from "@/components/sourcing/po-provenance-card";
 import { AssignToConsignmentSheet } from "@/components/shipments/assign-to-consignment-sheet";
+import { AssignPlotsSheet } from "@/components/shipments/assign-plots-sheet";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { authFetch } from "@/lib/api/client";
 import { UNIT_LABELS } from "@/lib/readiness-format";
@@ -40,6 +41,8 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
   const canWrite = currentUser?.role === "ADMIN" || currentUser?.role === "COMPLIANCE_OFFICER";
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignLots, setAssignLots] = useState<LotReadiness[]>([]);
+  const [assignPlotsOpen, setAssignPlotsOpen] = useState(false);
+  const [assignPlotsLotId, setAssignPlotsLotId] = useState<string | null>(null);
 
   const {
     data: po,
@@ -172,7 +175,15 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <CoverageFunnelCard funnel={po.funnel} nextDeadline={po.next_deadline} />
-          <ReadinessChecklistCard blockers={po.blockers} />
+          <ReadinessChecklistCard
+            blockers={po.blockers}
+            lots={po.lots}
+            canWrite={canWrite}
+            onAssignPlots={(lotId) => {
+              setAssignPlotsLotId(lotId);
+              setAssignPlotsOpen(true);
+            }}
+          />
         </div>
 
         <PoLotsTable
@@ -194,11 +205,18 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
         />
 
         {canWrite && (
-          <AssignToConsignmentSheet
-            open={assignOpen}
-            onOpenChange={setAssignOpen}
-            lotIds={assignLots.map((l) => l.id)}
-          />
+          <>
+            <AssignToConsignmentSheet
+              open={assignOpen}
+              onOpenChange={setAssignOpen}
+              lotIds={assignLots.map((l) => l.id)}
+            />
+            <AssignPlotsSheet
+              open={assignPlotsOpen}
+              onOpenChange={setAssignPlotsOpen}
+              lotId={assignPlotsLotId ?? ""}
+            />
+          </>
         )}
       </div>
     </TooltipProvider>
