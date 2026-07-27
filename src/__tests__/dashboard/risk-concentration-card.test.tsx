@@ -2,7 +2,12 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import { renderWithProviders, mockPaginatedResponse } from "../helpers";
 import { RiskConcentrationCard } from "@/components/dashboard/risk-concentration-card";
-import type { BatchReadiness, DueDiligenceStatement, Supplier } from "@/lib/api/types";
+import type {
+  BatchReadiness,
+  CertificationExpiring,
+  DueDiligenceStatement,
+  Supplier,
+} from "@/lib/api/types";
 
 const originalFetch = globalThis.fetch;
 
@@ -64,17 +69,44 @@ function ddsStatement(overrides: Partial<DueDiligenceStatement> = {}): DueDilige
   };
 }
 
+function expiringCert(overrides: Partial<CertificationExpiring> = {}): CertificationExpiring {
+  return {
+    id: "cert-1",
+    supplier_id: "sup-1",
+    supplier_name: "Acme Farms",
+    certification_type: "Rainforest Alliance",
+    certificate_number: "RA-001",
+    valid_until: "2026-08-15",
+    ...overrides,
+  };
+}
+
 function mockApi({
   readinessResults = [] as BatchReadiness[],
   highRiskSuppliers = [] as Supplier[],
   plotsFailingCount = 0,
   ddsResults = [] as DueDiligenceStatement[],
   highRiskStatus = 200,
+  expiringCerts = [] as CertificationExpiring[],
+  expiringCertsCount = undefined as number | undefined,
+  expiringCertsStatus = 200,
 }) {
   globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
     const url = typeof input === "string" ? input : input.toString();
     if (url.includes("/supply-chain/batches/readiness/")) {
       return Promise.resolve(new Response(JSON.stringify(mockPaginatedResponse(readinessResults)), { status: 200 }));
+    }
+    // Must precede the `/suppliers/` + risk_rating branch below — this URL is
+    // also under /suppliers/ and would otherwise fall through to the 404.
+    if (url.includes("/suppliers/certifications/")) {
+      return expiringCertsStatus === 200
+        ? Promise.resolve(
+            new Response(
+              JSON.stringify(mockPaginatedResponse(expiringCerts, expiringCertsCount ?? expiringCerts.length)),
+              { status: 200 }
+            )
+          )
+        : Promise.resolve(new Response("error", { status: 500 }));
     }
     if (url.includes("/suppliers/") && url.includes("risk_rating=HIGH")) {
       return highRiskStatus === 200
@@ -173,5 +205,74 @@ describe("RiskConcentrationCard", () => {
     expect(screen.queryByText(/caught up/i)).not.toBeInTheDocument();
     const plotsRow = screen.getByText("Plots failing validation").closest("a");
     expect(plotsRow).toHaveTextContent("0");
+  });
+
+  // ── Metric 4c: certifications expiring (eudr-app#139 feed + #148 filter) ──
+
+  it("renders the certifications-expiring count with a supplier · type sub-label", async () => {
+    mockApi({ expiringCerts: [expiringCert()] });
+    renderWithProviders(<RiskConcentrationCard />);
+    await waitFor(() => expect(screen.getByText("Certifications expiring < 30 days")).toBeInTheDocument());
+    const row = screen.getByText("Certifications expiring < 30 days").closest("a");
+    expect(row).toHaveTextContent("1");
+    // The mockup's literal sub-label shape: "1 supplier · Rainforest Alliance".
+    expect(row).toHaveTextContent("1 supplier · Rainforest Alliance");
+  });
+
+  it("links through to /suppliers pre-filtered by the same 30-day window it displays", async () => {
+    mockApi({ expiringCerts: [expiringCert()] });
+    renderWithProviders(<RiskConcentrationCard />);
+    await waitFor(() => expect(screen.getByText("Certifications expiring < 30 days")).toBeInTheDocument());
+    const row = screen.getByText("Certifications expiring < 30 days").closest("a");
+    // The window in the href MUST match the window in the label — a row that
+    // says "< 30 days" and lands on a 90-day list is a lie on a compliance
+    // surface. Both derive from CERTS_EXPIRING_WINDOW_DAYS.
+    expect(row).toHaveAttribute("href", "/suppliers?certifications_expiring=30");
+  });
+
+  it("takes the count from the paginator, not the returned rows", async () => {
+    // The feed is fetched with page_size=100 for the sub-label; if an org ever
+    // exceeds that, `count` is still the truth. Asserting rows.length here
+    // would let a truncated page silently understate exposure.
+    mockApi({ expiringCerts: [expiringCert()], expiringCertsCount: 7 });
+    renderWithProviders(<RiskConcentrationCard />);
+    await waitFor(() => expect(screen.getByText("Certifications expiring < 30 days")).toBeInTheDocument());
+    const row = screen.getByText("Certifications expiring < 30 days").closest("a");
+    expect(row).toHaveTextContent("7");
+  });
+
+  it("summarises multiple suppliers and certification types in the sub-label", async () => {
+    mockApi({
+      expiringCerts: [
+        expiringCert({ id: "c1", supplier_id: "s1", certification_type: "Rainforest Alliance" }),
+        expiringCert({ id: "c2", supplier_id: "s2", certification_type: "Fairtrade" }),
+        // Same supplier as c1 — distinct suppliers, not row count.
+        expiringCert({ id: "c3", supplier_id: "s1", certification_type: "Rainforest Alliance" }),
+      ],
+    });
+    renderWithProviders(<RiskConcentrationCard />);
+    await waitFor(() => expect(screen.getByText("Certifications expiring < 30 days")).toBeInTheDocument());
+    const row = screen.getByText("Certifications expiring < 30 days").closest("a");
+    expect(row).toHaveTextContent("3");
+    expect(row).toHaveTextContent("2 suppliers · Rainforest Alliance, Fairtrade");
+  });
+
+  it("degrades the certifications row to a dash without blanking its neighbours", async () => {
+    mockApi({ expiringCertsStatus: 500, plotsFailingCount: 2 });
+    renderWithProviders(<RiskConcentrationCard />);
+    await waitFor(() => expect(screen.getByText("Certifications expiring < 30 days")).toBeInTheDocument());
+    const certsRow = screen.getByText("Certifications expiring < 30 days").closest("a");
+    expect(certsRow).toHaveTextContent("—");
+    const plotsRow = screen.getByText("Plots failing validation").closest("a");
+    expect(plotsRow).toHaveTextContent("2");
+  });
+
+  it("shows a literal zero for certifications when none are expiring", async () => {
+    mockApi({ expiringCerts: [] });
+    renderWithProviders(<RiskConcentrationCard />);
+    await waitFor(() => expect(screen.getByText("Certifications expiring < 30 days")).toBeInTheDocument());
+    const row = screen.getByText("Certifications expiring < 30 days").closest("a");
+    expect(row).toHaveTextContent("0");
+    expect(row).toHaveTextContent("None expiring");
   });
 });

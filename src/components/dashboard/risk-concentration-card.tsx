@@ -5,11 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
+  CERTS_EXPIRING_WINDOW_DAYS,
+  useCertificationsExpiringSoon,
   useDdsStatements,
   useHighRiskSuppliers,
   usePlotsFailingValidationCount,
   useReadinessRows,
 } from "@/hooks/use-dashboard-data";
+import type { CertificationExpiring } from "@/lib/api/types";
 import { computeHighRiskConcentration, countDdsExpiringWithin90Days, formatWholeNumber } from "@/lib/dashboard-worklist";
 
 interface RiskRowData {
@@ -37,13 +40,36 @@ function RiskRow({ row }: { row: RiskRowData }) {
   );
 }
 
+/** "2 suppliers · Rainforest Alliance, Fairtrade" — the mockup's sub-label
+ * for 4c. Suppliers are counted DISTINCT (one supplier with three lapsing
+ * certs is one supplier at risk, and the certificate count is already the
+ * row's value). Types are capped so a long tail can't overrun the row. */
+function summariseExpiringCerts(rows: CertificationExpiring[]): string {
+  if (rows.length === 0) return "None expiring";
+  const supplierCount = new Set(rows.map((r) => r.supplier_id)).size;
+  const types = Array.from(new Set(rows.map((r) => r.certification_type)));
+  const shown = types.slice(0, MAX_CERT_TYPES_SHOWN).join(", ");
+  const overflow = types.length - MAX_CERT_TYPES_SHOWN;
+  const typeLabel = overflow > 0 ? `${shown} +${overflow} more` : shown;
+  return `${supplierCount} supplier${supplierCount === 1 ? "" : "s"} · ${typeLabel}`;
+}
+
+const MAX_CERT_TYPES_SHOWN = 2;
+
 /**
  * Tier 4 "Risk Concentration" (dashboard-redesign.md) — standing exposure
- * that predicts tomorrow's Tier 1 alerts. Phase 1 ships 3 of the 4 designed
- * metrics; 4c (certifications expiring < 30 days) is deferred to backend
- * #137 (`SupplierListSerializer` excludes `certifications`; computing it
- * client-side would need an N+1 fetch per supplier) and is OMITTED
- * entirely — not shown as a "—" row, just absent.
+ * that predicts tomorrow's Tier 1 alerts. All four designed metrics now
+ * ship: 4c (certifications expiring) was omitted in Phase 1 pending backend
+ * surface, and landed once eudr-app#139 supplied the row-level feed and
+ * #148 gave it a filtered destination.
+ *
+ * ⚠️ 4c is a FORWARD-LOOKING warning, by the backend's contract (#139):
+ * the window is `today <= valid_until <= today + 30`, so an **already-
+ * lapsed** certification appears nowhere in this card. That is the more
+ * severe state, and it is currently visible only on a supplier's detail
+ * page. Do not "fix" this by widening the window — that would merge two
+ * distinct states into one count (the same mistake eudr-frontend#82 records
+ * for DDS). It wants its own metric.
  *
  * Every click-through opens the destination list PRE-FILTERED:
  * `/suppliers?risk_rating=HIGH`, `/plots?validation_status=FAILED`,
@@ -65,8 +91,9 @@ export function RiskConcentrationCard() {
   const { data: highRiskSuppliers, isLoading: highRiskLoading, isError: highRiskError } = useHighRiskSuppliers();
   const { data: plotsFailing, isLoading: plotsLoading, isError: plotsError } = usePlotsFailingValidationCount();
   const { data: statements, isLoading: statementsLoading, isError: statementsError } = useDdsStatements();
+  const { data: expiringCerts, isLoading: certsLoading, isError: certsError } = useCertificationsExpiringSoon();
 
-  const isLoading = readinessLoading || highRiskLoading || plotsLoading || statementsLoading;
+  const isLoading = readinessLoading || highRiskLoading || plotsLoading || statementsLoading || certsLoading;
 
   if (isLoading) {
     return (
@@ -113,6 +140,17 @@ export function RiskConcentrationCard() {
       value: plotsError ? "—" : formatWholeNumber(plotsFailing ?? 0),
       tone: plotsError || !plotsFailing ? "neutral" : "bad",
       href: "/plots?validation_status=FAILED",
+    },
+    {
+      key: "certs-expiring",
+      label: `Certifications expiring < ${CERTS_EXPIRING_WINDOW_DAYS} days`,
+      subLabel: certsError ? "Unavailable" : summariseExpiringCerts(expiringCerts?.rows ?? []),
+      // The paginator's total, never `rows.length` — the rows are capped at
+      // page_size=100 for the sub-label, and a truncated page must not
+      // understate exposure on a compliance surface.
+      value: certsError ? "—" : formatWholeNumber(expiringCerts?.count ?? 0),
+      tone: certsError || !expiringCerts?.count ? "neutral" : "warn",
+      href: `/suppliers?certifications_expiring=${CERTS_EXPIRING_WINDOW_DAYS}`,
     },
     {
       key: "dds-expiring",
