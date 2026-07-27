@@ -257,6 +257,41 @@ describe("RiskConcentrationCard", () => {
     expect(row).toHaveTextContent("2 suppliers · Rainforest Alliance, Fairtrade");
   });
 
+  it("caps the certification types listed and counts the rest as overflow", async () => {
+    // Guards the `+N more` branch of summariseExpiringCerts. Without this, that
+    // branch is unreachable by the suite: every other fixture stays at or under
+    // MAX_CERT_TYPES_SHOWN, so deleting the overflow suffix entirely still
+    // passed all 11 tests (found in review of PR #86).
+    mockApi({
+      expiringCerts: [
+        expiringCert({ id: "c1", supplier_id: "s1", certification_type: "Rainforest Alliance" }),
+        expiringCert({ id: "c2", supplier_id: "s2", certification_type: "Fairtrade" }),
+        expiringCert({ id: "c3", supplier_id: "s3", certification_type: "Organic" }),
+        expiringCert({ id: "c4", supplier_id: "s4", certification_type: "UTZ" }),
+      ],
+    });
+    renderWithProviders(<RiskConcentrationCard />);
+    await waitFor(() => expect(screen.getByText("Certifications expiring < 30 days")).toBeInTheDocument());
+    const row = screen.getByText("Certifications expiring < 30 days").closest("a");
+    expect(row).toHaveTextContent("4 suppliers · Rainforest Alliance, Fairtrade +2 more");
+  });
+
+  it("does not add an overflow suffix when the types fit exactly", async () => {
+    // The off-by-one companion to the test above: at exactly
+    // MAX_CERT_TYPES_SHOWN the label must read clean, with no "+0 more".
+    mockApi({
+      expiringCerts: [
+        expiringCert({ id: "c1", supplier_id: "s1", certification_type: "Rainforest Alliance" }),
+        expiringCert({ id: "c2", supplier_id: "s2", certification_type: "Fairtrade" }),
+      ],
+    });
+    renderWithProviders(<RiskConcentrationCard />);
+    await waitFor(() => expect(screen.getByText("Certifications expiring < 30 days")).toBeInTheDocument());
+    const row = screen.getByText("Certifications expiring < 30 days").closest("a");
+    expect(row).toHaveTextContent("2 suppliers · Rainforest Alliance, Fairtrade");
+    expect(row).not.toHaveTextContent("more");
+  });
+
   it("degrades the certifications row to a dash without blanking its neighbours", async () => {
     mockApi({ expiringCertsStatus: 500, plotsFailingCount: 2 });
     renderWithProviders(<RiskConcentrationCard />);

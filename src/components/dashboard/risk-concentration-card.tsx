@@ -43,7 +43,14 @@ function RiskRow({ row }: { row: RiskRowData }) {
 /** "2 suppliers · Rainforest Alliance, Fairtrade" — the mockup's sub-label
  * for 4c. Suppliers are counted DISTINCT (one supplier with three lapsing
  * certs is one supplier at risk, and the certificate count is already the
- * row's value). Types are capped so a long tail can't overrun the row. */
+ * row's value). Types are capped so a long tail can't overrun the row.
+ *
+ * Derived from the fetched rows, which are capped at `page_size=100`, so past
+ * 100 lapsing certs org-wide this undercounts suppliers/types while the row's
+ * VALUE (the paginator `count`) stays exact. That asymmetry is deliberate and
+ * the safe direction — the headline number a compliance officer acts on is
+ * never understated; only the descriptive gloss is. Same pilot-scale
+ * convention as 4a's supplier join (dashboard-redesign.md). */
 function summariseExpiringCerts(rows: CertificationExpiring[]): string {
   if (rows.length === 0) return "None expiring";
   const supplierCount = new Set(rows.map((r) => r.supplier_id)).size;
