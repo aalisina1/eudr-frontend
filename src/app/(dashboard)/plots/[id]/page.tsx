@@ -100,7 +100,15 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
           </Badge>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+          <div>
+            <p className="text-muted-foreground text-xs mb-0.5">Country</p>
+            <p className="text-xs">{plot.country || "—"}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground text-xs mb-0.5">Region</p>
+            <p className="text-xs">{plot.region || "—"}</p>
+          </div>
           <div>
             <p className="text-muted-foreground text-xs mb-0.5">Geometry Source</p>
             <p className="text-xs">{plot.geometry_source.replace(/_/g, " ")}</p>
