@@ -174,7 +174,6 @@ function PlotsPageInner() {
                         {STATUS_LABEL[plot.validation_status]}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">{plot.area_hectares} ha</p>
                     {plotIdentity(plot).secondary && (
                       <p className="text-xs text-muted-foreground font-mono mt-0.5">
                         {plotIdentity(plot).secondary}

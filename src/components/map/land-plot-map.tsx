@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { plotIdentity } from "@/lib/plot-identity";
 import type { LandPlot, ValidationStatus } from "@/lib/api/types";
 
 const STATUS_COLORS: Record<ValidationStatus, string> = {
@@ -9,6 +10,24 @@ const STATUS_COLORS: Record<ValidationStatus, string> = {
   FAILED: "#C23D3D",
   REQUIRES_REVIEW: "#E8C468",
 };
+
+const HTML_ESCAPES: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+};
+
+/** Escapes a value before it is interpolated into the popup's HTML string
+ * (built manually below for Leaflet's `bindPopup`, not via React). Plot
+ * fields — `external_id` in particular, user-writable via PATCH since
+ * ADR-0026 (eudr-app#161) — are untrusted; skipping this turns a stored
+ * value like `<img src=x onerror=...>` into markup that executes for anyone
+ * viewing the org's map. */
+export function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
+}
 
 interface LandPlotMapProps {
   plots: LandPlot[];
@@ -118,16 +137,16 @@ export function LandPlotMap({ plots, selectedPlotId }: LandPlotMapProps) {
         },
       );
 
-      const label = `${plot.country}${plot.region ? `, ${plot.region}` : ""}`;
+      const label = plotIdentity(plot).primary;
 
       layer
         .bindPopup(
           `<div style="font-family: var(--font-sans); min-width: 160px;">
-            <p style="font-weight: 600; font-size: 13px; margin: 0 0 6px 0; color: var(--card-foreground);">${label}</p>
+            <p style="font-weight: 600; font-size: 13px; margin: 0 0 6px 0; color: var(--card-foreground);">${escapeHtml(label)}</p>
             <div style="display: grid; gap: 3px; font-size: 12px; color: var(--muted-foreground);">
-              <span>Area: ${plot.area_hectares} ha</span>
-              <span>Source: ${plot.geometry_source}</span>
-              ${plot.external_id ? `<span>ID: <span style="font-family: monospace; font-size: 11px;">${plot.external_id}</span></span>` : ""}
+              <span>Area: ${escapeHtml(String(plot.area_hectares))} ha</span>
+              <span>Source: ${escapeHtml(plot.geometry_source)}</span>
+              ${plot.external_id ? `<span>Their code: <span style="font-family: monospace; font-size: 11px;">${escapeHtml(plot.external_id)}</span></span>` : ""}
               <span style="display: inline-flex; align-items: center; gap: 5px;">
                 Status: <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${color};"></span>
                 <span style="text-transform: capitalize; color: ${color}; font-weight: 500;">${plot.validation_status.toLowerCase()}</span>
