@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Search, Plus } from "lucide-react";
 import { PlotForm } from "@/components/forms/plot-form";
 import { authFetch } from "@/lib/api/client";
+import { plotIdentity, plotMatchesQuery } from "@/lib/plot-identity";
 import type { PaginatedResponse, LandPlot, ValidationStatus } from "@/lib/api/types";
 
 const LandPlotMap = dynamic(
@@ -81,7 +82,6 @@ function PlotsPageInner() {
   }, [search]);
 
   // Client-side filter (plots are all loaded for the map anyway)
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const filteredPlots = useMemo(() => {
     if (!data?.results) return [];
     let plots = data.results;
@@ -89,13 +89,7 @@ function PlotsPageInner() {
       plots = plots.filter((p) => p.validation_status === statusFilter);
     }
     if (debouncedSearch) {
-      const q = debouncedSearch.toLowerCase();
-      plots = plots.filter(
-        (p) =>
-          p.country.toLowerCase().includes(q) ||
-          p.region?.toLowerCase().includes(q) ||
-          p.external_id?.toLowerCase().includes(q),
-      );
+      plots = plots.filter((p) => plotMatchesQuery(p, debouncedSearch));
     }
     return plots;
   }, [data?.results, statusFilter, debouncedSearch]);
@@ -132,7 +126,7 @@ function PlotsPageInner() {
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by country or region..."
+                placeholder="Search by reference, code, country or region..."
                 className="pl-9 h-9 bg-secondary/50 border-border/60 focus:bg-card rounded-xl text-[13px]"
               />
             </div>
@@ -173,7 +167,7 @@ function PlotsPageInner() {
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <p className="font-medium text-[13px] leading-tight group-hover:text-primary transition-colors">
-                        {plot.country}{plot.region ? `, ${plot.region}` : ""}
+                        {plotIdentity(plot).primary}
                       </p>
                       <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium whitespace-nowrap ${STATUS_TEXT[plot.validation_status]}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[plot.validation_status]}`} />
@@ -181,8 +175,10 @@ function PlotsPageInner() {
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">{plot.area_hectares} ha</p>
-                    {plot.external_id && (
-                      <p className="text-xs text-muted-foreground font-mono mt-0.5">{plot.external_id}</p>
+                    {plotIdentity(plot).secondary && (
+                      <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                        {plotIdentity(plot).secondary}
+                      </p>
                     )}
                   </div>
                 ))}
