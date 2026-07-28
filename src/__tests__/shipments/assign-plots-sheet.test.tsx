@@ -22,7 +22,7 @@ function batch(over: Partial<Batch> = {}): Batch {
 
 function plot(over: Partial<LandPlot> = {}): LandPlot {
   return {
-    id: "plot-a", supplier_id: "sup-1", organization_id: "org-1", country: "Ghana",
+    id: "plot-a", reference: "PLOT-000A", supplier_id: "sup-1", country: "Ghana",
     region: "Ashanti", area_hectares: 4.2, geometry: null, geometry_source: "GPS_DEVICE",
     accuracy_meters: null, collection_date: null, validation_status: "PASSED",
     validated_at: null, external_id: "PLOT-A", created_at: "", updated_at: "", ...over,

@@ -31,8 +31,8 @@ const originalFetch = globalThis.fetch;
 function plot(overrides: Partial<LandPlot> = {}): LandPlot {
   return {
     id: "plot-1",
+    reference: "PLOT-000001",
     supplier_id: "sup-1",
-    organization_id: "org-1",
     country: "Ghana",
     // Empty (not "Ashanti") — the page's country cell renders
     // `{country}{region ? `, ${region}` : ""}`, so a non-empty region would

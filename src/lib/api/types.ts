@@ -96,8 +96,9 @@ export interface GeoJsonGeometry {
 
 export interface LandPlot {
   id: string;
+  /** ADR-0026 — immutable, org-scoped display identity, e.g. "PLOT-000412". */
+  reference: string;
   supplier_id: string;
-  organization_id: string;
   country: string;
   region: string;
   area_hectares: number;
@@ -107,6 +108,7 @@ export interface LandPlot {
   collection_date: string | null;
   validation_status: ValidationStatus;
   validated_at: string | null;
+  /** The source system's own code, when known. Editable; may be blank. */
   external_id: string;
   created_at: string;
   updated_at: string;
