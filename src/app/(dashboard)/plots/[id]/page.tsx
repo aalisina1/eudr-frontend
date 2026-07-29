@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { ArrowLeft, MapPin, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
+import { plotIdentity } from "@/lib/plot-identity";
 import type { LandPlot, ValidationStatus } from "@/lib/api/types";
 
 const LandPlotMap = dynamic(
@@ -88,7 +89,7 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
             </div>
             <div>
               <h1 className="text-xl font-medium">
-                {plot.country}{plot.region ? `, ${plot.region}` : ""}
+                {plotIdentity(plot).primary}
               </h1>
               <p className="text-sm text-muted-foreground">{plot.area_hectares} hectares</p>
             </div>
@@ -99,7 +100,15 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
           </Badge>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+          <div>
+            <p className="text-muted-foreground text-xs mb-0.5">Country</p>
+            <p className="text-xs">{plot.country || "—"}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground text-xs mb-0.5">Region</p>
+            <p className="text-xs">{plot.region || "—"}</p>
+          </div>
           <div>
             <p className="text-muted-foreground text-xs mb-0.5">Geometry Source</p>
             <p className="text-xs">{plot.geometry_source.replace(/_/g, " ")}</p>

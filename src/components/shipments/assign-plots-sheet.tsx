@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { authFetch } from "@/lib/api/client";
 import { getErrorMessage } from "@/lib/api/errors";
+import { plotIdentity } from "@/lib/plot-identity";
 import type { Batch, LandPlot, PaginatedResponse } from "@/lib/api/types";
 
 interface AssignPlotsSheetProps {
@@ -157,7 +158,7 @@ export function AssignPlotsSheet({ open, onOpenChange, lotId, currentPlotIds, on
           )}
           <div className="max-h-72 space-y-1.5 overflow-y-auto">
             {plots.map((p) => {
-              const label = p.external_id || `${p.country}${p.region ? `, ${p.region}` : ""}`;
+              const { primary, secondary } = plotIdentity(p);
               return (
                 <label
                   key={p.id}
@@ -169,7 +170,14 @@ export function AssignPlotsSheet({ open, onOpenChange, lotId, currentPlotIds, on
                     checked={selectedIds.has(p.id)}
                     onCheckedChange={() => toggle(p.id)}
                   />
-                  <span className="flex-1 font-mono">{label}</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block font-mono">{primary}</span>
+                    {secondary && (
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {secondary}
+                      </span>
+                    )}
+                  </span>
                   <Badge variant={p.validation_status === "FAILED" ? "destructive" : "outline"}>
                     {p.validation_status}
                   </Badge>

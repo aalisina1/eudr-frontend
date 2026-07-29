@@ -31,14 +31,14 @@ const originalFetch = globalThis.fetch;
 function plot(overrides: Partial<LandPlot> = {}): LandPlot {
   return {
     id: "plot-1",
+    reference: "PLOT-000001",
     supplier_id: "sup-1",
-    organization_id: "org-1",
     country: "Ghana",
-    // Empty (not "Ashanti") — the page's country cell renders
-    // `{country}{region ? `, ${region}` : ""}`, so a non-empty region would
-    // concatenate onto the country text node ("Ghana, Ashanti") and break
-    // this file's exact `getByText("Ghana")`/`getByText("Cameroon")`
-    // assertions, which only care about country/status filtering, not region.
+    // Empty (not "Ashanti") — kept simple. Since ADR-0026 the card title is
+    // the plot's `reference`; country/region now only appear in the
+    // secondary context line (via `plotIdentity`), so this file matches on
+    // country with a substring regex rather than an exact `getByText` on
+    // the (no longer country-based) title.
     region: "",
     area_hectares: 12.5,
     geometry: null,
@@ -67,8 +67,8 @@ describe("/plots — validation_status URL param (dashboard filtered doorway)", 
       new Response(
         JSON.stringify(
           mockPaginatedResponse([
-            plot({ id: "p-failed", validation_status: "FAILED", country: "Ghana" }),
-            plot({ id: "p-passed", validation_status: "PASSED", country: "Cameroon" }),
+            plot({ id: "p-failed", reference: "PLOT-000001", validation_status: "FAILED", country: "Ghana" }),
+            plot({ id: "p-passed", reference: "PLOT-000002", validation_status: "PASSED", country: "Cameroon" }),
           ])
         ),
         { status: 200 }
@@ -76,8 +76,8 @@ describe("/plots — validation_status URL param (dashboard filtered doorway)", 
     );
     renderWithProviders(<PlotsPage />);
 
-    await waitFor(() => expect(screen.getByText("Ghana")).toBeInTheDocument());
-    expect(screen.queryByText("Cameroon")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/Ghana/)).toBeInTheDocument());
+    expect(screen.queryByText(/Cameroon/)).not.toBeInTheDocument();
     const select = screen.getByLabelText(/Validation status/i) as HTMLSelectElement;
     expect(select.value).toBe("FAILED");
   });
@@ -87,8 +87,8 @@ describe("/plots — validation_status URL param (dashboard filtered doorway)", 
       new Response(
         JSON.stringify(
           mockPaginatedResponse([
-            plot({ id: "p-failed", validation_status: "FAILED", country: "Ghana" }),
-            plot({ id: "p-passed", validation_status: "PASSED", country: "Cameroon" }),
+            plot({ id: "p-failed", reference: "PLOT-000001", validation_status: "FAILED", country: "Ghana" }),
+            plot({ id: "p-passed", reference: "PLOT-000002", validation_status: "PASSED", country: "Cameroon" }),
           ])
         ),
         { status: 200 }
@@ -96,8 +96,8 @@ describe("/plots — validation_status URL param (dashboard filtered doorway)", 
     );
     renderWithProviders(<PlotsPage />);
 
-    await waitFor(() => expect(screen.getByText("Ghana")).toBeInTheDocument());
-    expect(screen.getByText("Cameroon")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/Ghana/)).toBeInTheDocument());
+    expect(screen.getByText(/Cameroon/)).toBeInTheDocument();
     const select = screen.getByLabelText(/Validation status/i) as HTMLSelectElement;
     expect(select.value).toBe("");
   });
@@ -106,13 +106,13 @@ describe("/plots — validation_status URL param (dashboard filtered doorway)", 
     searchParams = new URLSearchParams("validation_status=BOGUS");
     globalThis.fetch = vi.fn().mockResolvedValue(
       new Response(
-        JSON.stringify(mockPaginatedResponse([plot({ id: "p-failed", validation_status: "FAILED", country: "Ghana" })])),
+        JSON.stringify(mockPaginatedResponse([plot({ id: "p-failed", reference: "PLOT-000001", validation_status: "FAILED", country: "Ghana" })])),
         { status: 200 }
       )
     );
     renderWithProviders(<PlotsPage />);
 
-    await waitFor(() => expect(screen.getByText("Ghana")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Ghana/)).toBeInTheDocument());
     const select = screen.getByLabelText(/Validation status/i) as HTMLSelectElement;
     expect(select.value).toBe("");
   });

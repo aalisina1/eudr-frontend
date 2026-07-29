@@ -22,7 +22,7 @@ function batch(over: Partial<Batch> = {}): Batch {
 
 function plot(over: Partial<LandPlot> = {}): LandPlot {
   return {
-    id: "plot-a", supplier_id: "sup-1", organization_id: "org-1", country: "Ghana",
+    id: "plot-a", reference: "PLOT-000A", supplier_id: "sup-1", country: "Ghana",
     region: "Ashanti", area_hectares: 4.2, geometry: null, geometry_source: "GPS_DEVICE",
     accuracy_meters: null, collection_date: null, validation_status: "PASSED",
     validated_at: null, external_id: "PLOT-A", created_at: "", updated_at: "", ...over,
@@ -61,7 +61,10 @@ describe("AssignPlotsSheet", () => {
   it("pre-checks the lot's currently assigned plots once loaded", async () => {
     mockFetch({
       batch: batch({ land_plot_ids: ["plot-a"] }),
-      plots: [plot({ id: "plot-a", external_id: "PLOT-A" }), plot({ id: "plot-b", external_id: "PLOT-B" })],
+      plots: [
+        plot({ id: "plot-a", reference: "PLOT-A", external_id: "PLOT-A" }),
+        plot({ id: "plot-b", reference: "PLOT-B", external_id: "PLOT-B" }),
+      ],
     });
     renderWithProviders(
       <AssignPlotsSheet open onOpenChange={vi.fn()} lotId="lot-1" />
@@ -77,7 +80,9 @@ describe("AssignPlotsSheet", () => {
   it("surfaces each plot's validation status so a FAILED plot is visible", async () => {
     mockFetch({
       batch: batch({ land_plot_ids: [] }),
-      plots: [plot({ id: "plot-c", external_id: "PLOT-C", validation_status: "FAILED" })],
+      plots: [
+        plot({ id: "plot-c", reference: "PLOT-C", external_id: "PLOT-C", validation_status: "FAILED" }),
+      ],
     });
     renderWithProviders(<AssignPlotsSheet open onOpenChange={vi.fn()} lotId="lot-1" />);
 
@@ -184,8 +189,24 @@ describe("AssignPlotsSheet", () => {
     });
   });
 
+  it("shows the plot reference so identical plots are distinguishable", async () => {
+    // The #83 bug: two plots, same supplier, same region, same area.
+    mockFetch({
+      plots: [
+        plot({ id: "p1", reference: "PLOT-000412", external_id: "FF-9931" }),
+        plot({ id: "p2", reference: "PLOT-000413", external_id: "" }),
+      ],
+    });
+    renderWithProviders(<AssignPlotsSheet open onOpenChange={vi.fn()} lotId="lot-1" />);
+
+    expect(await screen.findByText("PLOT-000412")).toBeInTheDocument();
+    expect(screen.getByText("PLOT-000413")).toBeInTheDocument();
+    // Their code appears as context, not as the identity.
+    expect(screen.getByText(/FF-9931/)).toBeInTheDocument();
+  });
+
   it("searches the org's plots via the geolocation endpoint", async () => {
-    mockFetch({ plots: [plot({ id: "plot-a", external_id: "PLOT-A" })] });
+    mockFetch({ plots: [plot({ id: "plot-a", reference: "PLOT-A", external_id: "PLOT-A" })] });
     renderWithProviders(<AssignPlotsSheet open onOpenChange={vi.fn()} lotId="lot-1" />);
     await waitFor(() => expect(screen.getByText("PLOT-A")).toBeInTheDocument());
 
