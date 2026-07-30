@@ -31,6 +31,7 @@ import type {
   PaginatedResponse,
   DataSource,
   SQLViewSchema,
+  TransformationPreviewRequest,
 } from "@/lib/api/types";
 
 export function TransformationsTab() {
@@ -268,11 +269,12 @@ function TransformationEditor({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          // #88 — typed so a divergent key fails the build, not the click.
           body: JSON.stringify({
             query_text: queryText,
             source_ids: selectedSourceIds,
             limit: 50,
-          }),
+          } satisfies TransformationPreviewRequest),
         }
       );
       if (!res.ok) {

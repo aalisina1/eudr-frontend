@@ -844,3 +844,37 @@ export interface PaginatedResponse<T> {
   previous: string | null;
   results: T[];
 }
+
+// ── Request bodies ──
+//
+// These mirror the backend's *request* serializers, not its model serializers.
+// Typing them is the regression guard for eudr-frontend#88: the Promote button
+// silently posted `sync_record_ids` where the backend reads `ids`, and nothing
+// caught it — the backend's tests post `ids`, the frontend compiled because the
+// body was an untyped object literal, and no test crossed the boundary. With
+// these types a divergent key is a BUILD failure, not a runtime one.
+//
+// Keep in sync with `apps/data_integration/serializers.py` (the `*Request`
+// serializers) via the `sync-types` skill.
+
+/** `SyncRecordIdsRequestSerializer` — shared by bulk-action and promote. */
+export interface SyncRecordIdsRequest {
+  ids: string[];
+}
+
+/** `SyncRecordIdsRequestSerializer` + the bulk-action `action` discriminator. */
+export interface SyncRecordBulkActionRequest extends SyncRecordIdsRequest {
+  action: "approve" | "reject";
+}
+
+/** `SelectObjectsRequestSerializer`. */
+export interface SelectObjectsRequest {
+  schema_ids: string[];
+}
+
+/** `TransformationPreviewRequestSerializer` (+ the view's own `query_text`/`limit`). */
+export interface TransformationPreviewRequest {
+  source_ids: string[];
+  query_text: string;
+  limit?: number;
+}

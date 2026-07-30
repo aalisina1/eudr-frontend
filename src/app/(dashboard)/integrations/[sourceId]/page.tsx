@@ -40,6 +40,7 @@ import type {
   SourceType,
   IngestJob,
   RawRecord,
+  SelectObjectsRequest,
 } from "@/lib/api/types";
 
 // ── Source type metadata ──
@@ -197,7 +198,10 @@ export default function SourceDetailPage() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ schema_ids: schemaIds }),
+          // #88 — typed so a divergent key fails the build, not the click.
+          body: JSON.stringify({
+            schema_ids: schemaIds,
+          } satisfies SelectObjectsRequest),
         }
       );
       if (!res.ok) throw new Error("Selection failed");

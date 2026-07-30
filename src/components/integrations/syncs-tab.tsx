@@ -26,6 +26,8 @@ import type {
   SyncConfig,
   SyncJob,
   SyncRecord,
+  SyncRecordBulkActionRequest,
+  SyncRecordIdsRequest,
   MappingConfig,
   PaginatedResponse,
 } from "@/lib/api/types";
@@ -612,7 +614,10 @@ function SyncRecordsView({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ids: Array.from(selectedIds), action }),
+          body: JSON.stringify({
+            ids: Array.from(selectedIds),
+            action,
+          } satisfies SyncRecordBulkActionRequest),
         }
       );
       if (!res.ok) {
@@ -637,9 +642,12 @@ function SyncRecordsView({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          // #88 — typed so a divergent key fails the BUILD, not the user's
+          // click. This posted `sync_record_ids` while the backend read `ids`,
+          // so Promote had never once worked.
           body: JSON.stringify({
-            sync_record_ids: Array.from(selectedIds),
-          }),
+            ids: Array.from(selectedIds),
+          } satisfies SyncRecordIdsRequest),
         }
       );
       if (!res.ok) {
