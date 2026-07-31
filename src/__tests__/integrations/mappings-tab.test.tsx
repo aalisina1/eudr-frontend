@@ -206,6 +206,32 @@ describe("CreateMappingForm — stream_role (#90)", () => {
     expect(screen.queryByLabelText(/stream role/i)).not.toBeInTheDocument();
   });
 
+  it("does not leak a picked-then-abandoned stream role into the body after switching off BATCH", async () => {
+    // `streamRole` state isn't reset when targetType changes away from BATCH
+    // — it's a plain useState with no reconciling effect. Submitting a
+    // request body that still carried the stale role would silently violate
+    // the BATCH ⇒ non-null / non-BATCH ⇒ null invariant this PR's write type
+    // exists to protect. `streamRoleFor` is what has to catch it at submit
+    // time; this exercises that path end to end, not just the pure function.
+    const user = userEvent.setup();
+    const captured = mockApi();
+    renderMappingsTab();
+    await openCreateForm(user);
+
+    await user.type(screen.getByPlaceholderText(/e\.g\./i), "Abandoned role");
+    await user.selectOptions(targetSelect(), "BATCH");
+    await user.selectOptions(streamSelect(), "LOT_STREAM");
+    await user.selectOptions(targetSelect(), "SUPPLIER");
+
+    const submit = screen.getByRole("button", { name: /create & add fields/i });
+    expect(submit).toBeEnabled();
+    await user.click(submit);
+
+    await waitFor(() => expect(captured).toHaveLength(1));
+    expect(captured[0].body.target_object_type).toBe("SUPPLIER");
+    expect(captured[0].body.stream_role).toBeNull();
+  });
+
   it("blocks submit — and sends nothing — while BATCH has no stream role", async () => {
     const user = userEvent.setup();
     const captured = mockApi();
@@ -236,6 +262,58 @@ describe("CreateMappingForm — stream_role (#90)", () => {
     expect(
       screen.getByText(/which side of two-stream ingestion/i)
     ).toBeInTheDocument();
+  });
+});
+
+/**
+ * Every <Label> in these two forms was previously unassociated with its
+ * control. Fixing only the ones a test happens to query is how that state
+ * persists — so assert the whole set, in both forms, by label text.
+ */
+describe("mapping form controls are associated with their labels", () => {
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  const SHARED_LABELS = [
+    /mapping name/i,
+    /target object type/i,
+    /source type/i,
+    /data source/i,
+    /source object/i,
+  ];
+
+  it("create form — every control is reachable by its label", async () => {
+    const user = userEvent.setup();
+    mockApi();
+    renderMappingsTab();
+    await openCreateForm(user);
+
+    for (const label of SHARED_LABELS) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument();
+    }
+    // Conditional controls, each behind its own branch.
+    await user.selectOptions(targetSelect(), "BATCH");
+    expect(screen.getByLabelText(/stream role/i)).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText(/source type/i), "TRANSFORMATION");
+    expect(screen.getByLabelText(/^transformation$/i)).toBeInTheDocument();
+  });
+
+  it("edit form — every control is reachable by its label", async () => {
+    const user = userEvent.setup();
+    const batch = mockMapping({
+      target_object_type: "BATCH",
+      stream_role: "PO_STREAM",
+    });
+    mockApi({ mappings: [batch], detail: batch });
+    renderMappingsTab();
+    await openEditForm(user);
+
+    for (const label of [...SHARED_LABELS, /stream role/i]) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument();
+    }
+    await user.selectOptions(screen.getByLabelText(/source type/i), "TRANSFORMATION");
+    expect(screen.getByLabelText(/^transformation$/i)).toBeInTheDocument();
   });
 });
 
