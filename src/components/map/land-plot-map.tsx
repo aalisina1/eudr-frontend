@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { plotIdentity } from "@/lib/plot-identity";
 import type { LandPlot, ValidationStatus } from "@/lib/api/types";
 
@@ -39,6 +39,11 @@ export function LandPlotMap({ plots, selectedPlotId }: LandPlotMapProps) {
   const leafletRef = useRef<typeof import("leaflet") | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const layerMapRef = useRef<Map<string, import("leaflet").GeoJSON>>(new Map());
+  // The map is created inside an async effect, so the layer effects below
+  // would otherwise run once against null refs and never again for a caller
+  // that already has its plots at mount (the plot detail page). Tracking
+  // readiness in state re-runs them the moment the map exists.
+  const [mapReady, setMapReady] = useState(false);
 
   // Initialize map once (not on every plots change)
   useEffect(() => {
@@ -64,6 +69,7 @@ export function LandPlotMap({ plots, selectedPlotId }: LandPlotMapProps) {
 
       mapRef.current = map;
       leafletRef.current = L;
+      setMapReady(true);
 
       L.control.zoom({ position: "bottomright" }).addTo(map);
 
@@ -93,8 +99,8 @@ export function LandPlotMap({ plots, selectedPlotId }: LandPlotMapProps) {
         mapRef.current = null;
       }
       leafletRef.current = null;
+      setMapReady(false);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update plot layers when data changes (without recreating the map)
@@ -164,7 +170,7 @@ export function LandPlotMap({ plots, selectedPlotId }: LandPlotMapProps) {
       const group = L.featureGroup(allLayers);
       map.fitBounds(group.getBounds(), { padding: [50, 50] });
     }
-  }, [plots]);
+  }, [plots, mapReady]);
 
   // Fly to the selected plot and open its popup
   useEffect(() => {
@@ -176,7 +182,7 @@ export function LandPlotMap({ plots, selectedPlotId }: LandPlotMapProps) {
     const bounds = layer.getBounds();
     mapRef.current.fitBounds(bounds, { padding: [80, 80], maxZoom: 14 });
     layer.openPopup();
-  }, [selectedPlotId]);
+  }, [selectedPlotId, plots, mapReady]);
 
   return (
     <div
