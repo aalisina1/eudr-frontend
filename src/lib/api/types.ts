@@ -639,6 +639,13 @@ export type SchemaObjectType = "TABLE" | "VIEW" | "FILE" | "ENDPOINT";
 export type TargetObjectType = "LAND_PLOT" | "BATCH" | "SUPPLIER" | "DDS_HEADER" | "PRODUCT";
 export type MappingSourceType = "SOURCE_OBJECT" | "TRANSFORMATION";
 
+/**
+ * `MappingConfig.StreamRole` — which side of two-stream ingestion a
+ * BATCH-targeted mapping feeds (ADR-0019 D4). `null` on every non-BATCH
+ * mapping, and on legacy BATCH mappings authored before the field existed.
+ */
+export type StreamRole = "PO_STREAM" | "LOT_STREAM";
+
 export interface DataSource {
   id: string;
   name: string;
@@ -721,6 +728,8 @@ export interface MappingConfig {
   transformation: string | null;
   transformation_name?: string;
   target_object_type: TargetObjectType;
+  /** Set iff `target_object_type === "BATCH"`; `null` on legacy BATCH rows. */
+  stream_role: StreamRole | null;
   is_active: boolean;
   version: number;
   field_mappings?: FieldMapping[];
@@ -877,4 +886,36 @@ export interface TransformationPreviewRequest {
   source_ids: string[];
   query_text: string;
   limit?: number;
+}
+
+/**
+ * `MappingConfigSerializer` on write (POST /mappings/, PATCH /mappings/{id}/).
+ *
+ * eudr-frontend#90: both mapping forms posted an untyped `Record<string,
+ * unknown>` that never carried `stream_role`, so creating a BATCH mapping
+ * always 400'd and nothing caught it at build time.
+ *
+ * `stream_role` is deliberately **required here but nullable**, which is
+ * stricter than the serializer field (`null=True, blank=True`). Making it
+ * optional would guard a future key *rename* but not an *omission* — and
+ * omission is precisely what #90 was. Required means every call site has to
+ * state a value, so the original bug cannot be written again without a build
+ * failure. Pass `null` for any non-BATCH target; `MappingConfigSerializer.
+ * validate()` short-circuits before reading it (ADR-0019 D4).
+ *
+ * The BATCH ⇒ non-null invariant is *not* expressed in the type: TypeScript
+ * cannot correlate two independently-narrowed fields of one object literal
+ * without contortions that would cost more than they buy. That half is
+ * enforced at the submit gate and pinned by tests.
+ */
+export interface MappingConfigWriteRequest {
+  name: string;
+  target_object_type: TargetObjectType;
+  source_type: MappingSourceType;
+  stream_role: StreamRole | null;
+  /** `SOURCE_OBJECT` only. */
+  source?: string | null;
+  source_object?: string | null;
+  /** `TRANSFORMATION` only. */
+  transformation?: string | null;
 }

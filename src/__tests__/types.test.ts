@@ -142,7 +142,7 @@ describe("Type definitions", () => {
     expect(t.output_columns).toHaveLength(1);
   });
 
-  it("MappingConfig interface has source_type", () => {
+  it("MappingConfig interface has source_type and stream_role", () => {
     const m: MappingConfig = {
       id: "m1",
       name: "Test mapping",
@@ -151,12 +151,17 @@ describe("Type definitions", () => {
       source_object: null,
       transformation: null,
       target_object_type: "SUPPLIER",
+      // #90: `stream_role` is on `MappingConfigSerializer.Meta.fields` but was
+      // missing from this interface, so the edit form had nothing to hydrate
+      // from. `null` is the correct value for a non-BATCH target.
+      stream_role: null,
       is_active: true,
       version: 1,
       created_at: "",
       updated_at: "",
     };
     expect(m.source_type).toBe("SOURCE_OBJECT");
+    expect(m.stream_role).toBeNull();
   });
 
   it("TracesSubmission interface has traces_status, verification_number, soap payloads, and corrected enums", () => {

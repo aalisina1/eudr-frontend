@@ -22,6 +22,7 @@ import { authFetch } from "@/lib/api/client";
 import { getErrorMessage } from "@/lib/api/errors";
 import type {
   MappingConfig,
+  MappingConfigWriteRequest,
   DataSource,
   DataSourceSchema,
   Transformation,
@@ -30,6 +31,7 @@ import type {
   TargetObjectType,
   TargetFieldInfo,
   MappingSourceType,
+  StreamRole,
 } from "@/lib/api/types";
 
 const TARGET_TYPES: { value: TargetObjectType; label: string }[] = [
@@ -39,6 +41,28 @@ const TARGET_TYPES: { value: TargetObjectType; label: string }[] = [
   { value: "DDS_HEADER", label: "DDS Header" },
   { value: "PRODUCT", label: "Product" },
 ];
+
+const STREAM_ROLES: { value: StreamRole; label: string }[] = [
+  { value: "PO_STREAM", label: "PO Stream" },
+  { value: "LOT_STREAM", label: "Lot Stream" },
+];
+
+/**
+ * `stream_role` is required by the backend for BATCH-targeted mappings only
+ * (ADR-0019 D4) — see `MappingConfigSerializer.validate()`. Both forms send it
+ * on every write, as `null` whenever the target isn't BATCH.
+ */
+const streamRoleFor = (
+  targetType: TargetObjectType,
+  streamRole: StreamRole | "",
+): StreamRole | null =>
+  targetType === "BATCH" && streamRole ? streamRole : null;
+
+/** The backend rejects the write unless a BATCH target carries a stream role. */
+const needsStreamRole = (
+  targetType: TargetObjectType,
+  streamRole: StreamRole | "",
+) => targetType === "BATCH" && !streamRole;
 
 const TRANSFORM_TYPES = [
   { value: "DIRECT", label: "Direct copy" },
@@ -58,6 +82,43 @@ interface FieldMappingRow {
   target_field: string;
   transformation_type: string;
   default_value: string;
+}
+
+/** Shared by the create and edit forms — both write the same contract. */
+function StreamRoleField({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: StreamRole | "";
+  onChange: (value: StreamRole | "") => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs" htmlFor={id}>
+        Stream Role <span className="text-red-600">*</span>
+      </Label>
+      <select
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value as StreamRole | "")}
+        className="w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
+      >
+        <option value="">Select stream role...</option>
+        {STREAM_ROLES.map((r) => (
+          <option key={r.value} value={r.value}>
+            {r.label}
+          </option>
+        ))}
+      </select>
+      <p className="text-xs text-muted-foreground">
+        Which side of two-stream ingestion this mapping feeds: PO stream
+        (ERP/CTRM purchase orders) or Lot stream (origin lots that carry plot
+        IDs).
+      </p>
+    </div>
+  );
 }
 
 export function MappingsTab() {
@@ -251,6 +312,7 @@ function CreateMappingForm({
   const [name, setName] = useState("");
   const [targetType, setTargetType] = useState<TargetObjectType>("LAND_PLOT");
   const [sourceType, setSourceType] = useState<MappingSourceType>("SOURCE_OBJECT");
+  const [streamRole, setStreamRole] = useState<StreamRole | "">("");
   const [selectedSourceId, setSelectedSourceId] = useState("");
   const [selectedSourceObjectId, setSelectedSourceObjectId] = useState("");
   const [selectedTransformationId, setSelectedTransformationId] = useState("");
@@ -295,17 +357,18 @@ function CreateMappingForm({
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const body: Record<string, unknown> = {
+      const body = {
         name,
         target_object_type: targetType,
         source_type: sourceType,
-      };
-      if (sourceType === "SOURCE_OBJECT") {
-        body.source = selectedSourceId;
-        body.source_object = selectedSourceObjectId || null;
-      } else {
-        body.transformation = selectedTransformationId;
-      }
+        stream_role: streamRoleFor(targetType, streamRole),
+        ...(sourceType === "SOURCE_OBJECT"
+          ? {
+              source: selectedSourceId,
+              source_object: selectedSourceObjectId || null,
+            }
+          : { transformation: selectedTransformationId }),
+      } satisfies MappingConfigWriteRequest;
       const res = await authFetch("/api/v1/data-integration/mappings/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -336,8 +399,9 @@ function CreateMappingForm({
       <Card className="border-border/50">
         <CardContent className="p-4 space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-xs">Mapping Name</Label>
+            <Label className="text-xs" htmlFor="create-name">Mapping Name</Label>
             <Input
+              id="create-name"
               placeholder="e.g. Land plots from parcels table"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -346,8 +410,9 @@ function CreateMappingForm({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs">Target Object Type</Label>
+              <Label className="text-xs" htmlFor="create-target-type">Target Object Type</Label>
               <select
+                id="create-target-type"
                 value={targetType}
                 onChange={(e) => setTargetType(e.target.value as TargetObjectType)}
                 className="w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
@@ -361,8 +426,9 @@ function CreateMappingForm({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs">Source Type</Label>
+              <Label className="text-xs" htmlFor="create-source-type">Source Type</Label>
               <select
+                id="create-source-type"
                 value={sourceType}
                 onChange={(e) => setSourceType(e.target.value as MappingSourceType)}
                 className="w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
@@ -373,11 +439,20 @@ function CreateMappingForm({
             </div>
           </div>
 
+          {targetType === "BATCH" && (
+            <StreamRoleField
+              id="create-stream-role"
+              value={streamRole}
+              onChange={setStreamRole}
+            />
+          )}
+
           {sourceType === "SOURCE_OBJECT" && (
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs">Data Source</Label>
+                <Label className="text-xs" htmlFor="create-data-source">Data Source</Label>
                 <select
+                  id="create-data-source"
                   value={selectedSourceId}
                   onChange={(e) => {
                     setSelectedSourceId(e.target.value);
@@ -394,8 +469,9 @@ function CreateMappingForm({
                 </select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Source Object</Label>
+                <Label className="text-xs" htmlFor="create-source-object">Source Object</Label>
                 <select
+                  id="create-source-object"
                   value={selectedSourceObjectId}
                   onChange={(e) => setSelectedSourceObjectId(e.target.value)}
                   className="w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
@@ -414,8 +490,9 @@ function CreateMappingForm({
 
           {sourceType === "TRANSFORMATION" && (
             <div className="space-y-1.5">
-              <Label className="text-xs">Transformation</Label>
+              <Label className="text-xs" htmlFor="create-transformation">Transformation</Label>
               <select
+                id="create-transformation"
                 value={selectedTransformationId}
                 onChange={(e) => setSelectedTransformationId(e.target.value)}
                 className="w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
@@ -436,7 +513,11 @@ function CreateMappingForm({
             </Button>
             <Button
               size="sm"
-              disabled={!name.trim() || createMutation.isPending}
+              disabled={
+                !name.trim() ||
+                needsStreamRole(targetType, streamRole) ||
+                createMutation.isPending
+              }
               onClick={() => createMutation.mutate()}
             >
               {createMutation.isPending && (
@@ -463,6 +544,7 @@ function EditMappingForm({
   const [name, setName] = useState("");
   const [targetType, setTargetType] = useState<TargetObjectType>("LAND_PLOT");
   const [sourceType, setSourceType] = useState<MappingSourceType>("SOURCE_OBJECT");
+  const [streamRole, setStreamRole] = useState<StreamRole | "">("");
   const [selectedSourceId, setSelectedSourceId] = useState("");
   const [selectedSourceObjectId, setSelectedSourceObjectId] = useState("");
   const [selectedTransformationId, setSelectedTransformationId] = useState("");
@@ -486,6 +568,10 @@ function EditMappingForm({
       setName(mapping.name);
       setTargetType(mapping.target_object_type);
       setSourceType(mapping.source_type);
+      // `?? ""` also covers legacy BATCH mappings authored before stream_role
+      // existed — they hydrate empty, so saving one forces a choice rather
+      // than silently re-posting the null the backend now rejects.
+      setStreamRole(mapping.stream_role ?? "");
       setSelectedSourceId(mapping.source ?? "");
       setSelectedSourceObjectId(mapping.source_object ?? "");
       setSelectedTransformationId(mapping.transformation ?? "");
@@ -533,17 +619,22 @@ function EditMappingForm({
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const body: Record<string, unknown> = {
+      // This PATCH always carries `target_object_type`, which trips
+      // `MappingConfigSerializer.validate()`'s `touches_relevant_fields`
+      // branch — so a BATCH target must carry `stream_role` here too, even
+      // on an edit that only meant to rename (#90).
+      const body = {
         name,
         target_object_type: targetType,
         source_type: sourceType,
-      };
-      if (sourceType === "SOURCE_OBJECT") {
-        body.source = selectedSourceId || null;
-        body.source_object = selectedSourceObjectId || null;
-      } else {
-        body.transformation = selectedTransformationId || null;
-      }
+        stream_role: streamRoleFor(targetType, streamRole),
+        ...(sourceType === "SOURCE_OBJECT"
+          ? {
+              source: selectedSourceId || null,
+              source_object: selectedSourceObjectId || null,
+            }
+          : { transformation: selectedTransformationId || null }),
+      } satisfies MappingConfigWriteRequest;
       const res = await authFetch(`/api/v1/data-integration/mappings/${mappingId}/`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -591,8 +682,9 @@ function EditMappingForm({
       <Card className="border-border/50">
         <CardContent className="p-4 space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-xs">Mapping Name</Label>
+            <Label className="text-xs" htmlFor="edit-name">Mapping Name</Label>
             <Input
+              id="edit-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -600,8 +692,9 @@ function EditMappingForm({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs">Target Object Type</Label>
+              <Label className="text-xs" htmlFor="edit-target-type">Target Object Type</Label>
               <select
+                id="edit-target-type"
                 value={targetType}
                 onChange={(e) => setTargetType(e.target.value as TargetObjectType)}
                 className="w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
@@ -615,8 +708,9 @@ function EditMappingForm({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs">Source Type</Label>
+              <Label className="text-xs" htmlFor="edit-source-type">Source Type</Label>
               <select
+                id="edit-source-type"
                 value={sourceType}
                 onChange={(e) => setSourceType(e.target.value as MappingSourceType)}
                 className="w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
@@ -627,11 +721,20 @@ function EditMappingForm({
             </div>
           </div>
 
+          {targetType === "BATCH" && (
+            <StreamRoleField
+              id="edit-stream-role"
+              value={streamRole}
+              onChange={setStreamRole}
+            />
+          )}
+
           {sourceType === "SOURCE_OBJECT" && (
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs">Data Source</Label>
+                <Label className="text-xs" htmlFor="edit-data-source">Data Source</Label>
                 <select
+                  id="edit-data-source"
                   value={selectedSourceId}
                   onChange={(e) => {
                     setSelectedSourceId(e.target.value);
@@ -648,8 +751,9 @@ function EditMappingForm({
                 </select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Source Object</Label>
+                <Label className="text-xs" htmlFor="edit-source-object">Source Object</Label>
                 <select
+                  id="edit-source-object"
                   value={selectedSourceObjectId}
                   onChange={(e) => setSelectedSourceObjectId(e.target.value)}
                   className="w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
@@ -668,8 +772,9 @@ function EditMappingForm({
 
           {sourceType === "TRANSFORMATION" && (
             <div className="space-y-1.5">
-              <Label className="text-xs">Transformation</Label>
+              <Label className="text-xs" htmlFor="edit-transformation">Transformation</Label>
               <select
+                id="edit-transformation"
                 value={selectedTransformationId}
                 onChange={(e) => setSelectedTransformationId(e.target.value)}
                 className="w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
@@ -705,7 +810,11 @@ function EditMappingForm({
               </Button>
               <Button
                 size="sm"
-                disabled={!name.trim() || saveMutation.isPending}
+                disabled={
+                  !name.trim() ||
+                  needsStreamRole(targetType, streamRole) ||
+                  saveMutation.isPending
+                }
                 onClick={() => saveMutation.mutate()}
               >
                 {saveMutation.isPending && (
