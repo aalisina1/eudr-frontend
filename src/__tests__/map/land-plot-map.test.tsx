@@ -134,3 +134,43 @@ describe("escapeHtml", () => {
     expect(escapeHtml("GH, Ashanti")).toBe("GH, Ashanti");
   });
 });
+
+/**
+ * Regression: the plot DETAIL page (`/plots/[id]`) renders
+ * `<LandPlotMap plots={[plot]} />` — the data is already present on the very
+ * first mount, unlike the list page which mounts empty and fills in later.
+ *
+ * The map is created inside an async effect (`await import("leaflet")`), while
+ * the layer-drawing effect depends on `[plots]` alone and returns early while
+ * the refs are still null. With data present at mount, that early return is the
+ * only run it ever gets, so the polygon is never drawn and the map sits at its
+ * initial world view. The helper above deliberately sidesteps this by rendering
+ * empty first; these tests do not.
+ */
+describe("<LandPlotMap /> with plots present at first mount (detail page)", () => {
+  it("draws the plot layer", async () => {
+    const L = await getLeafletMock();
+    const geoJSONFn = L.geoJSON as unknown as ReturnType<typeof vi.fn>;
+    geoJSONFn.mockClear();
+
+    render(<LandPlotMap plots={[plot()]} />);
+
+    await waitFor(() => expect(geoJSONFn).toHaveBeenCalledTimes(1));
+  });
+
+  it("fits the map to the plot rather than leaving the initial world view", async () => {
+    const L = await getLeafletMock();
+    const mapFn = L.map as unknown as ReturnType<typeof vi.fn>;
+
+    // The mock returns one shared map instance for every `L.map()` call, so
+    // `fitBounds` accumulates calls across tests. Without clearing it here the
+    // assertion passes on a previous test's call and proves nothing.
+    const mapInstance = (mapFn as unknown as () => { fitBounds: ReturnType<typeof vi.fn> })();
+    mapInstance.fitBounds.mockClear();
+    mapFn.mockClear();
+
+    render(<LandPlotMap plots={[plot()]} selectedPlotId="p-1" />);
+
+    await waitFor(() => expect(mapInstance.fitBounds).toHaveBeenCalled());
+  });
+});
