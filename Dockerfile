@@ -15,6 +15,16 @@ COPY . .
 # Next.js collects anonymous telemetry — disable in CI/prod
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# NEXT_PUBLIC_* variables are inlined by Next.js at BUILD time, not read at
+# runtime. Without this the bundle ships with client.ts's localhost fallback
+# compiled in, and every API call from a deployed browser fails.
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
+# Fail loudly at build time rather than shipping a bundle pointed at localhost.
+RUN test -n "$NEXT_PUBLIC_API_URL" || \
+    (echo "NEXT_PUBLIC_API_URL build arg is required" && exit 1)
+
 RUN npm run build
 
 # ── Production ──
