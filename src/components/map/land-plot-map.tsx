@@ -166,7 +166,26 @@ export function LandPlotMap({ plots, selectedPlotId }: LandPlotMapProps) {
 
     if (allLayers.length > 0) {
       const group = L.featureGroup(allLayers);
-      map.fitBounds(group.getBounds(), { padding: [50, 50] });
+      const bounds = group.getBounds();
+
+      // Deferred to the next frame, after invalidateSize().
+      //
+      // The map is created in an async effect, so this can run while the
+      // container is still being laid out and Leaflet's cached size is still
+      // 0x0. fitBounds against a zero-size viewport does not throw — it
+      // silently leaves the map on the setView() default. That shipped: 18
+      // plots in Ghana and Cote d'Ivoire, and a map showing the whole planet
+      // with nothing on it, which reads as a broken feature rather than a
+      // zoom level.
+      //
+      // invalidateSize() makes Leaflet re-measure the real box first; the
+      // rAF guarantees layout has happened before either call.
+      requestAnimationFrame(() => {
+        const current = mapRef.current;
+        if (!current) return;
+        current.invalidateSize();
+        current.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
+      });
     }
   }, [plots, mapReady]);
 

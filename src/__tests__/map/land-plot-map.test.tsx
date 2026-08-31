@@ -174,3 +174,39 @@ describe("<LandPlotMap /> with plots present at first mount (detail page)", () =
     await waitFor(() => expect(mapInstance.fitBounds).toHaveBeenCalled());
   });
 });
+
+describe("initial viewport", () => {
+  it("re-measures the container before fitting, and caps the zoom", async () => {
+    /**
+     * The bug this covers shipped to production: fitBounds ran while Leaflet
+     * still had a 0x0 cached size, which does not throw — it silently leaves
+     * the map on its setView() world default. The Land Plots page showed the
+     * whole planet with 18 West African plots invisible on it.
+     *
+     * Ordering is the whole fix, so ordering is what this asserts.
+     */
+    const L = (await import("leaflet")).default;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const map = (L.map as any).mock.results.at(-1)?.value ?? (L.map as any)();
+    map.invalidateSize.mockClear();
+    map.fitBounds.mockClear();
+
+    const order: string[] = [];
+    map.invalidateSize.mockImplementation(() => order.push("invalidateSize"));
+    map.fitBounds.mockImplementation(() => order.push("fitBounds"));
+
+    render(<LandPlotMap plots={[plot()]} />);
+
+    await waitFor(() => expect(map.fitBounds).toHaveBeenCalled());
+
+    // The init effect also calls invalidateSize in its own frame, so assert
+    // the relationship that matters: the fit is immediately preceded by a
+    // re-measure, rather than running against a stale 0x0 size.
+    expect(order.filter((c) => c === "fitBounds")).toHaveLength(1);
+    expect(order[order.indexOf("fitBounds") - 1]).toBe("invalidateSize");
+    expect(map.fitBounds).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ maxZoom: 12 }),
+    );
+  });
+});
