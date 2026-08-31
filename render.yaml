@@ -19,3 +19,10 @@ services:
     envVars:
       - key: NEXT_PUBLIC_API_URL
         value: https://api.grovetrace.com
+      # CARTO basemap key (free tier, 5M tile requests/month). Public by
+      # nature — it ships in the JS bundle — so CARTO scopes it by domain
+      # rather than treating it as a secret. sync:false only so the value
+      # is entered once in the dashboard instead of committed here.
+      # Unset is safe: the map falls back to a keyless basemap.
+      - key: NEXT_PUBLIC_CARTO_KEY
+        sync: false
