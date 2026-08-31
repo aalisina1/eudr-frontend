@@ -21,6 +21,13 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
+# Optional. Without it the basemap falls back to a keyless source rather than
+# CARTO's watermarked "API KEY REQUIRED" tiles, so an unset key degrades the
+# map's styling and never its legibility. Not guarded like NEXT_PUBLIC_API_URL
+# below, because a missing tile key must not fail a developer's build.
+ARG NEXT_PUBLIC_CARTO_KEY
+ENV NEXT_PUBLIC_CARTO_KEY=${NEXT_PUBLIC_CARTO_KEY}
+
 # Fail loudly at build time rather than shipping a bundle pointed at localhost.
 RUN test -n "$NEXT_PUBLIC_API_URL" || \
     (echo "NEXT_PUBLIC_API_URL build arg is required" && exit 1)

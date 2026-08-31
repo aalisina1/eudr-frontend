@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { plotIdentity } from "@/lib/plot-identity";
 import type { LandPlot, ValidationStatus } from "@/lib/api/types";
+import { basemap } from "@/lib/map/basemap";
 
 const STATUS_COLORS: Record<ValidationStatus, string> = {
   PENDING: "#C7956D",
@@ -73,14 +74,11 @@ export function LandPlotMap({ plots, selectedPlotId }: LandPlotMapProps) {
 
       L.control.zoom({ position: "bottomright" }).addTo(map);
 
-      L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-        {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-          maxZoom: 19,
-          subdomains: "abcd",
-        },
-      ).addTo(map);
+      L.tileLayer(basemap.url, {
+        attribution: basemap.attribution,
+        maxZoom: basemap.maxZoom,
+        subdomains: basemap.subdomains,
+      }).addTo(map);
 
       // Ensure map tiles render correctly after container layout settles
       requestAnimationFrame(() => {

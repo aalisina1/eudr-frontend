@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { humanizeEventType } from "@/lib/consignment-format";
 import { formatEta } from "@/lib/readiness-format";
 import type { ConsignmentLocation } from "@/lib/api/types";
+import { basemap } from "@/lib/map/basemap";
 
 interface ShipmentLocationMapProps {
   location: ConsignmentLocation | null;
@@ -57,14 +58,11 @@ export function ShipmentLocationMap({ location }: ShipmentLocationMapProps) {
 
       L.control.zoom({ position: "bottomright" }).addTo(map);
 
-      L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-        {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-          maxZoom: 19,
-          subdomains: "abcd",
-        },
-      ).addTo(map);
+      L.tileLayer(basemap.url, {
+        attribution: basemap.attribution,
+        maxZoom: basemap.maxZoom,
+        subdomains: basemap.subdomains,
+      }).addTo(map);
 
       L.marker([loc.latitude, loc.longitude]).addTo(map);
 
