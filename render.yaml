@@ -1,0 +1,21 @@
+# Render Blueprint — Grovetrace frontend, Frankfurt.
+#
+# NEXT_PUBLIC_API_URL is inlined into the JS bundle by Next.js at BUILD time,
+# not read at runtime (Render translates envVars into Docker build args for
+# docker-runtime services). Changing this value therefore requires a rebuild,
+# not just a restart/redeploy of the existing image.
+#
+# Frankfurt is a contractual commitment (EU residency, sold in the one-pager)
+# and must not live only in a dashboard someone can edit — see the backend's
+# render.yaml (eudr-backend) for the matching commitment on that service.
+services:
+  - type: web
+    name: grovetrace-web
+    runtime: docker
+    region: frankfurt
+    plan: 0.5c-512mb
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://api.grovetrace.com
