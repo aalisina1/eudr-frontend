@@ -27,7 +27,7 @@ vi.mock("leaflet", () => {
   mapInstance.setView.mockReturnValue(mapInstance);
 
   const layer = {
-    getBounds: vi.fn(() => ({})),
+    getBounds: vi.fn(() => ({ getCenter: () => ({ lat: 5.76, lng: -6.53 }) })),
     openPopup: vi.fn(),
     addTo: vi.fn(),
     bindPopup: vi.fn(),
@@ -35,12 +35,19 @@ vi.mock("leaflet", () => {
   layer.addTo.mockReturnValue(layer);
   layer.bindPopup.mockReturnValue(layer);
 
+  const marker = {
+    addTo: vi.fn(),
+    bindPopup: vi.fn(),
+  };
+  marker.addTo.mockReturnValue(marker);
+  marker.bindPopup.mockReturnValue(marker);
+
   const L = {
     map: vi.fn(() => mapInstance),
     control: { zoom: vi.fn(() => ({ addTo: vi.fn() })) },
     tileLayer: vi.fn(() => ({ addTo: vi.fn() })),
     geoJSON: vi.fn(() => layer),
-    circleMarker: vi.fn(() => ({})),
+    circleMarker: vi.fn(() => marker),
     featureGroup: vi.fn(() => ({ getBounds: vi.fn(() => ({})) })),
     Icon: { Default: { prototype: {}, mergeOptions: vi.fn() } },
   };
@@ -208,5 +215,57 @@ describe("initial viewport", () => {
       expect.anything(),
       expect.objectContaining({ maxZoom: 12 }),
     );
+  });
+});
+
+describe("plot visibility at low zoom", () => {
+  it("draws a centroid dot for a polygon plot so it stays visible when sub-pixel", async () => {
+    /**
+     * Seed data spans West Africa, Brazil and Indonesia, so fitting all plots
+     * is correctly a world view — at which a 16 ha polygon measures 0x0 px on
+     * the real map, rendering an empty-looking page. The dot is what makes a
+     * plot visible at that zoom.
+     */
+    const L = (await import("leaflet")).default;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (L.circleMarker as any).mockClear();
+
+    render(
+      <LandPlotMap
+        plots={[
+          plot({
+            id: "poly-1",
+            geometry: {
+              type: "Polygon",
+              coordinates: [[[-6.55, 5.75], [-6.55, 5.78], [-6.52, 5.78], [-6.52, 5.75], [-6.55, 5.75]]],
+            },
+          }),
+        ]}
+      />,
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await waitFor(() => expect((L.circleMarker as any)).toHaveBeenCalled());
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [latlng, opts] = (L.circleMarker as any).mock.calls.at(-1);
+    expect(latlng).toEqual({ lat: 5.76, lng: -6.53 });
+    // Fixed pixel radius — the whole point is that it does not scale away.
+    expect(opts.radius).toBeGreaterThan(0);
+    expect(opts.fillColor).toBe("#34D399"); // PASSED
+  });
+
+  it("does not double-draw for a point plot, which already renders as a marker", async () => {
+    const L = (await import("leaflet")).default;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (L.circleMarker as any).mockClear();
+
+    render(<LandPlotMap plots={[plot({ id: "pt-1", geometry: { type: "Point", coordinates: [0, 0] } })]} />);
+    await waitFor(() => expect(L.geoJSON).toHaveBeenCalled());
+
+    // pointToLayer is passed to geoJSON but never invoked by the mock, so any
+    // circleMarker call here would be a second, unwanted dot.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((L.circleMarker as any)).not.toHaveBeenCalled();
   });
 });

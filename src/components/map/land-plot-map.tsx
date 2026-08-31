@@ -40,6 +40,9 @@ export function LandPlotMap({ plots, selectedPlotId }: LandPlotMapProps) {
   const leafletRef = useRef<typeof import("leaflet") | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const layerMapRef = useRef<Map<string, import("leaflet").GeoJSON>>(new Map());
+  // Centroid dots, kept separately from the polygons so the selection effect
+  // and its popup assertions keep working against the GeoJSON layer alone.
+  const markerMapRef = useRef<Map<string, import("leaflet").CircleMarker>>(new Map());
   // The map is created inside an async effect, so the layer effects below
   // would otherwise run once against null refs and never again for a caller
   // that already has its plots at mount (the plot detail page). Tracking
@@ -112,6 +115,10 @@ export function LandPlotMap({ plots, selectedPlotId }: LandPlotMapProps) {
       map.removeLayer(layer);
     }
     layerMapRef.current = new Map();
+    for (const marker of markerMapRef.current.values()) {
+      map.removeLayer(marker);
+    }
+    markerMapRef.current = new Map();
 
     const allLayers: import("leaflet").Layer[] = [];
 
@@ -143,8 +150,7 @@ export function LandPlotMap({ plots, selectedPlotId }: LandPlotMapProps) {
 
       const label = plotIdentity(plot).primary;
 
-      layer
-        .bindPopup(
+      const popupHtml =
           `<div style="font-family: var(--font-sans); min-width: 160px;">
             <p style="font-weight: 600; font-size: 13px; margin: 0 0 6px 0; color: var(--card-foreground);">${escapeHtml(label)}</p>
             <div style="display: grid; gap: 3px; font-size: 12px; color: var(--muted-foreground);">
@@ -156,12 +162,33 @@ export function LandPlotMap({ plots, selectedPlotId }: LandPlotMapProps) {
                 <span style="text-transform: capitalize; color: ${color}; font-weight: 500;">${plot.validation_status.toLowerCase()}</span>
               </span>
             </div>
-          </div>`,
-        )
-        .addTo(map);
+          </div>`;
+
+      layer.bindPopup(popupHtml).addTo(map);
 
       layerMapRef.current.set(plot.id, layer);
       allLayers.push(layer);
+
+      // A plot is sub-pixel at low zoom — a 16 ha polygon measured 0x0 on the
+      // deployed map — so the polygons alone render an empty-looking world.
+      // The seed data spans West Africa, Brazil and Indonesia, and fitting all
+      // of it is correctly a world view, so this is the zoom the page opens at.
+      // A fixed-radius centroid dot keeps every plot visible at any zoom and
+      // turns that view into three legible clusters. Points already draw as a
+      // circleMarker via pointToLayer, so they are skipped.
+      if (plot.geometry.type !== "Point") {
+        const centre = layer.getBounds().getCenter();
+        const marker = L.circleMarker(centre, {
+          radius: 5,
+          color: "#ffffff",
+          weight: 1.5,
+          fillColor: color,
+          fillOpacity: 1,
+        });
+        marker.bindPopup(popupHtml).addTo(map);
+        markerMapRef.current.set(plot.id, marker);
+        allLayers.push(marker);
+      }
     }
 
     if (allLayers.length > 0) {
