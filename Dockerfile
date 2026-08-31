@@ -15,6 +15,27 @@ COPY . .
 # Next.js collects anonymous telemetry — disable in CI/prod
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# NEXT_PUBLIC_* variables are inlined by Next.js at BUILD time, not read at
+# runtime. Without this the bundle ships with client.ts's localhost fallback
+# compiled in, and every API call from a deployed browser fails.
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
+# Fail loudly at build time rather than shipping a bundle pointed at localhost.
+RUN test -n "$NEXT_PUBLIC_API_URL" || \
+    (echo "NEXT_PUBLIC_API_URL build arg is required" && exit 1)
+
+# openapi-fetch strips a trailing slash from baseUrl internally
+# (node_modules/openapi-fetch/dist/index.mjs:21), but src/lib/api/client.ts
+# concatenates this raw value at lines 31, 59, 74 and 96 — a trailing slash
+# there produces "//auth/jwt/create/" for the hand-written fetch calls while
+# the typed openapi-fetch calls stay fine, so login would 404 while other
+# requests appear to work. Reject it here instead of shipping a bundle that
+# fails only some of the time.
+RUN case "$NEXT_PUBLIC_API_URL" in \
+      */) echo "NEXT_PUBLIC_API_URL must not end with a slash: $NEXT_PUBLIC_API_URL" && exit 1 ;; \
+    esac
+
 RUN npm run build
 
 # ── Production ──
