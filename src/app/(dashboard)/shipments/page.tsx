@@ -172,8 +172,8 @@ function ShipmentsPageInner() {
     <div className="space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-display text-3xl font-light italic">Shipments</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <h1 className="text-display text-4xl leading-[1.04] italic font-light">Shipments</h1>
+          <p className="mt-2.5 text-[15px] text-muted-foreground">
             Which arriving consignments still lack a ready DDS — and when they land.
           </p>
         </div>
