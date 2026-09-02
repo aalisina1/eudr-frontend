@@ -285,7 +285,7 @@ function DueDiligencePageInner() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-end justify-between gap-6 flex-wrap">
+      <header className="flex items-end justify-between gap-6 flex-wrap">
         <div>
           <h1 className="text-display text-4xl leading-[1.04] italic font-light">Submissions</h1>
           <p className="mt-2.5 text-[15px] text-muted-foreground">Statements submitted to the EU TRACES registry.</p>
@@ -294,7 +294,7 @@ function DueDiligencePageInner() {
           <Plus className="size-4" />
           New Statement
         </Button>
-      </div>
+      </header>
 
       <DataTable<DueDiligenceStatement>
         queryKey="due-diligence"
