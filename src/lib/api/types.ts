@@ -541,11 +541,24 @@ export interface RiskAssessment {
 
 export type TracesEnvironment = "ACCEPTANCE" | "PRODUCTION";
 
+/**
+ * `OperatorRoleType` in the vendored TRACES XSD. `""` means "fall back to the
+ * deployment-wide `TRACES_OPERATOR_ROLE`" — mirrors
+ * `TracesCredential.resolved_operator_role` on the backend.
+ */
+export type TracesOperatorRole = "" | "OPERATOR" | "REPRESENTATIVE_OPERATOR";
+
 export interface TracesCredential {
   id: string;
   environment: TracesEnvironment;
   username: string;
   web_service_client_id: string;
+  /**
+   * EUDR role this WS user is registered for in TRACES NT. TRACES rejects
+   * `EUDR-WEBSERVICE-USER-ACTIVITY-NOT-ALLOWED` when a submission claims a
+   * role the account does not hold.
+   */
+  operator_role: TracesOperatorRole;
   is_active: boolean;
   created_at: string;
   // password is NEVER returned by the API — write-only
