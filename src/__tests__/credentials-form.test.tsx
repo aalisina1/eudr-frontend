@@ -13,6 +13,16 @@
  * 5. CredentialsForm — submits {environment, username, password, web_service_client_id} to POST endpoint
  * 6. CredentialsForm — edit mode sends PATCH; password field is blank (write-only, never pre-filled)
  * 7. CredentialsForm — a save failure (e.g. 403) surfaces via the shared error-toast pattern
+ * 8. CredentialsForm — `operator_role` is settable, defaults blank (= use the
+ *    deployment default), and round-trips in edit mode. TRACES rejects
+ *    `EUDR-WEBSERVICE-USER-ACTIVITY-NOT-ALLOWED` when a submission claims a
+ *    role its WS user is not registered for, and the role is a property of
+ *    that individual WS user — so a deployment-wide default cannot describe
+ *    two tenants registered differently.
+ * 9. CredentialsForm — the secret is labelled "Authentication Key", TRACES'
+ *    own name for it, not "Password". It is not the TRACES account password;
+ *    entering that produces `UnauthenticatedException` with no hint as to
+ *    which of the two secrets was wanted. The wire field stays `password`.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, waitFor, fireEvent } from "@testing-library/react";
@@ -45,6 +55,7 @@ function makeCred(overrides: Partial<TracesCredential> = {}): TracesCredential {
     environment: "ACCEPTANCE",
     username: "test_user",
     web_service_client_id: "client_abc",
+    operator_role: "",
     is_active: true,
     created_at: "2026-01-01T00:00:00Z",
     ...overrides,
@@ -186,7 +197,7 @@ describe("CredentialsForm", () => {
 
     // Environment defaults to ACCEPTANCE — just fill the text fields
     const usernameInput = screen.getByLabelText(/username/i);
-    const passwordInput = screen.getByLabelText(/password/i);
+    const passwordInput = screen.getByLabelText(/authentication key/i);
     const clientIdInput = screen.getByLabelText(/web service client id/i);
 
     await user.type(usernameInput, "traces_user");
@@ -232,7 +243,7 @@ describe("CredentialsForm", () => {
     expect(usernameInput.value).toBe("prod_user");
 
     // Password must be blank — never pre-filled
-    const passwordInput = screen.getByLabelText(/password/i) as HTMLInputElement;
+    const passwordInput = screen.getByLabelText(/authentication key/i) as HTMLInputElement;
     expect(passwordInput.value).toBe("");
 
     // Submit without changing password — password should NOT be sent
@@ -260,7 +271,7 @@ describe("CredentialsForm", () => {
     );
 
     await user.type(screen.getByLabelText(/username/i), "traces_user");
-    await user.type(screen.getByLabelText(/password/i), "s3cr3t");
+    await user.type(screen.getByLabelText(/authentication key/i), "s3cr3t");
     await user.type(screen.getByLabelText(/web service client id/i), "ws_client_123");
     await user.click(screen.getByRole("button", { name: /create/i }));
 
@@ -293,5 +304,105 @@ describe("CredentialsForm", () => {
         calls.some((u) => u.includes("/api/v1/traces/credentials/")),
       ).toBe(true);
     });
+  });
+});
+
+
+// ── CredentialsForm: operator role + secret naming ───────────────────────────
+
+describe("CredentialsForm — EUDR operator role", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>) {
+    await user.type(screen.getByLabelText(/username/i), "n00n7ifn");
+    await user.type(screen.getByLabelText(/authentication key/i), "the-key");
+    await user.type(
+      screen.getByLabelText(/web service client id/i),
+      "eudr-test",
+    );
+  }
+
+  function postedBody(): Record<string, unknown> {
+    const [, init] = mockAuthFetch.mock.calls[0] as [string, RequestInit];
+    return JSON.parse(init.body as string);
+  }
+
+  it("offers both schema roles plus an explicit deployment-default option", () => {
+    renderWithProviders(<CredentialsForm open onOpenChange={vi.fn()} />);
+
+    const select = screen.getByLabelText(/EUDR role/i) as HTMLSelectElement;
+    expect(Array.from(select.options).map((o) => o.value)).toEqual([
+      "",
+      "OPERATOR",
+      "REPRESENTATIVE_OPERATOR",
+    ]);
+  });
+
+  it("sends the selected role when creating a credential", async () => {
+    mockAuthFetch.mockResolvedValue(jsonRes(makeCred()));
+    const user = userEvent.setup();
+
+    renderWithProviders(<CredentialsForm open onOpenChange={vi.fn()} />);
+    await fillRequiredFields(user);
+    await user.selectOptions(screen.getByLabelText(/EUDR role/i), "OPERATOR");
+    await user.click(screen.getByRole("button", { name: /create/i }));
+
+    await waitFor(() => expect(mockAuthFetch).toHaveBeenCalled());
+    expect(postedBody().operator_role).toBe("OPERATOR");
+  });
+
+  it("defaults to blank so an existing deployment keeps its current behaviour", async () => {
+    mockAuthFetch.mockResolvedValue(jsonRes(makeCred()));
+    const user = userEvent.setup();
+
+    renderWithProviders(<CredentialsForm open onOpenChange={vi.fn()} />);
+    await fillRequiredFields(user);
+    await user.click(screen.getByRole("button", { name: /create/i }));
+
+    await waitFor(() => expect(mockAuthFetch).toHaveBeenCalled());
+    expect(postedBody().operator_role).toBe("");
+  });
+
+  it("pre-fills the role when editing an existing credential", () => {
+    renderWithProviders(
+      <CredentialsForm
+        open
+        onOpenChange={vi.fn()}
+        credential={makeCred({ operator_role: "OPERATOR" })}
+      />,
+    );
+
+    expect(
+      (screen.getByLabelText(/EUDR role/i) as HTMLSelectElement).value,
+    ).toBe("OPERATOR");
+  });
+});
+
+describe("CredentialsForm — the secret is an Authentication Key", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("labels the secret as the Authentication Key rather than a password", () => {
+    renderWithProviders(<CredentialsForm open onOpenChange={vi.fn()} />);
+
+    expect(screen.getByLabelText(/authentication key/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^password/i)).not.toBeInTheDocument();
+  });
+
+  it("still sends the value as `password`, the field the API expects", async () => {
+    mockAuthFetch.mockResolvedValue(jsonRes(makeCred()));
+    const user = userEvent.setup();
+
+    renderWithProviders(<CredentialsForm open onOpenChange={vi.fn()} />);
+    await user.type(screen.getByLabelText(/username/i), "n00n7ifn");
+    await user.type(screen.getByLabelText(/authentication key/i), "the-key");
+    await user.type(
+      screen.getByLabelText(/web service client id/i),
+      "eudr-test",
+    );
+    await user.click(screen.getByRole("button", { name: /create/i }));
+
+    await waitFor(() => expect(mockAuthFetch).toHaveBeenCalled());
+    const [, init] = mockAuthFetch.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(init.body as string).password).toBe("the-key");
   });
 });

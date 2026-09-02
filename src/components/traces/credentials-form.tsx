@@ -26,6 +26,8 @@ const credentialSchema = z.object({
   // Password is write-only: required on create, optional on edit (empty = keep existing)
   password: z.string().optional(),
   web_service_client_id: z.string().min(1, "Web service client ID is required"),
+  // "" is a real, meaningful value: fall back to the deployment-wide default.
+  operator_role: z.enum(["", "OPERATOR", "REPRESENTATIVE_OPERATOR"]),
 });
 
 type CredentialFormValues = z.infer<typeof credentialSchema>;
@@ -58,6 +60,7 @@ export function CredentialsForm({
       // Password is intentionally blank — write-only, never rendered back
       password: "",
       web_service_client_id: credential?.web_service_client_id ?? "",
+      operator_role: credential?.operator_role ?? "",
     },
   });
 
@@ -72,6 +75,7 @@ export function CredentialsForm({
         environment: values.environment,
         username: values.username,
         web_service_client_id: values.web_service_client_id,
+        operator_role: values.operator_role,
       };
       if (!isEditing || (values.password && values.password.length > 0)) {
         body.password = values.password ?? "";
@@ -145,20 +149,23 @@ export function CredentialsForm({
 
           <div className="space-y-1.5">
             <Label htmlFor="password">
-              Password {isEditing ? "(leave blank to keep existing)" : "*"}
+              Authentication Key {isEditing ? "(leave blank to keep existing)" : "*"}
             </Label>
             <Input
               id="password"
               type="password"
               {...register("password")}
-              placeholder={isEditing ? "Leave blank to keep existing" : "Enter password"}
+              placeholder={
+                isEditing ? "Leave blank to keep existing" : "Enter authentication key"
+              }
               autoComplete="new-password"
             />
             {errors.password && (
               <p className="text-xs text-destructive">{errors.password.message}</p>
             )}
             <p className="text-[11px] text-muted-foreground">
-              Write-only — this value is never displayed after saving.
+              The web-service Authentication Key from TRACES — not your TRACES
+              account password. Write-only: never displayed after saving.
             </p>
           </div>
 
@@ -175,6 +182,31 @@ export function CredentialsForm({
                 {errors.web_service_client_id.message}
               </p>
             )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="operator_role">EUDR role</Label>
+            <select
+              id="operator_role"
+              {...register("operator_role")}
+              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+            >
+              <option value="">Use deployment default</option>
+              <option value="OPERATOR">Operator</option>
+              <option value="REPRESENTATIVE_OPERATOR">
+                Representative operator
+              </option>
+            </select>
+            {errors.operator_role && (
+              <p className="text-xs text-destructive">
+                {errors.operator_role.message}
+              </p>
+            )}
+            <p className="text-[11px] text-muted-foreground">
+              Must match how this web-service user is registered in TRACES.
+              Claiming a role the account does not hold is rejected with
+              &ldquo;user activity not allowed&rdquo;.
+            </p>
           </div>
 
           {mutation.error && (
