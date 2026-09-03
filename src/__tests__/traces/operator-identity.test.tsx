@@ -246,3 +246,36 @@ describe("OperatorIdentityForm — default activity type", () => {
     expect(JSON.parse(init.body as string).default_activity_type).toBe("");
   });
 });
+
+// ── the card must display what its edit sheet can change ─────────────────────
+//
+// `default_activity_type` and the credential's `operator_role` were added to
+// their forms but not to the read-only cards, so the only way to see either was
+// to open the sheet — on Settings screens whose whole job is to show the
+// current configuration. Both drive what gets declared to a regulator.
+
+describe("OperatorIdentityCard — usual activity", () => {
+  it("shows the configured default activity", async () => {
+    mockAuthFetch.mockResolvedValue(
+      jsonRes(makeOrg({ default_activity_type: "IMPORT" })),
+    );
+
+    renderWithProviders(<OperatorIdentityCard />);
+
+    expect(await screen.findByText(/usual activity/i)).toBeInTheDocument();
+    expect(await screen.findByText(/^Import/)).toBeInTheDocument();
+  });
+
+  it("says no default is set rather than showing an empty row", async () => {
+    mockAuthFetch.mockResolvedValue(
+      jsonRes(makeOrg({ default_activity_type: "" })),
+    );
+
+    renderWithProviders(<OperatorIdentityCard />);
+
+    expect(await screen.findByText(/usual activity/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/no default — chosen per statement/i),
+    ).toBeInTheDocument();
+  });
+});

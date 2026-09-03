@@ -406,3 +406,46 @@ describe("CredentialsForm — the secret is an Authentication Key", () => {
     expect(JSON.parse(init.body as string).password).toBe("the-key");
   });
 });
+
+// ── the credential card must show the role it is configured with ─────────────
+
+describe("CredentialsCard — EUDR role", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("shows the role a credential declares", async () => {
+    mockCredentialsApi({
+      credentialsResponse: {
+        data: { results: [makeCred({ operator_role: "OPERATOR" })] },
+      },
+    });
+
+    renderWithProviders(<CredentialsCard />);
+
+    expect(await screen.findByText("Operator")).toBeInTheDocument();
+  });
+
+  it("shows the deployment default rather than a blank when none is set", async () => {
+    mockCredentialsApi({
+      credentialsResponse: {
+        data: { results: [makeCred({ operator_role: "" })] },
+      },
+    });
+
+    renderWithProviders(<CredentialsCard />);
+
+    expect(await screen.findByText(/deployment default/i)).toBeInTheDocument();
+  });
+
+  it("still never renders a secret", async () => {
+    mockCredentialsApi({
+      credentialsResponse: {
+        data: { results: [makeCred({ operator_role: "REPRESENTATIVE_OPERATOR" })] },
+      },
+    });
+
+    renderWithProviders(<CredentialsCard />);
+
+    await screen.findByText(/representative operator/i);
+    expect(document.body.textContent ?? "").not.toMatch(/password|secret|key/i);
+  });
+});

@@ -18,6 +18,14 @@ const ORG_TYPE_LABEL: Record<string, string> = {
   SUPPLIER: "Supplier",
 };
 
+/** The regulator's own wording for each activity, matching the edit sheet and
+ * the DDS composer so one operator reads the same phrase everywhere. */
+const ACTIVITY_LABEL: Record<string, string> = {
+  DOMESTIC: "Domestic — placing on the EU market",
+  IMPORT: "Import — release for free circulation",
+  EXPORT: "Export — leaving the EU",
+};
+
 async function fetchOrganization(): Promise<Organization> {
   const res = await authFetch("/api/v1/accounts/organization/");
   if (!res.ok) {
@@ -88,6 +96,18 @@ export function OperatorIdentityCard() {
                 <span className="font-mono text-xs">{organization.eori_number}</span>
               ) : (
                 <span className="text-xs text-muted-foreground italic">Not set</span>
+              )}
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-muted-foreground w-32 shrink-0">Usual activity</span>
+              {organization.default_activity_type ? (
+                <span className="text-xs">
+                  {ACTIVITY_LABEL[organization.default_activity_type]}
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground italic">
+                  No default — chosen per statement
+                </span>
               )}
             </div>
             <div className="flex items-center gap-3 text-sm">
