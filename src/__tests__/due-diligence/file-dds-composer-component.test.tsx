@@ -11,7 +11,13 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../helpers";
 import { FileDdsComposer } from "@/components/due-diligence/file-dds-composer";
-import type { POReadinessDetail, PayloadEstimateResponse, Product, Supplier } from "@/lib/api/types";
+import type {
+  Organization,
+  POReadinessDetail,
+  PayloadEstimateResponse,
+  Product,
+  Supplier,
+} from "@/lib/api/types";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -134,6 +140,7 @@ interface FetchOptions {
   estimate?: PayloadEstimateResponse;
   createResponse?: unknown;
   submitForReviewOk?: boolean;
+  organization?: Partial<Organization>;
 }
 
 function makeFetch({
@@ -141,11 +148,13 @@ function makeFetch({
   estimate = UNDER_LIMIT_ESTIMATE,
   createResponse = { id: "new-dds-1" },
   submitForReviewOk = true,
+  organization = { id: "org-1", default_activity_type: "IMPORT" },
 }: FetchOptions = {}) {
   return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input.toString();
     const method = (init?.method ?? "GET").toUpperCase();
 
+    if (url.includes("/accounts/organization/")) return jsonResponse(organization);
     if (url.includes("/batches/po-1/readiness/")) return jsonResponse(po);
     if (url.includes("/suppliers/sup-1/")) return jsonResponse(SUPPLIER);
     if (url.includes("/commodities/products/prod-1/")) return jsonResponse(PRODUCT);
@@ -338,5 +347,105 @@ describe("FileDdsComposer", () => {
     await waitFor(() => expect(screen.getByText("0 of 2 lots selected")).toBeInTheDocument());
     expect(screen.getByRole("button", { name: "Save draft" })).toBeDisabled();
     expect(screen.getByRole("button", { name: /Submit to TRACES/ })).toBeDisabled();
+  });
+});
+
+
+// ── activity type ────────────────────────────────────────────────────────────
+//
+// Nothing ever set `activity_type`: the composer POSTed only
+// {statement_type, batch_ids}, and the envelope silently rendered the resulting
+// blank as DOMESTIC — a false claim of EU production on a filing to a
+// regulator. The operator's default now seeds it, and the officer must be able
+// to see and override what is about to be declared on their behalf.
+
+describe("FileDdsComposer — activity type", () => {
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.clearAllMocks();
+  });
+
+  it("prefills from the operator's default and sends it on create", async () => {
+    const fetchSpy = makeFetch();
+    globalThis.fetch = fetchSpy;
+    const user = userEvent.setup();
+
+    renderWithProviders(<FileDdsComposer poId="po-1" />);
+    await screen.findByText("LOT-GH-26-0001");
+
+    const select = (await screen.findByLabelText(
+      /activity/i,
+    )) as HTMLSelectElement;
+    expect(select.value).toBe("IMPORT");
+
+    await user.click(screen.getByRole("button", { name: /save draft/i }));
+
+    await waitFor(() => {
+      const call = fetchSpy.mock.calls.find(
+        ([u, i]) =>
+          u.toString().endsWith("/due-diligence/statements/") &&
+          (i as RequestInit)?.method === "POST",
+      );
+      expect(call).toBeDefined();
+      expect(JSON.parse((call![1] as RequestInit).body as string)).toMatchObject({
+        activity_type: "IMPORT",
+      });
+    });
+  });
+
+  it("sends the officer's override rather than the default", async () => {
+    const fetchSpy = makeFetch();
+    globalThis.fetch = fetchSpy;
+    const user = userEvent.setup();
+
+    renderWithProviders(<FileDdsComposer poId="po-1" />);
+    await screen.findByText("LOT-GH-26-0001");
+
+    await user.selectOptions(await screen.findByLabelText(/activity/i), "EXPORT");
+    await user.click(screen.getByRole("button", { name: /save draft/i }));
+
+    await waitFor(() => {
+      const call = fetchSpy.mock.calls.find(
+        ([u, i]) =>
+          u.toString().endsWith("/due-diligence/statements/") &&
+          (i as RequestInit)?.method === "POST",
+      );
+      expect(JSON.parse((call![1] as RequestInit).body as string)).toMatchObject({
+        activity_type: "EXPORT",
+      });
+    });
+  });
+
+  it("blocks filing when the operator has no default and none is chosen", async () => {
+    globalThis.fetch = makeFetch({
+      organization: { id: "org-1", default_activity_type: "" },
+    });
+    const user = userEvent.setup();
+
+    renderWithProviders(<FileDdsComposer poId="po-1" />);
+    await screen.findByText("LOT-GH-26-0001");
+
+    expect(
+      ((await screen.findByLabelText(/activity/i)) as HTMLSelectElement).value,
+    ).toBe("");
+    expect(screen.getByRole("button", { name: /save draft/i })).toBeDisabled();
+  });
+
+  it("names the three activities in the regulator's own terms", async () => {
+    globalThis.fetch = makeFetch();
+    const user = userEvent.setup();
+
+    renderWithProviders(<FileDdsComposer poId="po-1" />);
+    await screen.findByText("LOT-GH-26-0001");
+
+    const select = (await screen.findByLabelText(
+      /activity/i,
+    )) as HTMLSelectElement;
+    expect(Array.from(select.options).map((o) => o.value)).toEqual([
+      "",
+      "DOMESTIC",
+      "IMPORT",
+      "EXPORT",
+    ]);
   });
 });

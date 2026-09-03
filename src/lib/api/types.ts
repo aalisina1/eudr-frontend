@@ -29,6 +29,10 @@ export interface Organization {
   country: string;
   vat_number: string;
   eori_number: string;
+  /** The operator's usual commercial activity. Copied onto a new DDS as its
+   * starting value; the DDS always owns what is actually filed. `""` means no
+   * default — the officer chooses per statement. */
+  default_activity_type: ActivityType | "";
   traces_actor_id: string;
   is_active: boolean;
   created_at: string;
