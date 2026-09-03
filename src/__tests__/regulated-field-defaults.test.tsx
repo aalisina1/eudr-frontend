@@ -78,3 +78,41 @@ describe("SupplierForm — risk rating", () => {
     expect(select.value).toBe("PENDING");
   });
 });
+
+// ── post-merge audit of #101 (qa/post-merge-audit-frontend) ──────────────────
+//
+// #101 made the commercial activity an explicit, officer-visible, required
+// choice — in the composer. It is not the only door to a DDS. The freeform
+// "New Statement" sheet (`DDSForm`) is reachable from the Submissions page
+// header AND from the composer's own escape hatch
+// (`file-dds-composer.tsx:666`), and it POSTs `values` with no
+// `activity_type` at all.
+//
+// The backend then applies one for the officer: `DueDiligenceStatement.save()`
+// seeds a blank `activity_type` from `Organization.default_activity_type` on
+// first save. That is the same shape as the defect this file exists to
+// prevent — a regulated value supplied by something other than the person
+// signing for it — only now it happens server-side, where the officer cannot
+// see it. If the operator has no default it instead stays blank and the
+// statement is refused at submit time, on a different screen, days later.
+
+describe("DDSForm — the freeform statement path", () => {
+  it("lets the officer choose the commercial activity, as the composer does", async () => {
+    // FAILING BY DESIGN — demonstrates the gap. `DDSForm` has no activity
+    // control and, before this test, no test file of any kind referenced it.
+    const { DDSForm } = await import("@/components/forms/dds-form");
+    renderWithProviders(<DDSForm open onOpenChange={() => {}} />);
+
+    expect(screen.getByLabelText(/activity/i)).toBeInTheDocument();
+  });
+
+  it("does render the statement type it does own", async () => {
+    // Negative control: the sheet renders, and its selects are label-
+    // associated — so the assertion above fails for the missing field, not
+    // for a broken render or an unlabelled control.
+    const { DDSForm } = await import("@/components/forms/dds-form");
+    renderWithProviders(<DDSForm open onOpenChange={() => {}} />);
+
+    expect(screen.getByLabelText(/statement type/i)).toBeInTheDocument();
+  });
+});

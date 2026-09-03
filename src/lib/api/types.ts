@@ -515,7 +515,13 @@ export interface DueDiligenceStatement {
   traces_reference: string;
   status: DDSStatus;
   statement_type: StatementType;
-  activity_type: ActivityType;
+  /** `""` is reachable and the backend produces it deliberately: the field is
+   * `blank=True`, `save()` leaves it blank when the operator has no default,
+   * and `_validate_activity_type` exists to *reject* blanks at submit time.
+   * Two places already handle it — the detail page's `activityLabel` and the
+   * TRACES panel's confirm copy — which the narrower type made look like dead
+   * code a simplification pass would have been right to delete. */
+  activity_type: ActivityType | "";
   batch_ids: string[];
   risk_conclusion: RiskConclusion | null;
   conclusion_justification: string;

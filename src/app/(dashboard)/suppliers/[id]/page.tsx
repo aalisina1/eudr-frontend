@@ -28,11 +28,19 @@ const KYC_COLORS: Record<KYCStatus, { bg: string; text: string; dot: string; lab
   EXPIRED: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Expired" },
 };
 
-const RISK_COLORS: Record<RiskRating, { bg: string; text: string; dot: string; label: string }> = {
-  NOT_ASSESSED: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Not assessed" },
-  LOW: { bg: "bg-[#34D399]/10", text: "text-[#1A6B5A]", dot: "bg-[#34D399]", label: "Low" },
-  STANDARD: { bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", label: "Standard" },
-  HIGH: { bg: "bg-[#C23D3D]/10", text: "text-[#C23D3D]", dot: "bg-[#C23D3D]", label: "High" },
+/** `suffixed` is the phrase this page shows; `label` is the bare badge text
+ * the list page uses. They are separate because "Low"/"Standard"/"High" compose
+ * with a trailing "Risk" and "Not assessed" does not — bolting the word on
+ * produced "Not assessed Risk", describing the same supplier two different ways
+ * on two screens, one of them ungrammatical, on a page an auditor reads. */
+const RISK_COLORS: Record<
+  RiskRating,
+  { bg: string; text: string; dot: string; label: string; suffixed: string }
+> = {
+  NOT_ASSESSED: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Not assessed", suffixed: "Not assessed" },
+  LOW: { bg: "bg-[#34D399]/10", text: "text-[#1A6B5A]", dot: "bg-[#34D399]", label: "Low", suffixed: "Low Risk" },
+  STANDARD: { bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", label: "Standard", suffixed: "Standard Risk" },
+  HIGH: { bg: "bg-[#C23D3D]/10", text: "text-[#C23D3D]", dot: "bg-[#C23D3D]", label: "High", suffixed: "High Risk" },
 };
 
 const TH = "text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
@@ -151,7 +159,7 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
             </Badge>
             <Badge variant="secondary" className={`${risk.bg} ${risk.text} border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5`}>
               <span className={`w-1.5 h-1.5 rounded-full ${risk.dot}`} />
-              {risk.label} Risk
+              {risk.suffixed}
             </Badge>
           </div>
         </div>

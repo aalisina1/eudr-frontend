@@ -185,7 +185,7 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
    * The value actually filed is the DDS's own — the officer can change it
    * per statement, because activityType describes this transaction, not the
    * operator (the same operator can import cocoa and export chocolate). */
-  const { data: organization } = useQuery<Organization>({
+  const { data: organization, isError: orgUnreadable } = useQuery<Organization>({
     queryKey: ["organization"],
     queryFn: async () => {
       const res = await authFetch("/api/v1/accounts/organization/");
@@ -593,10 +593,19 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
                 <option value="IMPORT">Import — release for free circulation</option>
                 <option value="EXPORT">Export — leaving the EU</option>
               </select>
+              {/* Three states, not two. "Your operator has no default" and
+                  "the organisation could not be read" are different things,
+                  and only the first of them has an action attached — pointing
+                  someone at Settings when the request failed names a screen
+                  that will fail for them the same way. Setting the default is
+                  also ADMIN-only, so the officer filing this statement is told
+                  who can do it rather than to go and do it. */}
               <p className="text-[11px] text-muted-foreground">
                 {orgDefault
                   ? "Prefilled from your organisation's usual activity. Change it if this statement differs."
-                  : "Required by TRACES. Set a default in Settings to prefill this."}
+                  : orgUnreadable
+                    ? "Required by TRACES."
+                    : "Required by TRACES. An administrator can set a default in Settings to prefill this."}
               </p>
             </CardContent>
           </Card>

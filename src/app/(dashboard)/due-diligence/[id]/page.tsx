@@ -29,10 +29,14 @@ const ACTIVITY_LABEL: Record<ActivityType, string> = {
   EXPORT: "Export",
 };
 
-/** Some seeded/legacy statements carry an empty `activity_type` (not one of
- * the typed enum values) — degrade to "—" rather than rendering blank. */
+/** A statement can carry an empty `activity_type` — the field is `blank=True`
+ * and the backend produces blanks deliberately (see the type in
+ * `lib/api/types.ts`). Degrade to "—" rather than rendering nothing.
+ *
+ * The blank case is now expressible in the type, so this guard is no longer
+ * dead code that a simplification pass could remove in good faith. */
 function activityLabel(activityType: DueDiligenceStatement["activity_type"]): string {
-  return ACTIVITY_LABEL[activityType] ?? "—";
+  return activityType ? ACTIVITY_LABEL[activityType] : "—";
 }
 
 /** Label + value row for the "Statement details" meta grid — the mono,

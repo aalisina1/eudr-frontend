@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { authFetch } from "@/lib/api/client";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { getErrorMessage } from "@/lib/api/errors";
 import type { Organization } from "@/lib/api/types";
 import { OperatorIdentityForm } from "@/components/traces/operator-identity-form";
@@ -36,6 +37,14 @@ async function fetchOrganization(): Promise<Organization> {
 }
 
 export function OperatorIdentityCard() {
+  const { data: currentUser } = useCurrentUser();
+  // Same gate as CredentialsCard (#70 rider): the write endpoint is ADMIN-only,
+  // so offering Edit to anyone else is an affordance that can only end in a
+  // 403. The read is open to every org member — that is deliberate, and is what
+  // lets the DDS composer prefill an activity type — so the card still renders
+  // its values; only the write affordance is gated.
+  const isAdmin = currentUser?.role === "ADMIN";
+
   const [formOpen, setFormOpen] = useState(false);
 
   const { data: organization, isLoading, isError } = useQuery({
@@ -56,7 +65,7 @@ export function OperatorIdentityCard() {
               organization in submitted Due Diligence Statements.
             </p>
           </div>
-          {organization && (
+          {organization && isAdmin && (
             <Button
               size="sm"
               variant="outline"

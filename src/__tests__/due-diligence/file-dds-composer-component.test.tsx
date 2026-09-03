@@ -141,6 +141,9 @@ interface FetchOptions {
   createResponse?: unknown;
   submitForReviewOk?: boolean;
   organization?: Partial<Organization>;
+  /** GET /accounts/organization/ is `IsAdmin`-gated server-side, so a
+   * COMPLIANCE_OFFICER — the role this composer exists for — gets a 403. */
+  organizationStatus?: number;
 }
 
 function makeFetch({
@@ -149,12 +152,20 @@ function makeFetch({
   createResponse = { id: "new-dds-1" },
   submitForReviewOk = true,
   organization = { id: "org-1", default_activity_type: "IMPORT" },
+  organizationStatus = 200,
 }: FetchOptions = {}) {
   return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input.toString();
     const method = (init?.method ?? "GET").toUpperCase();
 
-    if (url.includes("/accounts/organization/")) return jsonResponse(organization);
+    if (url.includes("/accounts/organization/")) {
+      return organizationStatus === 200
+        ? jsonResponse(organization)
+        : jsonResponse(
+            { detail: "You do not have permission to access this resource." },
+            organizationStatus,
+          );
+    }
     if (url.includes("/batches/po-1/readiness/")) return jsonResponse(po);
     if (url.includes("/suppliers/sup-1/")) return jsonResponse(SUPPLIER);
     if (url.includes("/commodities/products/prod-1/")) return jsonResponse(PRODUCT);
@@ -447,5 +458,127 @@ describe("FileDdsComposer — activity type", () => {
       "IMPORT",
       "EXPORT",
     ]);
+  });
+});
+
+// ── post-merge audit of #101 (qa/post-merge-audit-frontend) ──────────────────
+//
+// Two mutants survived the tests that shipped with #101:
+//
+//   1. `chosenActivityType ?? orgDefault` → `|| orgDefault` — the whole
+//      documented point of the `??` (an explicit blank choice is a choice, and
+//      must not be silently re-filled from the org default) was unasserted.
+//   2. Dropping `|| !activityType` from the *Submit to TRACES* button — only
+//      "Save draft" was proven gated, so the more consequential of the two
+//      file actions could have shipped ungated.
+//
+// The third case here is a defect, not a gap: GET /accounts/organization/ is
+// `IsAdmin`-gated (`apps/accounts/views.py::OrganizationDetailView`), while
+// this composer is `IsComplianceOfficer`-gated — its own docstring says so.
+// The prefill therefore never works for the role the screen was built for.
+
+describe("FileDdsComposer — activity type, audit coverage", () => {
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.clearAllMocks();
+  });
+
+  it("treats an explicit blank as a choice, not as 'unset'", async () => {
+    // Guards the `??`. With `||`, clearing the select would snap straight back
+    // to IMPORT and re-enable filing — the officer would file the org default
+    // they had just deliberately cleared.
+    globalThis.fetch = makeFetch({
+      organization: { id: "org-1", default_activity_type: "IMPORT" },
+    });
+    const user = userEvent.setup();
+
+    renderWithProviders(<FileDdsComposer poId="po-1" />);
+    await screen.findByText("LOT-GH-26-0001");
+
+    const select = (await screen.findByLabelText(/activity/i)) as HTMLSelectElement;
+    expect(select.value).toBe("IMPORT");
+
+    await user.selectOptions(select, "");
+
+    expect(select.value).toBe("");
+    expect(screen.getByRole("button", { name: /save draft/i })).toBeDisabled();
+  });
+
+  it("gates Submit to TRACES on the activity too, not only Save draft", async () => {
+    globalThis.fetch = makeFetch({
+      organization: { id: "org-1", default_activity_type: "" },
+    });
+
+    renderWithProviders(<FileDdsComposer poId="po-1" />);
+    await screen.findByText("LOT-GH-26-0001");
+    await screen.findByLabelText(/activity/i);
+
+    expect(screen.getByRole("button", { name: /submit to traces/i })).toBeDisabled();
+  });
+
+  it("re-enables both file actions once an activity is chosen", async () => {
+    // Negative control for the two gate assertions above: they must fail for a
+    // real reason, not because these buttons are disabled by something else.
+    globalThis.fetch = makeFetch({
+      organization: { id: "org-1", default_activity_type: "" },
+    });
+    const user = userEvent.setup();
+
+    renderWithProviders(<FileDdsComposer poId="po-1" />);
+    await screen.findByText("LOT-GH-26-0001");
+
+    await user.selectOptions(await screen.findByLabelText(/activity/i), "EXPORT");
+
+    expect(screen.getByRole("button", { name: /save draft/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /submit to traces/i })).toBeEnabled();
+  });
+
+  it("still lets a compliance officer file when the org endpoint refuses them", async () => {
+    // The degradation is not fatal — this passes today. Recorded so the 403
+    // path has a green baseline that a future change would have to break.
+    const fetchSpy = makeFetch({ organizationStatus: 403 });
+    globalThis.fetch = fetchSpy;
+    const user = userEvent.setup();
+
+    renderWithProviders(<FileDdsComposer poId="po-1" />);
+    await screen.findByText("LOT-GH-26-0001");
+
+    const select = (await screen.findByLabelText(/activity/i)) as HTMLSelectElement;
+    expect(select.value).toBe("");
+
+    await user.selectOptions(select, "IMPORT");
+    await user.click(screen.getByRole("button", { name: /save draft/i }));
+
+    await waitFor(() => {
+      const call = fetchSpy.mock.calls.find(
+        ([u, i]) =>
+          u.toString().endsWith("/due-diligence/statements/") &&
+          (i as RequestInit)?.method === "POST",
+      );
+      expect(call).toBeDefined();
+      expect(JSON.parse((call![1] as RequestInit).body as string)).toMatchObject({
+        activity_type: "IMPORT",
+      });
+    });
+  });
+
+  it("does not tell a user who cannot read the org to go and set a default in Settings", async () => {
+    // FAILING BY DESIGN — demonstrates the defect.
+    //
+    // A COMPLIANCE_OFFICER gets 403 from GET /accounts/organization/, so
+    // `orgDefault` is "" and the composer prints "Set a default in Settings to
+    // prefill this." Settings' Operator Identity card is fed by that same
+    // admin-only endpoint, so it renders "Unable to load operator identity."
+    // for them. The instruction names a screen they cannot act on.
+    //
+    // The distinction the copy fails to make: "your operator has no default"
+    // and "you were not allowed to look" are different states.
+    globalThis.fetch = makeFetch({ organizationStatus: 403 });
+
+    renderWithProviders(<FileDdsComposer poId="po-1" />);
+    await screen.findByText("LOT-GH-26-0001");
+    await screen.findByLabelText(/activity/i);
+
+    expect(screen.queryByText(/set a default in settings/i)).toBeNull();
   });
 });

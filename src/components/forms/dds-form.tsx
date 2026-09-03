@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Sheet,
   SheetContent,
@@ -17,10 +17,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { authFetch } from "@/lib/api/client";
-import type { DueDiligenceStatement } from "@/lib/api/types";
+import type { DueDiligenceStatement, Organization } from "@/lib/api/types";
 
 const ddsSchema = z.object({
   statement_type: z.enum(["OPERATOR", "REFERENCE"]),
+  // "" is meaningful: no activity chosen. TRACES requires one, and
+  // `_validate_activity_type` refuses a blank at submit — but refusing it
+  // *here* would block saving a draft the officer has not finished.
+  activity_type: z.enum(["", "DOMESTIC", "IMPORT", "EXPORT"]),
   reference_number: z.string().optional(),
   risk_conclusion: z.enum(["NEGLIGIBLE", "NOT_NEGLIGIBLE"]).nullable().optional(),
   conclusion_justification: z.string().optional(),
@@ -38,6 +42,20 @@ interface DDSFormProps {
 export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
   const queryClient = useQueryClient();
   const isEditing = !!statement;
+
+  /** Prefill only — the value filed is this statement's own. Shares the
+   * `["organization"]` key with the composer and the Settings cards, so it is
+   * usually already in cache. A failure degrades to a blank select rather than
+   * an error: not knowing the default must not stop someone drafting. */
+  const { data: organization } = useQuery<Organization>({
+    queryKey: ["organization"],
+    queryFn: async () => {
+      const res = await authFetch("/api/v1/accounts/organization/");
+      if (!res.ok) throw new Error("Could not load organisation");
+      return res.json();
+    },
+  });
+  const orgDefault = organization?.default_activity_type ?? "";
   const canEdit = !statement || statement.status === "DRAFT" || statement.status === "REJECTED";
 
   const {
@@ -50,6 +68,7 @@ export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
     defaultValues: statement
       ? {
           statement_type: statement.statement_type,
+          activity_type: statement.activity_type,
           reference_number: statement.reference_number || "",
           risk_conclusion: statement.risk_conclusion,
           conclusion_justification: statement.conclusion_justification || "",
@@ -57,6 +76,7 @@ export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
         }
       : {
           statement_type: "OPERATOR",
+          activity_type: orgDefault,
           reference_number: "",
           risk_conclusion: null,
           conclusion_justification: "",
@@ -156,6 +176,34 @@ export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
               <option value="OPERATOR">Operator</option>
               <option value="REFERENCE">Reference</option>
             </select>
+          </div>
+
+          {/* The composer (#101) gated this; this sheet did not, and it is
+              reachable from the Submissions header *and* the composer's own
+              escape hatch. Without it the backend seeds `activity_type` from
+              the organisation default in `save()` — supplying a regulated
+              value on behalf of the person signing for it, server-side where
+              nobody can see it. Prefilled the same way the composer prefills,
+              and overridable for the same reason: activityType describes the
+              transaction, not the operator. */}
+          <div className="space-y-1.5">
+            <Label htmlFor="activity_type">Commercial activity</Label>
+            <select
+              id="activity_type"
+              {...register("activity_type")}
+              disabled={!canEdit}
+              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:opacity-50"
+            >
+              <option value="">Choose an activity…</option>
+              <option value="DOMESTIC">Domestic — placing on the EU market</option>
+              <option value="IMPORT">Import — release for free circulation</option>
+              <option value="EXPORT">Export — leaving the EU</option>
+            </select>
+            <p className="text-[11px] text-muted-foreground">
+              {orgDefault
+                ? "Prefilled from your organisation's usual activity."
+                : "Required by TRACES before this statement can be filed."}
+            </p>
           </div>
 
           {isEditing && (
