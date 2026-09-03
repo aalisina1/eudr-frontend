@@ -279,3 +279,53 @@ describe("OperatorIdentityCard — usual activity", () => {
     ).toBeInTheDocument();
   });
 });
+
+// ── post-merge audit of #105 (qa/post-merge-audit-frontend) ──────────────────
+//
+// #105 added an editable regulated field (`default_activity_type`) to this
+// card. Its sibling `CredentialsCard` hides its write affordance behind
+// `currentUser?.role === "ADMIN"` — the #70 QA rider, recorded in
+// `credentials-form.test.tsx`'s docstring items 3 and 4. This card has no such
+// check: the Edit button renders for any role as soon as `organization` is
+// truthy.
+//
+// Today the backend hides the hole by accident — GET /accounts/organization/
+// is `IsAdmin`-gated, so a non-admin never gets an `organization` to render.
+// That is the *same* gating that breaks the DDS composer's prefill for a
+// COMPLIANCE_OFFICER, so the obvious fix there (relax the read to
+// `IsAdminOrReadOnly`) would open this hole for real. Fix them together.
+
+describe("OperatorIdentityCard — write affordance role gate", () => {
+  it("hides Edit from a non-ADMIN, the way CredentialsCard does (#70)", async () => {
+    // FAILING BY DESIGN — demonstrates the missing gate.
+    mockAuthFetch.mockImplementation((url: string) =>
+      Promise.resolve(
+        url.includes("/auth/users/me/")
+          ? jsonRes({ id: "u1", role: "VIEWER", organization_id: "org-1" })
+          : jsonRes(makeOrg({ default_activity_type: "IMPORT" })),
+      ),
+    );
+
+    renderWithProviders(<OperatorIdentityCard />);
+    await screen.findByText("DE12345678901234");
+
+    expect(screen.queryByRole("button", { name: /edit/i })).toBeNull();
+  });
+
+  it("still shows Edit to an ADMIN", async () => {
+    // Negative control: the assertion above must fail because of the role,
+    // not because the button is missing for everyone.
+    mockAuthFetch.mockImplementation((url: string) =>
+      Promise.resolve(
+        url.includes("/auth/users/me/")
+          ? jsonRes({ id: "u1", role: "ADMIN", organization_id: "org-1" })
+          : jsonRes(makeOrg({ default_activity_type: "IMPORT" })),
+      ),
+    );
+
+    renderWithProviders(<OperatorIdentityCard />);
+    await screen.findByText("DE12345678901234");
+
+    expect(screen.getByRole("button", { name: /edit/i })).toBeInTheDocument();
+  });
+});

@@ -21,6 +21,8 @@ import type {
   SyncConfig,
   SyncJob,
   TracesSubmission,
+  Organization,
+  TracesCredential,
 } from "@/lib/api/types";
 
 /**
@@ -308,5 +310,64 @@ describe("Type definitions", () => {
       updated_at: "2025-06-30T00:00:00Z",
     };
     expect(dds.activity_type).toBe("DOMESTIC");
+  });
+});
+
+// ── post-merge audit of #99/#101/#105/#107 (qa/post-merge-audit-frontend) ────
+//
+// `src/lib/api/types.ts` mirrors the Django serializers by hand (umbrella
+// CLAUDE.md). Three of the four fields those PRs touched match the backend
+// exactly. `DueDiligenceStatement.activity_type` does not.
+
+describe("Type sync with eudr-backend serializers", () => {
+  it("Organization.default_activity_type admits the blank the serializer returns", () => {
+    // apps/accounts/models.py::Organization.default_activity_type is
+    // `blank=True`; blank means "no default, ask per statement".
+    const blank: Organization["default_activity_type"] = "";
+    const set: Organization["default_activity_type"] = "IMPORT";
+    expect([blank, set]).toEqual(["", "IMPORT"]);
+  });
+
+  it("TracesCredential.operator_role admits the blank the serializer returns", () => {
+    // apps/traces_integration/models.py::TracesCredential.operator_role is
+    // `blank=True`; blank means "fall back to settings.TRACES_OPERATOR_ROLE"
+    // (`resolved_operator_role`).
+    const blank: TracesCredential["operator_role"] = "";
+    expect(blank).toBe("");
+  });
+
+  it("Supplier.risk_rating carries the NOT_ASSESSED the model now defaults to", () => {
+    // apps/suppliers/models.py::Supplier.RiskRating.NOT_ASSESSED, and it is
+    // the model default — so it is the *most common* value the API returns.
+    const rating: Supplier["risk_rating"] = "NOT_ASSESSED";
+    expect(rating).toBe("NOT_ASSESSED");
+  });
+
+  it("DueDiligenceStatement.activity_type must admit the blank the API returns", () => {
+    // MISMATCH. apps/due_diligence/models.py::DueDiligenceStatement
+    // .activity_type is `blank=True`, and blank is a first-class state:
+    //   - eudr-app#194 backfilled existing statements to blank;
+    //   - `save()` leaves it blank when the operator has no default;
+    //   - `payload_builder._validate_activity_type` refuses a blank at submit
+    //     time with a field-level error — i.e. the backend expects to *see*
+    //     blanks and reject them, not to never produce them.
+    //
+    // The frontend already handles the blank at runtime in two places, both
+    // of which TypeScript believes are unreachable:
+    //   - due-diligence/[id]/page.tsx::activityLabel's `?? "—"`, whose own
+    //     comment says "Some seeded/legacy statements carry an empty
+    //     activity_type (not one of the typed enum values)";
+    //   - traces-panel.tsx's `{activityType ? … : null}`, the #105 fix that
+    //     stopped the confirm dialog inventing DOMESTIC.
+    //
+    // The second one is the hazard: the call site passes `stmt.activity_type`,
+    // so under this type the falsy branch is dead code, and a future
+    // simplification pass would be right — by the types — to delete the very
+    // guard #105 added.
+    //
+    // The pin fired and the type was widened, so this now compiles. Kept as a
+    // live assertion rather than deleted: it is the thing that must stay true.
+    const blank: DueDiligenceStatement["activity_type"] = "";
+    expect(blank).toBe("");
   });
 });

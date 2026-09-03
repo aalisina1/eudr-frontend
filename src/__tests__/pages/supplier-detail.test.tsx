@@ -181,3 +181,77 @@ describe("SupplierDetailPage", () => {
     expect(screen.getByText("Rainforest Alliance")).toBeInTheDocument();
   });
 });
+
+// ---------------------------------------------------------------------------
+// post-merge audit of #107 (qa/post-merge-audit-frontend)
+//
+// The detail page keeps its own copy of `RISK_COLORS` and indexes it
+// unguarded: `RISK_COLORS[supplier.risk_rating].bg`. #107 added the
+// NOT_ASSESSED entry under compiler pressure alone — nothing rendered it, on
+// either of the two pages holding a copy of the map. Rendering it turns up a
+// defect `tsc` could not see: this page prints `{risk.label} Risk`, and the
+// new label is the only one that does not compose with that suffix.
+// ---------------------------------------------------------------------------
+describe("SupplierDetailPage — NOT_ASSESSED risk rating", () => {
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.restoreAllMocks();
+  });
+
+  function mockUnassessed() {
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url.includes("/suppliers/sup-1/")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ ...SUPPLIER, risk_rating: "NOT_ASSESSED" }), {
+            status: 200,
+          }),
+        );
+      }
+      return Promise.resolve(
+        new Response(JSON.stringify(mockPaginatedResponse([])), { status: 200 }),
+      );
+    }) as typeof fetch;
+  }
+
+  it("renders the unassessed badge rather than crashing on the colour lookup", async () => {
+    mockUnassessed();
+    renderPage();
+
+    expect(await screen.findByText("Kuapa Kokoo Union")).toBeInTheDocument();
+    expect(screen.getByText(/not assessed/i)).toBeInTheDocument();
+  });
+
+  it("does not label the badge 'Not assessed Risk'", async () => {
+    // FAILING BY DESIGN — demonstrates the defect.
+    //
+    // The badge is `{risk.label} Risk`. "Low"/"Standard"/"High" were written
+    // to compose with that suffix; "Not assessed" was not, and #107 changed
+    // only the map. The list page renders `{risk.label}` bare and reads
+    // correctly, so the same supplier is described two different ways on two
+    // screens — one of them ungrammatical, on a page an auditor reads.
+    mockUnassessed();
+    renderPage();
+
+    await screen.findByText("Kuapa Kokoo Union");
+    expect(document.body.textContent).not.toContain("Not assessed Risk");
+  });
+
+  it("still composes correctly for a rating that is a conclusion", async () => {
+    // Negative control: the suffix itself is fine, and must stay.
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url.includes("/suppliers/sup-1/")) {
+        return Promise.resolve(new Response(JSON.stringify(SUPPLIER), { status: 200 }));
+      }
+      return Promise.resolve(
+        new Response(JSON.stringify(mockPaginatedResponse([])), { status: 200 }),
+      );
+    }) as typeof fetch;
+
+    renderPage();
+
+    await screen.findByText("Kuapa Kokoo Union");
+    expect(document.body.textContent).toContain("Standard Risk");
+  });
+});

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import {
   renderWithProviders,
   mockPaginatedResponse,
@@ -257,5 +257,86 @@ describe("SuppliersPage — certifications_expiring URL param (dashboard filtere
     expect(calls.some((url) => url.includes("risk_rating=HIGH") && url.includes("certifications_expiring=30"))).toBe(
       true
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// post-merge audit of #107 (qa/post-merge-audit-frontend)
+//
+// #107 widened `RiskRating` with NOT_ASSESSED. `tsc` forced the two
+// `RISK_COLORS` maps and nothing else — no test ever rendered a supplier in
+// the new state, and no test proved the new filter option is reachable from a
+// URL. Both are runtime paths TypeScript cannot vouch for: `RISK_COLORS[...]`
+// is an unguarded index, so a missing entry is a TypeError that takes the
+// whole table down, and the URL seed is a `RISK_OPTIONS.some()` membership
+// test that silently degrades to "" for anything it does not recognise.
+// ---------------------------------------------------------------------------
+describe("SuppliersPage — NOT_ASSESSED risk rating", () => {
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    searchParams = new URLSearchParams();
+    vi.restoreAllMocks();
+  });
+
+  const unassessed: Supplier = {
+    ...mockSuppliers[0],
+    id: "s3",
+    name: "Unrated Cooperative",
+    risk_rating: "NOT_ASSESSED",
+  };
+
+  it("renders a badge rather than crashing on a supplier nobody has assessed", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify(mockPaginatedResponse([unassessed])), { status: 200 }),
+      ) as typeof fetch;
+
+    renderWithProviders(<SuppliersPage />);
+
+    await waitFor(() => expect(screen.getByText("Unrated Cooperative")).toBeInTheDocument());
+    // Scoped to the row: "Not assessed" is also the new filter <option>'s label.
+    const row = screen.getByText("Unrated Cooperative").closest("tr")!;
+    expect(within(row).getByText("Not assessed")).toBeInTheDocument();
+  });
+
+  it("offers Not assessed in the toolbar filter", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify(mockPaginatedResponse(mockSuppliers)), { status: 200 }),
+      ) as typeof fetch;
+
+    renderWithProviders(<SuppliersPage />);
+    await waitFor(() => expect(screen.getByText("Green Farm Co")).toBeInTheDocument());
+
+    const select = screen.getByLabelText(/Risk rating/i) as HTMLSelectElement;
+    expect(Array.from(select.options).map((o) => o.value)).toEqual([
+      "",
+      "NOT_ASSESSED",
+      "LOW",
+      "STANDARD",
+      "HIGH",
+    ]);
+  });
+
+  it("seeds the filter from ?risk_rating=NOT_ASSESSED and asks the API for it", async () => {
+    // The whole point of the state is that these suppliers need someone to
+    // look at them, so "who has nobody assessed" has to be a shareable URL —
+    // the same contract Tier 4a's ?risk_rating=HIGH doorway already has.
+    searchParams = new URLSearchParams("risk_rating=NOT_ASSESSED");
+    const calls: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      calls.push(typeof input === "string" ? input : input.toString());
+      return Promise.resolve(
+        new Response(JSON.stringify(mockPaginatedResponse([unassessed])), { status: 200 }),
+      );
+    }) as typeof fetch;
+
+    renderWithProviders(<SuppliersPage />);
+
+    await waitFor(() => expect(screen.getByText("Unrated Cooperative")).toBeInTheDocument());
+    expect(calls.some((url) => url.includes("risk_rating=NOT_ASSESSED"))).toBe(true);
+    expect((screen.getByLabelText(/Risk rating/i) as HTMLSelectElement).value).toBe("NOT_ASSESSED");
   });
 });
