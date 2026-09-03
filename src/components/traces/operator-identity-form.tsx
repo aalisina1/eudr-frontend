@@ -25,6 +25,8 @@ const operatorIdentitySchema = z.object({
     .string()
     .max(17, "EORI number must be at most 17 characters")
     .optional(),
+  // "" is meaningful: no default, so the composer asks per statement.
+  default_activity_type: z.enum(["", "DOMESTIC", "IMPORT", "EXPORT"]),
 });
 
 type OperatorIdentityFormValues = z.infer<typeof operatorIdentitySchema>;
@@ -51,6 +53,7 @@ export function OperatorIdentityForm({
     resolver: zodResolver(operatorIdentitySchema),
     defaultValues: {
       eori_number: organization.eori_number ?? "",
+      default_activity_type: organization.default_activity_type ?? "",
     },
   });
 
@@ -59,7 +62,10 @@ export function OperatorIdentityForm({
       const res = await authFetch("/api/v1/accounts/organization/", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eori_number: values.eori_number ?? "" }),
+        body: JSON.stringify({
+          eori_number: values.eori_number ?? "",
+          default_activity_type: values.default_activity_type,
+        }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -105,6 +111,24 @@ export function OperatorIdentityForm({
             )}
             <p className="text-[11px] text-muted-foreground">
               EU Economic Operators Registration and Identification number.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="default_activity_type">Usual activity</Label>
+            <select
+              id="default_activity_type"
+              {...register("default_activity_type")}
+              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+            >
+              <option value="">No default — ask each time</option>
+              <option value="DOMESTIC">Domestic — placing on the EU market</option>
+              <option value="IMPORT">Import — release for free circulation</option>
+              <option value="EXPORT">Export — leaving the EU</option>
+            </select>
+            <p className="text-[11px] text-muted-foreground">
+              Prefills the commercial activity on each new statement. TRACES
+              requires one, and it can still be changed per statement.
             </p>
           </div>
 

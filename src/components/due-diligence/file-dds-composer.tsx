@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -34,8 +35,10 @@ import { DDSForm } from "@/components/forms/dds-form";
 import { authFetch } from "@/lib/api/client";
 import { getErrorMessage } from "@/lib/api/errors";
 import type {
+  ActivityType,
   ConsignmentDetail,
   DueDiligenceStatement,
+  Organization,
   PayloadEstimateResponse,
   POReadinessDetail,
   Product,
@@ -177,6 +180,33 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
   // masking the not-found state — see PR review discussion on #26).
   const [checkedOverride, setCheckedOverride] = useState<Set<string> | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  /** The operator's usual activity, used only to prefill the select below.
+   * The value actually filed is the DDS's own — the officer can change it
+   * per statement, because activityType describes this transaction, not the
+   * operator (the same operator can import cocoa and export chocolate). */
+  const { data: organization } = useQuery<Organization>({
+    queryKey: ["organization"],
+    queryFn: async () => {
+      const res = await authFetch("/api/v1/accounts/organization/");
+      if (!res.ok) throw new Error("Could not load organisation");
+      return res.json();
+    },
+  });
+
+  /** `null` means the officer has not touched the control yet, so the
+   * organisation's default shows through — including once it arrives from a
+   * still-in-flight request. Any explicit choice wins, and that deliberately
+   * includes choosing the blank option: `??` falls back on null, never on "".
+   *
+   * Derived during render rather than synced with an effect: a
+   * `setState`-in-`useEffect` prefill would cascade renders, and would race
+   * the org request on first paint. */
+  const [chosenActivityType, setChosenActivityType] = useState<
+    ActivityType | "" | null
+  >(null);
+  const orgDefault = organization?.default_activity_type ?? "";
+  const activityType = chosenActivityType ?? orgDefault;
   const [freeformOpen, setFreeformOpen] = useState(false);
 
   const anchorKind: "po" | "consignment" = consignmentId ? "consignment" : "po";
@@ -257,7 +287,11 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
       const res = await authFetch(`/api/v1/due-diligence/statements/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ statement_type: "OPERATOR", batch_ids: checkedList }),
+        body: JSON.stringify({
+          statement_type: "OPERATOR",
+          batch_ids: checkedList,
+          activity_type: activityType,
+        }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -542,6 +576,33 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
 
           <Card>
             <CardHeader>
+              <CardTitle>Activity</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1.5">
+              <Label htmlFor="activity_type">Commercial activity *</Label>
+              <select
+                id="activity_type"
+                value={activityType}
+                onChange={(e) =>
+                  setChosenActivityType(e.target.value as ActivityType | "")
+                }
+                className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              >
+                <option value="">Choose an activity…</option>
+                <option value="DOMESTIC">Domestic — placing on the EU market</option>
+                <option value="IMPORT">Import — release for free circulation</option>
+                <option value="EXPORT">Export — leaving the EU</option>
+              </select>
+              <p className="text-[11px] text-muted-foreground">
+                {orgDefault
+                  ? "Prefilled from your organisation's usual activity. Change it if this statement differs."
+                  : "Required by TRACES. Set a default in Settings to prefill this."}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Risk assessment</CardTitle>
             </CardHeader>
             <CardContent className="flex items-center justify-between gap-3">
@@ -561,13 +622,17 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
         <div className="mx-auto flex max-w-6xl items-center justify-end gap-2 px-6">
           <Button
             variant="ghost"
-            disabled={checkedIds.size === 0 || createMutation.isPending}
+            disabled={
+              checkedIds.size === 0 || createMutation.isPending || !activityType
+            }
             onClick={() => createMutation.mutate(false)}
           >
             Save draft
           </Button>
           <Button
-            disabled={checkedIds.size === 0 || createMutation.isPending}
+            disabled={
+              checkedIds.size === 0 || createMutation.isPending || !activityType
+            }
             onClick={() => setConfirmOpen(true)}
             className="gap-1.5"
           >

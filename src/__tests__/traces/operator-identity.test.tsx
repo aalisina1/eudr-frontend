@@ -9,10 +9,13 @@
  * 2. OperatorIdentityCard — surfaces a distinct error state (not a misleading
  *    empty state) when the organization can't be loaded (e.g. 403 for a
  *    non-admin — GET /api/v1/accounts/organization/ is IsAdmin-gated).
- * 3. OperatorIdentityForm — pre-fills the current EORI number and PATCHes
- *    only {eori_number} to /api/v1/accounts/organization/.
+ * 3. OperatorIdentityForm — pre-fills the current EORI number and PATCHes only
+ *    the fields it owns to /api/v1/accounts/organization/.
  * 4. OperatorIdentityForm — a save failure (e.g. backend 403) surfaces via
  *    the shared #8 error-toast pattern (see source-card "run now" 409 test).
+ * 5. OperatorIdentityForm — `default_activity_type`: the operator's usual
+ *    commercial activity, set once here and copied onto each new DDS, and
+ *    clearable for an operator whose activity is genuinely mixed.
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
@@ -51,6 +54,7 @@ function makeOrg(overrides: Partial<Organization> = {}): Organization {
     country: "DE",
     vat_number: "DE123456789",
     eori_number: "DE12345678901234",
+    default_activity_type: "",
     traces_actor_id: "",
     is_active: true,
     created_at: "2026-01-01T00:00:00Z",
@@ -99,7 +103,7 @@ describe("OperatorIdentityCard", () => {
 // ── OperatorIdentityForm ─────────────────────────────────────────────────────
 
 describe("OperatorIdentityForm", () => {
-  it("pre-fills the current EORI number and PATCHes only {eori_number}", async () => {
+  it("pre-fills the current EORI number and PATCHes only the fields it owns", async () => {
     mockAuthFetch.mockResolvedValue(jsonRes(makeOrg()));
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
@@ -125,7 +129,14 @@ describe("OperatorIdentityForm", () => {
     expect(url).toBe("/api/v1/accounts/organization/");
     expect(init.method).toBe("PATCH");
     const body = JSON.parse(init.body as string);
-    expect(body).toEqual({ eori_number: "NL857702430" });
+    // Still an exact-equality assertion, deliberately: a PATCH must not carry
+    // fields this form does not own (name, country, traces_actor_id, ...),
+    // because a stale value would silently overwrite the server's. The form
+    // now owns two fields, so the expected set grew by exactly one.
+    expect(body).toEqual({
+      eori_number: "NL857702430",
+      default_activity_type: "",
+    });
   });
 
   it("surfaces a save failure (e.g. 403 for a non-admin) as an error toast", async () => {
@@ -168,5 +179,70 @@ describe("OperatorIdentityForm", () => {
 
     await waitFor(() => expect(toast.success).toHaveBeenCalled());
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+  });
+});
+
+// ── default activity type ────────────────────────────────────────────────────
+//
+// The operator's usual commercial activity, set once here and copied onto each
+// new DDS. Without it the composer starts blank every time and the officer must
+// re-choose per statement — which is how a blank reached the envelope in the
+// first place.
+
+describe("OperatorIdentityForm — default activity type", () => {
+  it("prefills the organisation's current default", () => {
+    renderWithProviders(
+      <OperatorIdentityForm
+        open
+        onOpenChange={() => {}}
+        organization={makeOrg({ default_activity_type: "IMPORT" })}
+      />,
+    );
+
+    expect(
+      (screen.getByLabelText(/usual activity/i) as HTMLSelectElement).value,
+    ).toBe("IMPORT");
+  });
+
+  it("PATCHes the chosen default alongside the EORI", async () => {
+    mockAuthFetch.mockResolvedValue(jsonRes(makeOrg()));
+    const user = userEvent.setup();
+
+    renderWithProviders(
+      <OperatorIdentityForm
+        open
+        onOpenChange={() => {}}
+        organization={makeOrg({ default_activity_type: "" })}
+      />,
+    );
+
+    await user.selectOptions(screen.getByLabelText(/usual activity/i), "IMPORT");
+    await user.click(screen.getByRole("button", { name: /save/i }));
+
+    await waitFor(() => expect(mockAuthFetch).toHaveBeenCalled());
+    const [, init] = mockAuthFetch.mock.calls.at(-1) as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      default_activity_type: "IMPORT",
+    });
+  });
+
+  it("allows clearing the default for an operator with mixed activity", async () => {
+    mockAuthFetch.mockResolvedValue(jsonRes(makeOrg()));
+    const user = userEvent.setup();
+
+    renderWithProviders(
+      <OperatorIdentityForm
+        open
+        onOpenChange={() => {}}
+        organization={makeOrg({ default_activity_type: "IMPORT" })}
+      />,
+    );
+
+    await user.selectOptions(screen.getByLabelText(/usual activity/i), "");
+    await user.click(screen.getByRole("button", { name: /save/i }));
+
+    await waitFor(() => expect(mockAuthFetch).toHaveBeenCalled());
+    const [, init] = mockAuthFetch.mock.calls.at(-1) as [string, RequestInit];
+    expect(JSON.parse(init.body as string).default_activity_type).toBe("");
   });
 });
