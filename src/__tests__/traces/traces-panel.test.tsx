@@ -429,3 +429,53 @@ describe("TracesPanel", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 });
+
+// ── the confirmation must describe the actual filing ─────────────────────────
+//
+// This dialog is the last thing an officer reads before a regulated filing, so
+// it has to describe the statement that is about to be sent. It rendered
+// `(activityType || "DOMESTIC")` — the same invented-claim defect eudr-app#191
+// removed from the envelope, surviving in the UI: a statement with no activity
+// type was described as a *domestic* filing, immediately above the words "This
+// is a regulated action".
+
+describe("TracesPanel — submit confirmation copy", () => {
+  async function openConfirm(activityType?: string) {
+    mockAuthFetch.mockImplementation(() => Promise.resolve(jsonRes({ results: [] })));
+    const user = userEvent.setup();
+    renderWithProviders(
+      <TracesPanel ddsId="dds-1" ddsStatus="APPROVED" activityType={activityType} />,
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /submit to traces/i })).toBeEnabled(),
+    );
+    await user.click(screen.getByRole("button", { name: /submit to traces/i }));
+    return screen.findByRole("dialog");
+  }
+
+  it("never claims DOMESTIC for a statement that declares no activity", async () => {
+    const dialog = await openConfirm(undefined);
+    expect(within(dialog).queryByText(/domestic/i)).toBeNull();
+  });
+
+  it("names the activity when the statement has one", async () => {
+    const dialog = await openConfirm("IMPORT");
+    expect(within(dialog).getByText(/import/i)).toBeInTheDocument();
+  });
+
+  it("uses the right article for a vowel-initial activity", async () => {
+    const dialog = await openConfirm("IMPORT");
+    expect(dialog.textContent).toContain("as an import activity");
+    expect(dialog.textContent).not.toContain("as a import");
+  });
+
+  it("uses the right article for a consonant-initial activity", async () => {
+    const dialog = await openConfirm("DOMESTIC");
+    expect(dialog.textContent).toContain("as a domestic activity");
+  });
+
+  it("still warns that filing is regulated when no activity is set", async () => {
+    const dialog = await openConfirm(undefined);
+    expect(dialog.textContent).toMatch(/regulated action/i);
+  });
+});

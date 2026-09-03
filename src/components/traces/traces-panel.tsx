@@ -62,6 +62,19 @@ const STATUS_META: Record<
   archived: { label: "Archived", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
 };
 
+/** "a domestic activity" but "an import activity".
+ *
+ * The activity is never invented here. This dialog is the last thing an officer
+ * reads before a regulated filing, and it previously rendered
+ * `activityType || "DOMESTIC"` — describing a statement that declares no
+ * activity as a *domestic* one, which is a claim about EU production that the
+ * statement does not make. Same defect eudr-app#191 removed from the envelope.
+ * When there is no activity type the phrase is omitted entirely; the backend
+ * refuses the submission anyway, with a field-level error. */
+function indefiniteArticle(word: string): "a" | "an" {
+  return /^[aeiou]/i.test(word) ? "an" : "a";
+}
+
 /** Derive the single display state a submission (or its absence) maps to.
  * ADR-0017's FE derivation table: status ∈ {QUEUED, PROCESSING, RETRYING} →
  * "Submitting…" — `isInFlight()` (`@/lib/traces-status`, #41) is the single
@@ -481,9 +494,16 @@ export function TracesPanel({
             <DialogTitle>Submit this DDS to TRACES?</DialogTitle>
             <DialogDescription>
               This files the Due Diligence Statement to the EU TRACES{" "}
-              <span className="font-medium">Acceptance</span> environment as a{" "}
-              <span className="font-medium">{(activityType || "DOMESTIC").toLowerCase()}</span>{" "}
-              activity. This is a regulated action.
+              <span className="font-medium">Acceptance</span> environment
+              {activityType ? (
+                <>
+                  {" "}
+                  as {indefiniteArticle(activityType)}{" "}
+                  <span className="font-medium">{activityType.toLowerCase()}</span>{" "}
+                  activity
+                </>
+              ) : null}
+              . This is a regulated action.
             </DialogDescription>
           </DialogHeader>
           {submitMutation.isError && (

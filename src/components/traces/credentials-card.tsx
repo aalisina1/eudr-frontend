@@ -33,6 +33,14 @@ async function fetchCredentials(): Promise<TracesCredential[]> {
   return (Array.isArray(data) ? data : (data.results ?? [])) as TracesCredential[];
 }
 
+/** `OperatorRoleType` in the TRACES XSD. A blank credential falls back to the
+ * deployment-wide `TRACES_OPERATOR_ROLE`, which is a real state worth naming
+ * rather than rendering as an empty line. */
+const ROLE_LABEL: Record<string, string> = {
+  OPERATOR: "Operator",
+  REPRESENTATIVE_OPERATOR: "Representative operator",
+};
+
 const ENV_LABEL: Record<string, string> = {
   ACCEPTANCE: "Acceptance",
   PRODUCTION: "Production",
@@ -177,6 +185,17 @@ export function CredentialsCard() {
                       <p className="text-sm font-medium truncate">{cred.username}</p>
                       <p className="text-xs text-muted-foreground font-mono truncate">
                         {cred.web_service_client_id}
+                      </p>
+                      {/* The role this credential declares in <dds:operatorRole>.
+                          TRACES rejects EUDR-WEBSERVICE-USER-ACTIVITY-NOT-ALLOWED
+                          when it does not match the WS user's registration, and
+                          that fault names nothing an operator can act on — so the
+                          configured value has to be visible without opening the
+                          edit sheet. */}
+                      <p className="text-xs text-muted-foreground truncate">
+                        {cred.operator_role
+                          ? ROLE_LABEL[cred.operator_role]
+                          : "Deployment default"}
                       </p>
                     </div>
                   </div>
