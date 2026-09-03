@@ -18,6 +18,7 @@ const KYC_COLORS: Record<KYCStatus, { bg: string; text: string; dot: string; lab
 };
 
 const RISK_COLORS: Record<RiskRating, { bg: string; text: string; dot: string; label: string }> = {
+  NOT_ASSESSED: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Not assessed" },
   LOW: { bg: "bg-[#34D399]/10", text: "text-[#1A6B5A]", dot: "bg-[#34D399]", label: "Low" },
   STANDARD: { bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", label: "Standard" },
   HIGH: { bg: "bg-[#C23D3D]/10", text: "text-[#C23D3D]", dot: "bg-[#C23D3D]", label: "High" },
@@ -112,6 +113,9 @@ const filters: FilterDef[] = [
 // `extraParams` instead of the shared component's own filter mechanism.
 const RISK_OPTIONS: { value: RiskRating | ""; label: string }[] = [
   { value: "", label: "All Risk Levels" },
+  // Findable on purpose: the whole point of the state is that these suppliers
+  // need someone to look at them.
+  { value: "NOT_ASSESSED", label: "Not assessed" },
   { value: "LOW", label: "Low" },
   { value: "STANDARD", label: "Standard" },
   { value: "HIGH", label: "High" },
