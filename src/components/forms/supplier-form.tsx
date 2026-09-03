@@ -22,7 +22,7 @@ const supplierSchema = z.object({
   name: z.string().min(1, "Name is required"),
   country_of_origin: z.string().min(2, "Country code is required (e.g. GH, BR)"),
   kyc_status: z.enum(["PENDING", "VERIFIED", "REJECTED", "EXPIRED"]),
-  risk_rating: z.enum(["LOW", "STANDARD", "HIGH"]),
+  risk_rating: z.enum(["NOT_ASSESSED", "LOW", "STANDARD", "HIGH"]),
   external_id: z.string().optional(),
 });
 
@@ -57,7 +57,11 @@ export function SupplierForm({ open, onOpenChange, supplier }: SupplierFormProps
           name: "",
           country_of_origin: "",
           kyc_status: "PENDING",
-          risk_rating: "STANDARD",
+          // A rating is a conclusion somebody has to reach. Defaulting to
+          // STANDARD asserted one for every supplier ever created — see the
+          // model-side fix in eudr-app#198. PENDING above is different: it
+          // says plainly that no verification has happened.
+          risk_rating: "NOT_ASSESSED",
           external_id: "",
         },
   });
@@ -134,6 +138,7 @@ export function SupplierForm({ open, onOpenChange, supplier }: SupplierFormProps
               {...register("risk_rating")}
               className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             >
+              <option value="NOT_ASSESSED">Not assessed</option>
               <option value="LOW">Low</option>
               <option value="STANDARD">Standard</option>
               <option value="HIGH">High</option>

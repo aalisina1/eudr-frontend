@@ -42,7 +42,9 @@ export interface Organization {
 // ── Suppliers ──
 
 export type KYCStatus = "PENDING" | "VERIFIED" | "REJECTED" | "EXPIRED";
-export type RiskRating = "LOW" | "STANDARD" | "HIGH";
+/** `NOT_ASSESSED` mirrors `KYCStatus.PENDING`: the absence of a conclusion has
+ * to be expressible, or the default has to assert one. */
+export type RiskRating = "NOT_ASSESSED" | "LOW" | "STANDARD" | "HIGH";
 
 export interface Supplier {
   id: string;

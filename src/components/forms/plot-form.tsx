@@ -64,7 +64,14 @@ export function PlotForm({ open, onOpenChange }: PlotFormProps) {
       area_hectares: 0,
       geometry_source: "MANUAL_ENTRY",
       accuracy_meters: null,
-      collection_date: new Date().toISOString().split("T")[0],
+      // Deliberately empty. This records when the plot geolocation was
+      // *collected*, which already happened at a time this form cannot know —
+      // a survey from 2019 entered today would otherwise be stamped today.
+      // Optional in this schema and nullable on the model, so blank is a valid
+      // and honest state. Contrast `transaction_date` on the PO/batch forms,
+      // which defaults to today correctly: that describes what the user is
+      // doing now rather than asserting what was already true.
+      collection_date: "",
       external_id: "",
       geometry_json: "",
     },
@@ -154,6 +161,10 @@ export function PlotForm({ open, onOpenChange }: PlotFormProps) {
           <div className="space-y-1.5">
             <Label htmlFor="collection_date">Collection Date</Label>
             <Input id="collection_date" type="date" {...register("collection_date")} />
+            <p className="text-[11px] text-muted-foreground">
+              When the geolocation was collected — not today&rsquo;s date, unless
+              it was surveyed today.
+            </p>
           </div>
 
           <div className="space-y-1.5">
