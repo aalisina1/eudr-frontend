@@ -121,6 +121,32 @@ describe("CoveredLotsCard", () => {
     expect(screen.getByText(/2 declared plots could not be resolved/i)).toBeInTheDocument();
   });
 
+  it("still reports the discrepancy when EVERY declared plot fails to resolve", () => {
+    // The worst case, and the one the first cut skipped: the warning was
+    // nested under `plots.length > 0`, so a lot whose every plot id is a ghost
+    // fell into the "No plots" branch — while the card header, summing
+    // `plot_count`, said the statement covered three. Two contradictory
+    // statements on one card, and the discrepancy the card exists to surface
+    // silently dropped.
+    render(<CoveredLotsCard lots={[lot({ plot_count: 3, plots: [] })]} blockers={[]} />);
+
+    expect(screen.getByText(/3 declared plots could not be resolved/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 lot · 3 plots/i)).toBeInTheDocument();
+    // "No plots" would be a different, and wrong, claim: plots ARE declared.
+    expect(screen.queryByText(/^No plots/)).not.toBeInTheDocument();
+  });
+
+  it("does not claim a statement is empty when the field was simply not sent", () => {
+    // `covered_lots` is detail-only, and absent on any list-shaped statement
+    // or from a frontend deployed ahead of its backend. Collapsing that into
+    // `[]` told every officer that every statement covers nothing and cannot
+    // be filed — a confident, false, red assertion.
+    render(<CoveredLotsCard lots={undefined} blockers={undefined} />);
+
+    expect(screen.queryByText(/covers no lots/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/not available here/i)).toBeInTheDocument();
+  });
+
   it("marks a covered batch that is itself the purchase order", () => {
     // Otherwise an empty PO list on a PO-level statement reads as a broken
     // link rather than as the order itself.

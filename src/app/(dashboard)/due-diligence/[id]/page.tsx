@@ -75,10 +75,29 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
   // anything TRACES actually holds must be withdrawn there, and the backend
   // now refuses the local path with a 409. Read from the same query key the
   // TRACES panel uses, so both agree and only one fetch happens.
-  const { data: latestSubmission } = useLatestTracesSubmission(id);
+  const {
+    data: latestSubmission,
+    isLoading: submissionLoading,
+    isError: submissionError,
+  } = useLatestTracesSubmission(id);
+  // Fail safe, not fail open. This is a two-hop fetch (list, then detail)
+  // while the statement is one hop, so the statement almost always resolves
+  // first — and during that window, or permanently if the request 403s, an
+  // unguarded check would render the local Withdraw on a statement TRACES
+  // holds. Assume held until we know otherwise: the cost of hiding a button
+  // for a moment is nothing; the cost of offering a local withdrawal on a
+  // live filing is a statement recorded as withdrawn while the regulator
+  // still enforces it.
+  //
+  // "Held" excludes every status TRACES has finished with, matching the
+  // backend's own list — a REJECTED filing is not held, and treating it as
+  // such left it with no withdrawal route at all.
+  const settledAtTraces = ["REJECTED", "WITHDRAWN", "ARCHIVED", "OBSOLETE"];
   const heldByTraces =
-    !!latestSubmission?.traces_uuid &&
-    latestSubmission.traces_status !== "WITHDRAWN";
+    submissionLoading ||
+    submissionError ||
+    (!!latestSubmission?.traces_uuid &&
+      !settledAtTraces.includes(latestSubmission.traces_status));
 
   const actionMutation = useMutation({
     mutationFn: async (action: string) => {

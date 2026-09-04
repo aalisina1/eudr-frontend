@@ -143,6 +143,70 @@ describe("DDS detail — withdrawing a statement TRACES holds", () => {
     );
   });
 
+  it.each(["REJECTED", "ARCHIVED", "OBSOLETE"] as const)(
+    "offers it for a filing TRACES has finished with (%s)",
+    async (tracesStatus) => {
+      // ADR-0017 means a rejection never moves `DDS.status`, so a rejected
+      // statement stays SUBMITTED. Treating "has a uuid" as "TRACES holds it"
+      // hid the header control, while the panel offers Withdraw only when
+      // AVAILABLE — leaving the statement with no route out from either.
+      mockApi(submission({ traces_status: tracesStatus }));
+      renderPage();
+
+      await waitFor(() => expect(screen.getByText("DDS-2026-0001")).toBeInTheDocument());
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: /^withdraw$/i })).toBeInTheDocument(),
+      );
+    },
+  );
+
+  it("hides it while the submission is still being fetched", async () => {
+    // Two hops (list, then detail) against the statement's one, so the
+    // statement almost always resolves first. Rendering the local Withdraw in
+    // that window offers a click that the backend answers with a 409 — and
+    // before the backend was hardened, one that recorded a statement as
+    // withdrawn while the regulator still held it. Fail safe, not fail open.
+    let releaseSubmissions: (value: Response) => void = () => {};
+    const pendingList = new Promise<Response>((resolve) => {
+      releaseSubmissions = resolve;
+    });
+    mockAuthFetch.mockImplementation((url: string) => {
+      if (url.includes("/due-diligence/statements/dds-1/")) {
+        return Promise.resolve(jsonRes(statement()));
+      }
+      if (url.includes("/traces/submissions/?dds_id")) return pendingList;
+      return Promise.resolve(jsonRes({}));
+    });
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText("DDS-2026-0001")).toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: /^withdraw$/i })).not.toBeInTheDocument();
+
+    releaseSubmissions(jsonRes({ results: [] }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /^withdraw$/i })).toBeInTheDocument(),
+    );
+  });
+
+  it("hides it when the submission lookup fails", async () => {
+    // A 403 or a network error is not evidence that TRACES holds nothing.
+    mockAuthFetch.mockImplementation((url: string) => {
+      if (url.includes("/due-diligence/statements/dds-1/")) {
+        return Promise.resolve(jsonRes(statement()));
+      }
+      if (url.includes("/traces/submissions/?dds_id")) {
+        return Promise.resolve(jsonRes({ detail: "Forbidden" }, 403));
+      }
+      return Promise.resolve(jsonRes({}));
+    });
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText("DDS-2026-0001")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: /^withdraw$/i })).not.toBeInTheDocument(),
+    );
+  });
+
   it("offers it again once the filing has been withdrawn at TRACES", async () => {
     mockApi(submission({ traces_status: "WITHDRAWN", submission_type: "WITHDRAW" }));
     renderPage();

@@ -14,12 +14,15 @@ import type { TracesSubmission, TracesSubmissionStatus } from "@/lib/api/types";
  * TRACES later rejects the statement. This module is what makes the
  * Submissions list badge (`due-diligence/page.tsx`, #22) tell that story.
  *
- * This mirrors `deriveDisplay`/`STATUS_META` in
- * `components/traces/traces-panel.tsx` (the DDS-detail panel, shipped in
- * #2/PR#35) but is kept as a separate, list-scoped definition rather than a
- * shared import — that panel just landed fully tested and this ticket
- * doesn't need to touch it. Consolidating both call sites onto one module is
- * a reasonable follow-up once both have settled.
+ * `deriveTracesDisplay` is now the single derivation, consumed by both the
+ * Submissions list badge and the DDS-detail panel. It was duplicated in
+ * `components/traces/traces-panel.tsx`, and the two copies drifted exactly as
+ * `isInFlight` (#41) had already drifted before it: the panel was fixed to
+ * check a FAILED pipeline before the regulator's last-known status, and to
+ * name the lifecycle statuses the vendored XSD carries, while this copy was
+ * not. The same statement then read "Submitted" on the list and "Failed" on
+ * its own detail page. Each surface still owns its style map; only the
+ * derivation is shared, because that is the part that has to agree.
  */
 export type TracesDisplayKey =
   | "submitting"
@@ -29,7 +32,26 @@ export type TracesDisplayKey =
   | "failed"
   | "withdrawn"
   | "grouped"
-  | "archived";
+  | "archived"
+  | "suspended"
+  | "updated"
+  | "obsolete";
+
+/** Every `EudrStatusType` the backend can store maps to a display state. A
+ * status with no entry derived to `null`, and the list then fell back to
+ * `dds.status` — so an OBSOLETE filing read "Submitted", which is precisely
+ * the ADR-0017 failure this module exists to prevent. */
+const TRACES_STATUS_KEYS: Record<string, TracesDisplayKey> = {
+  AVAILABLE: "available",
+  REJECTED: "rejected",
+  WITHDRAWN: "withdrawn",
+  GROUPED: "grouped",
+  ARCHIVED: "archived",
+  SUSPENDED: "suspended",
+  UPDATED: "updated",
+  OBSOLETE: "obsolete",
+  SUBMITTED: "submitted",
+};
 
 /** Pipeline states that mean "still in flight, no verdict yet" (ADR-0017:
  * QUEUED/PROCESSING/RETRYING all map to "Submitting…", covering the entire
@@ -63,6 +85,9 @@ export const TRACES_DISPLAY_STYLE: Record<
   withdrawn: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Withdrawn", icon: XCircle },
   grouped: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Grouped", icon: FileText },
   archived: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Archived", icon: FileText },
+  suspended: { bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", label: "Suspended", icon: AlertTriangle },
+  updated: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Updated", icon: FileText },
+  obsolete: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Obsolete", icon: FileText },
 };
 
 /**
@@ -78,13 +103,13 @@ export function deriveTracesDisplay(
   sub: Pick<TracesSubmission, "status"> & Partial<Pick<TracesSubmission, "traces_status">> | null | undefined,
 ): TracesDisplayKey | null {
   if (!sub) return null;
-  if (sub.traces_status === "AVAILABLE") return "available";
-  if (sub.traces_status === "REJECTED") return "rejected";
-  if (sub.traces_status === "WITHDRAWN") return "withdrawn";
-  if (sub.traces_status === "GROUPED") return "grouped";
-  if (sub.traces_status === "ARCHIVED") return "archived";
-  if (sub.traces_status === "SUBMITTED") return "submitted";
+  // Our own pipeline failing is checked BEFORE the regulator's last known
+  // status. When a getDds poll takes a SOAP Fault,
+  // `poll.py._fail_business_rejection` sets `status=FAILED` and deliberately
+  // leaves `traces_status` at SUBMITTED — so reading the regulator's status
+  // first said "Submitted" forever for a row nothing was polling any more.
+  // It also keeps a FAILED amendment from reading as "Available".
   if (sub.status === "FAILED") return "failed";
   if (isInFlight(sub.status)) return "submitting";
-  return null;
+  return TRACES_STATUS_KEYS[sub.traces_status ?? ""] ?? null;
 }

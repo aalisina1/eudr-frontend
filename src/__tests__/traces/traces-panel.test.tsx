@@ -667,3 +667,119 @@ describe("TracesPanel — what the officer is told to do about a failure", () =>
     await waitFor(() => expect(screen.getAllByText("Obsolete").length).toBeGreaterThan(0));
   });
 });
+
+describe("TracesPanel — a failed amendment or withdrawal", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const failedModification = (type: "UPDATE" | "WITHDRAW") =>
+    baseSubmission({
+      submission_type: type,
+      status: "FAILED",
+      traces_status: "",
+      traces_reference_number: "26FREQVKTA7K2V",
+      verification_number: "VER-1",
+      error_message: "Some business rules are not met",
+      error_detail: [
+        { field: "EUDR-DDS-AMENDMENT-PERIOD-EXPIRED", message: "window closed" },
+      ],
+    });
+
+  it.each(["UPDATE", "WITHDRAW"] as const)(
+    "never offers Resubmit for a failed %s row",
+    async (type) => {
+      // The backend re-runs the row's own operation, but before it was
+      // hardened this button POSTed to `/retry/` on an UPDATE/WITHDRAW row and
+      // the view dispatched `submit_dds_to_traces` — filing a second,
+      // duplicate declaration for a statement TRACES already held AVAILABLE.
+      mockApi({ submission: failedModification(type) });
+      renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+      await waitFor(() =>
+        expect(screen.getByText("EUDR-DDS-AMENDMENT-PERIOD-EXPIRED")).toBeInTheDocument(),
+      );
+      expect(
+        screen.queryByRole("button", { name: /resubmit to traces/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /^submit to traces$/i }),
+      ).not.toBeInTheDocument();
+    },
+  );
+
+  it("still offers Resubmit for a failed CREATE, which is what it is for", async () => {
+    mockApi({
+      submission: baseSubmission({
+        submission_type: "CREATE",
+        status: "FAILED",
+        traces_status: "",
+        error_message: "Payload validation failed",
+      }),
+    });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="APPROVED" />);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /resubmit to traces/i })).toBeInTheDocument(),
+    );
+  });
+
+  it("keeps the surviving filing visible and actionable", async () => {
+    // A failed amendment leaves the ORIGINAL filing untouched at TRACES. The
+    // panel rendered "Failed" with no reference number and no way to act on
+    // the statement that still exists — so the amendment could not even be
+    // tried again.
+    mockApi({ submission: failedModification("UPDATE") });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() =>
+      expect(screen.getByText(/the statement is still filed with traces/i)).toBeInTheDocument(),
+    );
+    expect(screen.getByText("26FREQVKTA7K2V")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^amend$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^withdraw$/i })).toBeInTheDocument();
+  });
+
+  it("does not show one action's error under the other", async () => {
+    const submission = baseSubmission({
+      traces_status: "AVAILABLE",
+      traces_reference_number: "26FREQVKTA7K2V",
+      submitted_at: "2026-06-30T00:00:00Z",
+    });
+    mockApi({ submission });
+    mockAuthFetch.mockImplementation((url: string, init?: RequestInit) => {
+      if (init?.method === "POST" && url.includes("/amend/")) {
+        return Promise.resolve(jsonRes({ detail: "Amendment window closed" }, 400));
+      }
+      if (url.includes("/auth/users/me/")) {
+        return Promise.resolve(jsonRes({ id: "u1", role: "ADMIN", organization_id: "org-1" }));
+      }
+      if (url.includes("/traces/credentials/")) return Promise.resolve(jsonRes({ results: [{ id: "c1" }] }));
+      if (url.includes("/traces/submissions/?dds_id")) {
+        return Promise.resolve(jsonRes({ results: [{ id: submission.id }] }));
+      }
+      if (url === `/api/v1/traces/submissions/${submission.id}/`) {
+        return Promise.resolve(jsonRes(submission));
+      }
+      return Promise.resolve(jsonRes({}));
+    });
+    const user = userEvent.setup();
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /^amend$/i })).toBeInTheDocument(),
+    );
+    await user.click(screen.getByRole("button", { name: /^amend$/i }));
+    let dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: /^amend$/i }));
+    await waitFor(() =>
+      expect(within(dialog).getByText(/amendment window closed/i)).toBeInTheDocument(),
+    );
+
+    await user.click(within(dialog).getByRole("button", { name: /cancel/i }));
+    await user.click(screen.getByRole("button", { name: /^withdraw$/i }));
+    dialog = await screen.findByRole("dialog");
+
+    // Otherwise the withdrawal dialog opens carrying an error about an
+    // amendment — describing an action the reader did not take.
+    expect(within(dialog).queryByText(/amendment window closed/i)).not.toBeInTheDocument();
+  });
+});

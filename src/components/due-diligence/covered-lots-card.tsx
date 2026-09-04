@@ -116,6 +116,7 @@ function LotBlock({ lot }: { lot: CoveredLot }) {
 
   const period = formatHarvestPeriod(lot.harvest_period_start, lot.harvest_period_end);
   const unit = UNIT_LABELS[lot.unit] ?? lot.unit;
+  const unresolvedPlots = Math.max(lot.plot_count - lot.plots.length, 0);
 
   return (
     <div className="rounded-xl border border-border/40 bg-secondary/25 px-4 py-3.5">
@@ -167,29 +168,28 @@ function LotBlock({ lot }: { lot: CoveredLot }) {
       )}
 
       <div className="mt-3 border-t border-border/40 pt-2">
-        {lot.plots.length > 0 ? (
-          <>
-            <p className="mb-1 text-[10.5px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-              {lot.plot_count} plot{lot.plot_count === 1 ? "" : "s"} declared
-            </p>
-            <div>
-              {lot.plots.map((plot) => (
-                <PlotRow key={plot.id} plot={plot} />
-              ))}
-            </div>
-            {/* `plot_count` counts what the filing covers; `plots` holds the
-                ones that still resolve within this organisation. A gap means
-                the statement declares ground the app can no longer describe,
-                which is a discrepancy, not a rounding detail. */}
-            {lot.plot_count > lot.plots.length && (
-              <p className="mt-1 text-[12px] text-destructive">
-                {lot.plot_count - lot.plots.length} declared plot
-                {lot.plot_count - lot.plots.length === 1 ? "" : "s"} could not be
-                resolved.
-              </p>
-            )}
-          </>
-        ) : (
+        {lot.plot_count > 0 && (
+          <p className="mb-1 text-[10.5px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+            {lot.plot_count} plot{lot.plot_count === 1 ? "" : "s"} declared
+          </p>
+        )}
+        {lot.plots.map((plot) => (
+          <PlotRow key={plot.id} plot={plot} />
+        ))}
+        {/* `plot_count` is what the statement declares; `plots` is what can
+            still be described. A gap means it declares ground the app can no
+            longer account for — a discrepancy, not a rounding detail.
+            Deliberately NOT nested under `plots.length > 0`: the worst case is
+            when *every* declared plot fails to resolve, and that is exactly
+            the case a nested check skipped, leaving the card saying "no plots"
+            while its own header counted several. */}
+        {unresolvedPlots > 0 && (
+          <p className="mt-1 text-[12px] text-destructive">
+            {unresolvedPlots} declared plot{unresolvedPlots === 1 ? "" : "s"}{" "}
+            could not be resolved.
+          </p>
+        )}
+        {lot.plot_count === 0 && (
           <p className="text-[12.5px] text-destructive">
             No plots — a statement must declare the land its goods came from.
           </p>
@@ -237,6 +237,13 @@ export function CoveredLotsCard({
   blockers: FilingBlocker[] | undefined;
 }) {
   const rows = lots ?? [];
+  // `undefined` means the field was not sent — the list serializer omits it,
+  // and a frontend deployed ahead of its backend would see it absent
+  // everywhere. That is not the same claim as "this statement covers
+  // nothing", which the card states in red and calls unfilable. Telling every
+  // officer their every statement is empty would be a worse failure than
+  // showing nothing.
+  const notLoaded = lots === undefined;
   const plotTotal = rows.reduce((sum, lot) => sum + lot.plot_count, 0);
   const poTotal = new Set(
     rows.flatMap((lot) => lot.purchase_orders.map((po) => po.id)),
@@ -246,21 +253,27 @@ export function CoveredLotsCard({
     <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base font-medium">What this statement covers</h2>
-        <p className="text-[12.5px] text-muted-foreground tabular-nums">
-          {rows.length} lot{rows.length === 1 ? "" : "s"} · {plotTotal} plot
-          {plotTotal === 1 ? "" : "s"}
-          {poTotal > 0 && (
-            <>
-              {" "}
-              · {poTotal} purchase order{poTotal === 1 ? "" : "s"}
-            </>
-          )}
-        </p>
+        {!notLoaded && (
+          <p className="text-[12.5px] text-muted-foreground tabular-nums">
+            {rows.length} lot{rows.length === 1 ? "" : "s"} · {plotTotal} plot
+            {plotTotal === 1 ? "" : "s"}
+            {poTotal > 0 && (
+              <>
+                {" "}
+                · {poTotal} purchase order{poTotal === 1 ? "" : "s"}
+              </>
+            )}
+          </p>
+        )}
       </div>
 
       {blockers && blockers.length > 0 && <Blockers blockers={blockers} />}
 
-      {rows.length === 0 ? (
+      {notLoaded ? (
+        <p className="text-[12.5px] text-muted-foreground">
+          The statement&rsquo;s contents are not available here.
+        </p>
+      ) : rows.length === 0 ? (
         <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-6 text-center">
           <p className="text-[13px] font-medium text-destructive">
             This statement covers no lots

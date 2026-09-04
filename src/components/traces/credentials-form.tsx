@@ -35,6 +35,13 @@ const credentialSchema = z.object({
   // explain than to quietly change what the person entered.
   operator_ws_identifier: z
     .string()
+    // Trimmed BEFORE the length check, and the submit trims too. An
+    // identifier pasted from the TRACES UI routinely arrives with a trailing
+    // space or newline, and validating the raw string rejected a perfectly
+    // valid 16-character value for characters that were never going to be
+    // sent — the same class of invisible-whitespace failure the auth key's
+    // own handling documents.
+    .trim()
     .max(16, "TRACES web service identifiers are at most 16 characters"),
 });
 
