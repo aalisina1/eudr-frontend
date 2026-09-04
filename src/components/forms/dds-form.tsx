@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Sheet,
   SheetContent,
@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { authFetch } from "@/lib/api/client";
-import type { DueDiligenceStatement, Organization } from "@/lib/api/types";
+import type { DueDiligenceStatement } from "@/lib/api/types";
 
 const ddsSchema = z.object({
   statement_type: z.enum(["OPERATOR", "REFERENCE"]),
@@ -36,26 +36,17 @@ type DDSFormValues = z.infer<typeof ddsSchema>;
 interface DDSFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  statement?: DueDiligenceStatement | null;
+  /** Required. This sheet edits an existing statement; it does not create
+   * one. Creation runs through the composer, from a purchase order and its
+   * lots — the only path that produces something TRACES will accept, since
+   * `commodities` is mandatory in the XSD. Making this non-optional is what
+   * stops the lotless create path being reintroduced by accident (#104). */
+  statement: DueDiligenceStatement;
 }
 
 export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
   const queryClient = useQueryClient();
-  const isEditing = !!statement;
 
-  /** Prefill only — the value filed is this statement's own. Shares the
-   * `["organization"]` key with the composer and the Settings cards, so it is
-   * usually already in cache. A failure degrades to a blank select rather than
-   * an error: not knowing the default must not stop someone drafting. */
-  const { data: organization } = useQuery<Organization>({
-    queryKey: ["organization"],
-    queryFn: async () => {
-      const res = await authFetch("/api/v1/accounts/organization/");
-      if (!res.ok) throw new Error("Could not load organisation");
-      return res.json();
-    },
-  });
-  const orgDefault = organization?.default_activity_type ?? "";
   const canEdit = !statement || statement.status === "DRAFT" || statement.status === "REJECTED";
 
   const {
@@ -65,22 +56,13 @@ export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
     formState: { errors },
   } = useForm<DDSFormValues>({
     resolver: zodResolver(ddsSchema),
-    defaultValues: statement
-      ? {
+    defaultValues: {
           statement_type: statement.statement_type,
           activity_type: statement.activity_type,
           reference_number: statement.reference_number || "",
           risk_conclusion: statement.risk_conclusion,
           conclusion_justification: statement.conclusion_justification || "",
           valid_until: statement.valid_until?.split("T")[0] || "",
-        }
-      : {
-          statement_type: "OPERATOR",
-          activity_type: orgDefault,
-          reference_number: "",
-          risk_conclusion: null,
-          conclusion_justification: "",
-          valid_until: "",
         },
   });
 
@@ -88,11 +70,8 @@ export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
 
   const saveMutation = useMutation({
     mutationFn: async (values: DDSFormValues) => {
-      const url = isEditing
-        ? `/api/v1/due-diligence/statements/${statement.id}/`
-        : "/api/v1/due-diligence/statements/";
-      const res = await authFetch(url, {
-        method: isEditing ? "PATCH" : "POST",
+      const res = await authFetch(`/api/v1/due-diligence/statements/${statement.id}/`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
@@ -152,12 +131,10 @@ export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
       <SheetContent side="right" className="sm:max-w-md">
         <SheetHeader>
           <SheetTitle>
-            {isEditing ? `Statement ${statement.reference_number}` : "New DDS"}
+            {`Statement ${statement.reference_number}`}
           </SheetTitle>
           <SheetDescription>
-            {isEditing
-              ? `Status: ${statement.status.replace("_", " ")}`
-              : "Create a new due diligence statement."}
+            {`Status: ${statement.status.replace("_", " ")}`}
           </SheetDescription>
         </SheetHeader>
 
@@ -200,18 +177,15 @@ export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
               <option value="EXPORT">Export — leaving the EU</option>
             </select>
             <p className="text-[11px] text-muted-foreground">
-              {orgDefault
-                ? "Prefilled from your organisation's usual activity."
-                : "Required by TRACES before this statement can be filed."}
+              What this statement declares. TRACES requires one before it can be
+              filed.
             </p>
           </div>
 
-          {isEditing && (
-            <div className="space-y-1.5">
-              <Label>Reference Number</Label>
-              <Input value={statement.reference_number} disabled className="opacity-50" />
-            </div>
-          )}
+          <div className="space-y-1.5">
+            <Label>Reference Number</Label>
+            <Input value={statement.reference_number} disabled className="opacity-50" />
+          </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="risk_conclusion">Risk Conclusion</Label>
@@ -255,13 +229,12 @@ export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isPending} className="flex-1">
-                  {saveMutation.isPending ? "Saving…" : isEditing ? "Update" : "Create Draft"}
+                  {saveMutation.isPending ? "Saving…" : "Update"}
                 </Button>
               </div>
             )}
 
-            {isEditing && (
-              <div className="flex flex-wrap gap-2 w-full border-t pt-3 border-border/50">
+            <div className="flex flex-wrap gap-2 w-full border-t pt-3 border-border/50">
                 {(statement.status === "DRAFT" || statement.status === "REJECTED") && (
                   <Button
                     type="button"
@@ -321,8 +294,7 @@ export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
                     Delete
                   </Button>
                 )}
-              </div>
-            )}
+            </div>
           </SheetFooter>
         </form>
       </SheetContent>

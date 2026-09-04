@@ -56,9 +56,17 @@ describe("DueDiligencePage", () => {
     expect(screen.queryByRole("heading", { level: 1, name: /due diligence/i })).toBeNull();
   });
 
-  it("renders the New Statement button", () => {
+  it("points at the purchase order, which is where a statement starts", () => {
+    /** Reversed deliberately. This asserted a "New Statement" button, which
+     * opened a sheet with no lot selection and produced statements covering
+     * nothing — unfilable, since `commodities` is mandatory in the TRACES XSD
+     * (#104). The affordance is now a link into Sourcing, which is the only
+     * path that composes a statement TRACES will accept. */
     renderWithProviders(<DueDiligencePage />);
-    expect(screen.getByText("New Statement")).toBeInTheDocument();
+    expect(screen.queryByText("New Statement")).toBeNull();
+    expect(
+      screen.getByRole("link", { name: /file from a purchase order/i }),
+    ).toHaveAttribute("href", "/supply-chains");
   });
 
   it("renders DDS data after loading", async () => {

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Send } from "lucide-react";
+import { ArrowLeft, Send } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +31,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { DDSForm } from "@/components/forms/dds-form";
 import { authFetch } from "@/lib/api/client";
 import { getErrorMessage } from "@/lib/api/errors";
 import type {
@@ -155,8 +154,12 @@ interface FileDdsComposerProps {
  *
  * Left: the PO's lot batches, checked by default (spec Decision 5 — explicit
  * per-lot lines, splittable/auditable), with a freeform escape hatch to the
- * pre-existing "New Statement" Sheet (`DDSForm`) for cross-PO/periodic
- * composition. Right: an auto-computed declaration summary, the geolocation
+ * freeform escape hatch to
+ * the "New Statement" sheet — removed in #104, because it opened a form with
+ * no lot selection, so the button promised exactly what that form could not
+ * do. Cross-PO composition is a real need and is not solved by it; EUDR's own
+ * mechanism is a Group Head (IS release 8.2.1), which references submitted
+ * statements by reference *and* verification number. Right: an auto-computed declaration summary, the geolocation
  * payload meter (fed by eudr-app #94/BE-C's payload-estimate endpoint — the
  * dependency this issue was blocked on until PR #98 merged), and a read-only
  * risk-assessment placeholder (#25 owns the real scoring UI).
@@ -207,7 +210,6 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
   >(null);
   const orgDefault = organization?.default_activity_type ?? "";
   const activityType = chosenActivityType ?? orgDefault;
-  const [freeformOpen, setFreeformOpen] = useState(false);
 
   const anchorKind: "po" | "consignment" = consignmentId ? "consignment" : "po";
   const anchorId = consignmentId ?? poId ?? "";
@@ -410,9 +412,7 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
               <CardTitle>Covered lots</CardTitle>
               <CardDescription>{checkedIds.size} of {po.lots.length} lots selected</CardDescription>
             </div>
-            <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setFreeformOpen(true)}>
-              <Plus className="size-3.5" /> Add lots from other POs
-            </Button>
+
           </CardHeader>
           <CardContent className="px-1.5 pb-3.5">
             <Table>
@@ -672,7 +672,6 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      <DDSForm open={freeformOpen} onOpenChange={setFreeformOpen} />
     </div>
   );
 }

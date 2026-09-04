@@ -7,7 +7,7 @@
  * `e2e/05-due-diligence.spec.ts`.
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../helpers";
 import { FileDdsComposer } from "@/components/due-diligence/file-dds-composer";
@@ -330,15 +330,24 @@ describe("FileDdsComposer", () => {
     expect(reviewCall).toBeUndefined();
   });
 
-  it("the 'Add lots from other POs' escape hatch opens the existing freeform DDS Sheet", async () => {
+  it("no longer offers the 'Add lots from other POs' escape hatch", async () => {
+    /** Reversed deliberately. This asserted the button opened the freeform
+     * "New DDS" sheet — which was true, and was the defect: that sheet has no
+     * lot selection, so the control promised precisely what it could not do,
+     * and what it produced covered nothing. `commodities` is mandatory in the
+     * TRACES XSD, so every statement it created was unfilable (#104).
+     *
+     * Cross-PO composition is a real need and this never met it. EUDR's own
+     * mechanism is a Group Head (Information System release 8.2.1), which
+     * references previously submitted DDS or SD members by reference *and*
+     * verification number — neither of which anything here collects. */
     globalThis.fetch = makeFetch();
     renderWithProviders(<FileDdsComposer poId="po-1" />);
     await waitFor(() => expect(screen.getByText("LOT-GH-26-0001")).toBeInTheDocument());
 
-    const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /Add lots from other POs/ }));
-    expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    expect(within(screen.getByRole("dialog")).getByText("New DDS")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Add lots from other POs/ }),
+    ).toBeNull();
   });
 
   it("shows a not-found message when the PO fails to load", async () => {
@@ -580,5 +589,37 @@ describe("FileDdsComposer — activity type, audit coverage", () => {
     await screen.findByLabelText(/activity/i);
 
     expect(screen.queryByText(/set a default in settings/i)).toBeNull();
+  });
+});
+
+
+describe("FileDdsComposer — no escape hatch that cannot do what it says", () => {
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.clearAllMocks();
+  });
+
+  it("does not offer 'Add lots from other POs'", async () => {
+    /** That button opened `DDSForm`, which has no lot selection at all — it
+     * promised precisely the thing it could not do, and produced a statement
+     * covering nothing (#104). Cross-PO composition is a real need; EUDR's own
+     * mechanism is a Group Head, which references submitted statements by
+     * reference *and* verification number. */
+    globalThis.fetch = makeFetch();
+    renderWithProviders(<FileDdsComposer poId="po-1" />);
+    await screen.findByText("LOT-GH-26-0001");
+
+    expect(
+      screen.queryByRole("button", { name: /add lots from other/i }),
+    ).toBeNull();
+  });
+
+  it("still shows the covered lots it does own", async () => {
+    /** Negative control: the card the button lived on must survive. */
+    globalThis.fetch = makeFetch();
+    renderWithProviders(<FileDdsComposer poId="po-1" />);
+
+    expect(await screen.findByText("LOT-GH-26-0001")).toBeInTheDocument();
+    expect(screen.getByText(/covered lots/i)).toBeInTheDocument();
   });
 });
