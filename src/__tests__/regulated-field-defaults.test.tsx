@@ -96,22 +96,60 @@ describe("SupplierForm — risk rating", () => {
 // see it. If the operator has no default it instead stays blank and the
 // statement is refused at submit time, on a different screen, days later.
 
-describe("DDSForm — the freeform statement path", () => {
-  it("lets the officer choose the commercial activity, as the composer does", async () => {
-    // FAILING BY DESIGN — demonstrates the gap. `DDSForm` has no activity
-    // control and, before this test, no test file of any kind referenced it.
+describe("DDSForm — editing a statement", () => {
+  /** The sheet no longer creates statements (#104): it opened without lot
+   * selection, and `commodities` is mandatory in the TRACES XSD, so everything
+   * it produced was unfilable. It is now edit-only, and `statement` is a
+   * required prop so the create path cannot return by accident.
+   *
+   * The activity control matters more here than it did on the create path:
+   * editing is how an officer corrects an activity type on a DRAFT or REJECTED
+   * statement, and — since eudr-app#205 — how they record the risk conclusion
+   * that approval now requires. */
+  const draft = {
+    id: "dds-1",
+    reference_number: "DDS-2026-GH-010",
+    traces_reference: "",
+    status: "DRAFT",
+    statement_type: "OPERATOR",
+    activity_type: "IMPORT",
+    batch_ids: [],
+    risk_conclusion: null,
+    conclusion_justification: "",
+    created_by_id: "u1",
+    reviewed_by_id: null,
+    submitted_at: null,
+    valid_until: null,
+    archived_until: null,
+    risk_assessments: [],
+    covered_lots: [],
+    filing_blockers: [],
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+  } as never;
+
+  it("lets the officer correct the commercial activity", async () => {
     const { DDSForm } = await import("@/components/forms/dds-form");
-    renderWithProviders(<DDSForm open onOpenChange={() => {}} />);
+    renderWithProviders(<DDSForm open onOpenChange={() => {}} statement={draft} />);
 
     expect(screen.getByLabelText(/activity/i)).toBeInTheDocument();
   });
 
-  it("does render the statement type it does own", async () => {
-    // Negative control: the sheet renders, and its selects are label-
-    // associated — so the assertion above fails for the missing field, not
-    // for a broken render or an unlabelled control.
+  it("prefills the statement's own activity, not the organisation default", async () => {
+    /** The distinction the #107 sweep was about: an existing statement already
+     * declared something, and the sheet must show that rather than overwrite it
+     * with whatever the operator usually files. */
     const { DDSForm } = await import("@/components/forms/dds-form");
-    renderWithProviders(<DDSForm open onOpenChange={() => {}} />);
+    renderWithProviders(<DDSForm open onOpenChange={() => {}} statement={draft} />);
+
+    expect((screen.getByLabelText(/activity/i) as HTMLSelectElement).value).toBe(
+      "IMPORT",
+    );
+  });
+
+  it("still renders the statement type", async () => {
+    const { DDSForm } = await import("@/components/forms/dds-form");
+    renderWithProviders(<DDSForm open onOpenChange={() => {}} statement={draft} />);
 
     expect(screen.getByLabelText(/statement type/i)).toBeInTheDocument();
   });

@@ -1,16 +1,17 @@
 "use client";
 
 import { Suspense, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, FileQuestion, Plus } from "lucide-react";
 import { DataTable, type ColumnDef, type FilterDef } from "@/components/data-table";
-import { DDSForm } from "@/components/forms/dds-form";
 import { FileDdsComposer } from "@/components/due-diligence/file-dds-composer";
 import { authFetch } from "@/lib/api/client";
+import { cn } from "@/lib/utils";
 import type { DueDiligenceStatement, TracesSubmission, TracesSubmissionStatus } from "@/lib/api/types";
 import { DDS_STATUS_STYLE } from "@/lib/dds-status";
 import { deriveTracesDisplay, TRACES_DISPLAY_STYLE } from "@/lib/traces-status";
@@ -97,7 +98,6 @@ export default function DueDiligencePage() {
 
 function DueDiligencePageInner() {
   const router = useRouter();
-  const [formOpen, setFormOpen] = useState(false);
 
   // #26 — the `?po=` deep-link target (from PO Detail's "File DDS" CTA,
   // `src/app/(dashboard)/supply-chains/[id]/page.tsx`) takes over this whole
@@ -290,10 +290,15 @@ function DueDiligencePageInner() {
           <h1 className="text-display text-4xl leading-[1.04] italic font-light">Submissions</h1>
           <p className="mt-2.5 text-[15px] text-muted-foreground">Statements submitted to the EU TRACES registry.</p>
         </div>
-        <Button onClick={() => setFormOpen(true)} className="gap-1.5">
+        {/* A statement is composed from a purchase order and its lots — that
+            is the only path that can produce one TRACES will accept, since
+            `commodities` is mandatory in the XSD. The button that used to sit
+            here opened a form with no lot selection and produced statements
+            that could never be filed (eudr-frontend#104). */}
+        <Link href="/supply-chains" className={cn(buttonVariants(), "gap-1.5")}>
           <Plus className="size-4" />
-          New Statement
-        </Button>
+          File from a purchase order
+        </Link>
       </header>
 
       <DataTable<DueDiligenceStatement>
@@ -309,13 +314,9 @@ function DueDiligencePageInner() {
         onRowClick={(stmt) => router.push(`/due-diligence/${stmt.id}`)}
         emptyIcon={<FileQuestion className="w-5 h-5 text-muted-foreground" />}
         emptyTitle="No statements yet"
-        emptyDescription="Create a due diligence statement to declare your supply chain is deforestation-free"
+        emptyDescription="Statements are filed from a purchase order — open Sourcing and pick one that is ready to file"
       />
 
-      <DDSForm
-        open={formOpen}
-        onOpenChange={setFormOpen}
-      />
     </div>
   );
 }
