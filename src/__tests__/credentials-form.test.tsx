@@ -56,6 +56,7 @@ function makeCred(overrides: Partial<TracesCredential> = {}): TracesCredential {
     username: "test_user",
     web_service_client_id: "client_abc",
     operator_role: "",
+    operator_ws_identifier: "",
     is_active: true,
     created_at: "2026-01-01T00:00:00Z",
     ...overrides,
@@ -447,5 +448,76 @@ describe("CredentialsCard — EUDR role", () => {
 
     await screen.findByText(/representative operator/i);
     expect(document.body.textContent ?? "").not.toMatch(/password|secret|key/i);
+  });
+});
+
+describe("CredentialsForm — the operator's Web Service Identifier", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("sends the identifier so a filing can carry an operator identity at all", async () => {
+    // Without it the envelope names no operator: under `operatorRole=OPERATOR`
+    // there is no `representedOperator` and the statement body has no
+    // `operator` element. That is the standing cause of the live
+    // `EUDR-OPERATOR-EORI-FOR-ACTIVITY-MISSING` rejection (eudr-app#202).
+    mockAuthFetch.mockResolvedValue(jsonRes(makeCred(), 201));
+    const user = userEvent.setup();
+    renderWithProviders(<CredentialsForm open onOpenChange={() => {}} />);
+
+    await user.type(screen.getByLabelText(/^username/i), "n00n7ifn");
+    await user.type(screen.getByLabelText(/authentication key/i), "key");
+    await user.type(screen.getByLabelText(/web service client id/i), "eudr-test");
+    await user.type(screen.getByLabelText(/web service identifier/i), "OPWS-0042");
+    await user.click(screen.getByRole("button", { name: /create/i }));
+
+    await waitFor(() => expect(mockAuthFetch).toHaveBeenCalled());
+    const body = JSON.parse(
+      (mockAuthFetch.mock.calls.at(-1)![1] as RequestInit).body as string,
+    );
+    expect(body.operator_ws_identifier).toBe("OPWS-0042");
+    // Distinct from the client id, which identifies the software. Conflating
+    // them is the easy mistake — acceptance's client id is a shared literal.
+    expect(body.web_service_client_id).toBe("eudr-test");
+  });
+
+  it("refuses an identifier longer than the schema allows rather than truncating it", async () => {
+    // `OperatorAccessIdentifierType` is maxLength 16. A truncated value is
+    // still a valid-looking identifier — for a different operator.
+    mockAuthFetch.mockResolvedValue(jsonRes(makeCred(), 201));
+    const user = userEvent.setup();
+    renderWithProviders(<CredentialsForm open onOpenChange={() => {}} />);
+
+    const field = screen.getByLabelText(/web service identifier/i);
+    // `maxLength` stops typing at the boundary; paste bypasses it, which is
+    // how a copied identifier actually arrives.
+    await user.click(field);
+    await user.paste("X".repeat(17));
+    await user.type(screen.getByLabelText(/^username/i), "u");
+    await user.type(screen.getByLabelText(/authentication key/i), "k");
+    await user.type(screen.getByLabelText(/web service client id/i), "c");
+    await user.click(screen.getByRole("button", { name: /create/i }));
+
+    expect(await screen.findByText(/at most 16 characters/i)).toBeInTheDocument();
+    expect(mockAuthFetch).not.toHaveBeenCalled();
+  });
+
+  it("keeps an existing identifier when editing without touching the field", async () => {
+    mockAuthFetch.mockResolvedValue(jsonRes(makeCred(), 200));
+    const user = userEvent.setup();
+    renderWithProviders(
+      <CredentialsForm
+        open
+        onOpenChange={() => {}}
+        credential={makeCred({ operator_ws_identifier: "OPWS-0042" })}
+      />,
+    );
+
+    expect(screen.getByLabelText(/web service identifier/i)).toHaveValue("OPWS-0042");
+    await user.click(screen.getByRole("button", { name: /update/i }));
+
+    await waitFor(() => expect(mockAuthFetch).toHaveBeenCalled());
+    const body = JSON.parse(
+      (mockAuthFetch.mock.calls.at(-1)![1] as RequestInit).body as string,
+    );
+    expect(body.operator_ws_identifier).toBe("OPWS-0042");
   });
 });

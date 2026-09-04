@@ -197,6 +197,22 @@ export function CredentialsCard() {
                           ? ROLE_LABEL[cred.operator_role]
                           : "Deployment default"}
                       </p>
+                      {/* Whether an operator identity is being sent at all is
+                          the difference between a filing TRACES can attribute
+                          and one it rejects for having no operator. A missing
+                          value is the more important state, so it is the one
+                          named out loud rather than left as a blank line. */}
+                      <p
+                        className={`text-xs truncate ${
+                          cred.operator_ws_identifier
+                            ? "text-muted-foreground font-mono"
+                            : "text-destructive"
+                        }`}
+                      >
+                        {cred.operator_ws_identifier
+                          ? `WS identifier ${cred.operator_ws_identifier}`
+                          : "No web service identifier — filings carry no operator identity"}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0 ml-4">

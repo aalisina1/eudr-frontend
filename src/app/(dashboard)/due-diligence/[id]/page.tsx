@@ -20,6 +20,8 @@ import { DDSForm } from "@/components/forms/dds-form";
 import type { ActivityType, DueDiligenceStatement } from "@/lib/api/types";
 import { DDS_STATUS_STYLE } from "@/lib/dds-status";
 import { TracesPanel } from "@/components/traces/traces-panel";
+import { CoveredLotsCard } from "@/components/due-diligence/covered-lots-card";
+import { useLatestTracesSubmission } from "@/hooks/use-latest-traces-submission";
 
 const TH = "text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
 
@@ -67,6 +69,43 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
       return res.json();
     },
   });
+
+  // The header's Withdraw button withdraws *locally*. That is only ever
+  // correct for a statement TRACES has no record of (seeded and legacy rows):
+  // anything TRACES actually holds must be withdrawn there, and the backend
+  // now refuses the local path with a 409. Read from the same query key the
+  // TRACES panel uses, so both agree and only one fetch happens.
+  const {
+    data: latestSubmission,
+    isLoading: submissionLoading,
+    isError: submissionError,
+  } = useLatestTracesSubmission(id);
+  // Fail safe, not fail open. This is a two-hop fetch (list, then detail)
+  // while the statement is one hop, so the statement almost always resolves
+  // first — and during that window, or permanently if the request 403s, an
+  // unguarded check would render the local Withdraw on a statement TRACES
+  // holds. Assume held until we know otherwise: the cost of hiding a button
+  // for a moment is nothing; the cost of offering a local withdrawal on a
+  // live filing is a statement recorded as withdrawn while the regulator
+  // still enforces it.
+  //
+  // "Held" excludes every status TRACES has finished with, matching the
+  // backend's own list — a REJECTED filing is not held, and treating it as
+  // such left it with no withdrawal route at all.
+  //
+  // Known limitation: this reads the latest row only, while the backend scans
+  // every row for the statement. So a newer settled row (a rejected
+  // amendment, say) can leave this button visible over an older AVAILABLE
+  // filing. It is the safe direction — the backend refuses with a 409 naming
+  // the filing to withdraw at TRACES, which this page renders — and closing
+  // it properly means the API telling the client whether a live filing
+  // exists, rather than the client inferring it from one row.
+  const settledAtTraces = ["REJECTED", "WITHDRAWN", "ARCHIVED", "OBSOLETE"];
+  const heldByTraces =
+    submissionLoading ||
+    submissionError ||
+    (!!latestSubmission?.traces_uuid &&
+      !settledAtTraces.includes(latestSubmission.traces_status));
 
   const actionMutation = useMutation({
     mutationFn: async (action: string) => {
@@ -182,7 +221,7 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
               </Button>
             </>
           )}
-          {stmt.status === "SUBMITTED" && (
+          {stmt.status === "SUBMITTED" && !heldByTraces && (
             <Button
               size="sm"
               variant="secondary"
@@ -211,6 +250,14 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
       {/* Two-column layout: statement details + risk assessments (left), TRACES submission (right) */}
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)] gap-5 items-start">
         <div className="flex flex-col gap-5 min-w-0">
+          {/* What the statement declares comes first. Everything below it —
+              the metadata, the risk assessments — is *about* this. */}
+          <CoveredLotsCard
+            lots={stmt.covered_lots}
+            blockers={stmt.filing_blockers}
+            alreadyFiled={stmt.status === "SUBMITTED" || stmt.status === "WITHDRAWN"}
+          />
+
           <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
             <h2 className="text-base font-medium mb-4">Statement details</h2>
             <div className="grid grid-cols-[160px_1fr] gap-x-4 gap-y-3.5">
