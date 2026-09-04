@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -8,7 +9,9 @@ import {
   CheckCircle2,
   FileText,
   Loader2,
+  PenLine,
   Send,
+  Undo2,
   XCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { authFetch } from "@/lib/api/client";
 import { getErrorMessage } from "@/lib/api/errors";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useLatestTracesSubmission } from "@/hooks/use-latest-traces-submission";
 import { isInFlight } from "@/lib/traces-status";
 import type { DDSStatus, TracesErrorDetail, TracesSubmission } from "@/lib/api/types";
 
@@ -45,7 +49,10 @@ type DisplayKey =
   | "failed"
   | "withdrawn"
   | "grouped"
-  | "archived";
+  | "archived"
+  | "suspended"
+  | "updated"
+  | "obsolete";
 
 const STATUS_META: Record<
   DisplayKey,
@@ -60,6 +67,24 @@ const STATUS_META: Record<
   withdrawn: { label: "Withdrawn", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
   grouped: { label: "Grouped", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
   archived: { label: "Archived", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
+  suspended: { label: "Suspended", bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]" },
+  updated: { label: "Updated", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
+  obsolete: { label: "Obsolete", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
+};
+
+/** Every TRACES lifecycle status maps to a display state. A status with no
+ * entry rendered as nothing at all — and the backend now stores the full
+ * `EudrStatusType`, including OBSOLETE, which a statement really can reach. */
+const TRACES_STATUS_DISPLAY: Record<string, DisplayKey> = {
+  AVAILABLE: "available",
+  REJECTED: "rejected",
+  WITHDRAWN: "withdrawn",
+  GROUPED: "grouped",
+  ARCHIVED: "archived",
+  SUSPENDED: "suspended",
+  UPDATED: "updated",
+  OBSOLETE: "obsolete",
+  SUBMITTED: "submitted",
 };
 
 /** "a domestic activity" but "an import activity".
@@ -83,36 +108,21 @@ function indefiniteArticle(word: string): "a" | "an" {
  * and there before the two were consolidated). */
 function deriveDisplay(sub: TracesSubmission | null): DisplayKey {
   if (!sub) return "not_submitted";
-  if (sub.traces_status === "AVAILABLE") return "available";
-  if (sub.traces_status === "REJECTED") return "rejected";
-  if (sub.traces_status === "WITHDRAWN") return "withdrawn";
-  if (sub.traces_status === "GROUPED") return "grouped";
-  if (sub.traces_status === "ARCHIVED") return "archived";
-  if (sub.traces_status === "SUBMITTED") return "submitted";
+  // Our own pipeline failing is checked BEFORE the regulator's last known
+  // status. Previously `traces_status` won, which hid a real failure: when a
+  // getDds poll takes a SOAP Fault (TRACES has no record of the uuid),
+  // `poll.py._fail_business_rejection` sets `status=FAILED` and deliberately
+  // leaves `traces_status` at SUBMITTED — so the panel went on saying
+  // "Submitted — waiting for TRACES to resolve…" forever, for a submission
+  // that had stopped being polled. The same ordering keeps a FAILED
+  // amendment of an AVAILABLE filing from rendering as "Available".
   if (sub.status === "FAILED") return "failed";
   if (isInFlight(sub.status)) return "submitting";
-  return "not_submitted";
+  return TRACES_STATUS_DISPLAY[sub.traces_status] ?? "not_submitted";
 }
 
 function isPending(sub: TracesSubmission | null): boolean {
   return !!STATUS_META[deriveDisplay(sub)].pending;
-}
-
-/** GET returns the lightweight list serializer (no `traces_status` /
- * `verification_number` / `error_message` / `error_detail`) — follow up
- * with a detail GET by id so the panel has the full row to render. */
-async function fetchLatestSubmission(ddsId: string): Promise<TracesSubmission | null> {
-  const listRes = await authFetch(
-    `/api/v1/traces/submissions/?dds_id=${ddsId}&ordering=-created_at`,
-  );
-  if (!listRes.ok) throw new Error(getErrorMessage(await listRes.json().catch(() => ({}))));
-  const listData = await listRes.json();
-  const latestId = listData.results?.[0]?.id as string | undefined;
-  if (!latestId) return null;
-
-  const detailRes = await authFetch(`/api/v1/traces/submissions/${latestId}/`);
-  if (!detailRes.ok) throw new Error(getErrorMessage(await detailRes.json().catch(() => ({}))));
-  return detailRes.json();
 }
 
 /** `GET /api/v1/traces/credentials/` is `IsAdmin`-gated server-side (only an
@@ -192,6 +202,70 @@ function ErrorDetail({ submission, display }: { submission: TracesSubmission; di
         </div>
       ))}
     </div>
+  );
+}
+
+/** What to actually do about a failure.
+ *
+ * The panel used to say "Fix the issue on the underlying batches/plots, then
+ * resubmit" for every failure. On the live 2026-09-03 rejection that advice
+ * was simply wrong: the two rules TRACES broke were
+ * `EUDR-OPERATOR-EORI-FOR-ACTIVITY-MISSING` and a `percentageEstimation` rule,
+ * neither of which concerns a batch or a plot. Someone following it would
+ * have gone through their lots looking for a problem that was not there
+ * (eudr-app#202).
+ *
+ * Classified from the structured rule ids TRACES returns, which are the only
+ * reliable part of a rejection — its `<Message>` values are untranslated i18n
+ * keys and `<Field>` is usually empty.
+ */
+function RemediationHint({ submission }: { submission: TracesSubmission }) {
+  const haystack = [
+    submission.error_message,
+    ...(submission.error_detail ?? []).flatMap((d) => [d.field, d.message]),
+  ]
+    .join(" ")
+    .toUpperCase();
+
+  const isAboutTheAccount =
+    haystack.includes("OPERATOR") ||
+    haystack.includes("EORI") ||
+    haystack.includes("WEBSERVICE-USER") ||
+    haystack.includes("CREDENTIAL") ||
+    haystack.includes("UNAUTHENTICATED");
+  const isAboutTheGoods =
+    haystack.includes("BATCH[") ||
+    haystack.includes("PLOT") ||
+    haystack.includes("HARVEST") ||
+    haystack.includes("COMMODIT") ||
+    haystack.includes("GEOLOCATION");
+
+  if (isAboutTheAccount && !isAboutTheGoods) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        This is about how your organisation is registered with TRACES, not about
+        your lots or plots. Check the Web Service Identifier, EUDR role and
+        Authentication Key in{" "}
+        <Link href="/settings" className="text-primary hover:underline">
+          Settings → TRACES
+        </Link>
+        , then resubmit.
+      </p>
+    );
+  }
+  if (isAboutTheGoods) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Fix the issue on the underlying lots or plots, then resubmit.
+      </p>
+    );
+  }
+  return (
+    <p className="text-xs text-muted-foreground">
+      Resolve the problem TRACES names above, then resubmit. If it names a rule
+      rather than a field, it concerns the statement as a whole rather than one
+      lot.
+    </p>
   );
 }
 
@@ -319,12 +393,9 @@ export function TracesPanel({
 }) {
   const queryClient = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [modifyOpen, setModifyOpen] = useState<"amend" | "withdraw" | null>(null);
 
-  const { data: submission, isLoading } = useQuery({
-    queryKey: ["traces-submission", ddsId],
-    queryFn: () => fetchLatestSubmission(ddsId),
-    refetchInterval: (query) => (isPending(query.state.data ?? null) ? 3000 : false),
-  });
+  const { data: submission, isLoading } = useLatestTracesSubmission(ddsId);
 
   const { data: currentUser } = useCurrentUser();
   const isAdmin = currentUser?.role === "ADMIN";
@@ -380,6 +451,28 @@ export function TracesPanel({
     onError: (err) => toast.error(getErrorMessage(err)),
   });
 
+  /** Amend and withdraw both address one existing filing by its TRACES uuid,
+   * and both are refused by the backend unless that filing is AVAILABLE. */
+  const modifyMutation = useMutation({
+    mutationFn: async (action: "amend" | "withdraw") => {
+      const res = await authFetch(
+        `/api/v1/traces/submissions/${sub!.id}/${action}/`,
+        { method: "POST" },
+      );
+      if (!res.ok) throw new Error(getErrorMessage(await res.json().catch(() => ({}))));
+      return res.json();
+    },
+    onSuccess: (_data, action) => {
+      setModifyOpen(null);
+      toast.success(
+        action === "amend" ? "Amendment sent to TRACES" : "Withdrawal sent to TRACES",
+      );
+      queryClient.invalidateQueries({ queryKey: ["traces-submission", ddsId] });
+      queryClient.invalidateQueries({ queryKey: ["dds", ddsId] });
+    },
+    onError: (err) => toast.error(getErrorMessage(err)),
+  });
+
   const style = STATUS_META[display];
   const pending = isPending(sub);
   const canResubmit = !sub || display === "rejected" || display === "failed";
@@ -425,13 +518,33 @@ export function TracesPanel({
             <CopyChip label="Verification Number" value={sub!.verification_number} />
           </div>
           <AmendWindow submittedAt={sub!.submitted_at} />
+          {/* A filing was one-way until now. Both actions are live calls to
+              the regulator, so both go through a confirm step. */}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Button
+              size="sm"
+              variant="secondary"
+              className="gap-1.5"
+              onClick={() => setModifyOpen("amend")}
+            >
+              <PenLine className="size-3.5" />
+              Amend
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="gap-1.5 text-destructive hover:text-destructive"
+              onClick={() => setModifyOpen("withdraw")}
+            >
+              <Undo2 className="size-3.5" />
+              Withdraw
+            </Button>
+          </div>
         </div>
       ) : display === "rejected" || display === "failed" ? (
         <div className="space-y-3">
           <ErrorDetail submission={sub!} display={display} />
-          <p className="text-xs text-muted-foreground">
-            Fix the issue on the underlying batches/plots, then resubmit.
-          </p>
+          <RemediationHint submission={sub!} />
         </div>
       ) : pending ? (
         <p className="text-sm text-muted-foreground flex items-center gap-2">
@@ -487,6 +600,72 @@ export function TracesPanel({
           ))}
         </div>
       </div>
+
+      <Dialog
+        open={modifyOpen !== null}
+        onOpenChange={(open) => !open && setModifyOpen(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {modifyOpen === "withdraw"
+                ? "Withdraw this statement from TRACES?"
+                : "Amend this statement at TRACES?"}
+            </DialogTitle>
+            <DialogDescription>
+              {modifyOpen === "withdraw" ? (
+                <>
+                  This retracts the filing{" "}
+                  <span className="font-mono">{sub?.traces_reference_number}</span>{" "}
+                  at the regulator. The statement is only marked withdrawn here
+                  once TRACES confirms it. This is a regulated action.
+                </>
+              ) : (
+                <>
+                  This re-files the statement as it stands now — including any
+                  corrections since made to its lots or plots — keeping the same
+                  reference number{" "}
+                  <span className="font-mono">{sub?.traces_reference_number}</span>
+                  . TRACES re-runs risk profiling. This is a regulated action.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          {/* Deliberately not a client-side window check. TRACES measures the
+              72 hours from when the reference number became visible — an
+              event we do not record — so refusing here would block
+              amendments that are still legal. TRACES decides, and says why. */}
+          <p className="text-xs text-muted-foreground">
+            TRACES refuses this once the 72-hour window has closed, or once the
+            statement is locked to a customs declaration. If it does, the reason
+            it gives will appear here.
+          </p>
+          {modifyMutation.isError && (
+            <p className="text-sm text-destructive">{modifyMutation.error.message}</p>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" size="sm" onClick={() => setModifyOpen(null)}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              variant={modifyOpen === "withdraw" ? "destructive" : "default"}
+              disabled={modifyMutation.isPending}
+              onClick={() => modifyOpen && modifyMutation.mutate(modifyOpen)}
+              className="gap-1.5"
+            >
+              {modifyMutation.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : modifyOpen === "withdraw" ? (
+                <Undo2 className="size-3.5" />
+              ) : (
+                <PenLine className="size-3.5" />
+              )}
+              {modifyOpen === "withdraw" ? "Withdraw" : "Amend"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>

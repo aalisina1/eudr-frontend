@@ -173,6 +173,7 @@ describe("Type definitions", () => {
       submission_type: "CREATE",
       status: "QUEUED",
       traces_status: "AVAILABLE",
+      traces_uuid: "9f925115-2858-4370-9288-2f4c8605c0bb",
       verification_number: "VER-123",
       traces_reference_number: "TR-456",
       error_message: "",
@@ -201,7 +202,11 @@ describe("Type definitions", () => {
       dds_id: "dds1",
       submission_type: "CREATE",
       status: "FAILED",
-      traces_status: "" as TracesSubmission["traces_status"],
+      // No cast needed any more: `""` is now expressible in the union. A
+      // submission that never reached TRACES genuinely has no status, and
+      // casting around that hid it from the type.
+      traces_status: "",
+      traces_uuid: "",
       verification_number: "",
       traces_reference_number: "",
       error_message: "Payload validation failed: 1 error.",

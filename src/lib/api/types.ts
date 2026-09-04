@@ -94,6 +94,10 @@ export interface CertificationExpiring {
 
 export type GeometrySource = "GPS_DEVICE" | "SATELLITE_IMAGERY" | "MANUAL_ENTRY" | "THIRD_PARTY" | "DATA_IMPORT";
 export type ValidationStatus = "PENDING" | "PASSED" | "FAILED" | "REQUIRES_REVIEW";
+/** ADR-0014 — the human resolution state, orthogonal to `ValidationStatus`.
+ * Resolution never rewrites the deforestation provider's verdict; it records
+ * that someone acted on it. An EXCLUDED plot is dropped from every filing. */
+export type ResolutionStatus = "UNRESOLVED" | "AWAITING_RESURVEY" | "OVERRIDDEN" | "EXCLUDED";
 
 export interface GeoJsonGeometry {
   type: "Point" | "Polygon" | "MultiPolygon";
@@ -534,6 +538,65 @@ export interface DueDiligenceStatement {
   created_at: string;
   updated_at: string;
   risk_assessments?: RiskAssessment[];
+  /** What the statement is about — the goods, the ground they came from, and
+   * the orders they fulfil. Detail serializer only; absent on the list. */
+  covered_lots?: CoveredLot[];
+  /** Why this statement cannot be filed, while it can still be fixed. Empty
+   * means the batch data would build a payload. Detail serializer only. */
+  filing_blockers?: FilingBlocker[];
+}
+
+/** A land plot as it appears beside the statement that declares it. Geometry
+ * is deliberately not included — this is a summary; the plot detail screen is
+ * where a map belongs. */
+export interface CoveredPlot {
+  id: string;
+  /** Immutable, human-readable identity (ADR-0026), e.g. `PLOT-000412`. */
+  reference: string;
+  country: string;
+  region: string;
+  /** Decimal serialised as a string; `null` when the plot has no recorded area. */
+  area_hectares: string | null;
+  validation_status: ValidationStatus;
+  resolution_status: ResolutionStatus;
+}
+
+/** A purchase order a covered lot fulfils. */
+export interface CoveredPurchaseOrder {
+  id: string;
+  reference_number: string;
+}
+
+export interface CoveredLot {
+  id: string;
+  /** Blank when `resolved` is false — an id that resolves to nothing, or to
+   * another organisation's batch, is listed but never described. */
+  reference_number: string;
+  /** Decimal serialised as a string; `null` on an unresolved lot. */
+  quantity: string | null;
+  unit: string;
+  country_of_harvest: string;
+  harvest_period_start: string | null;
+  harvest_period_end: string | null;
+  /** Counts the plots the filing actually covers, which for a consolidated lot
+   * are its parents' — not the empty list the batch carries itself. */
+  plot_count: number;
+  plots: CoveredPlot[];
+  purchase_orders: CoveredPurchaseOrder[];
+  /** True when this covered batch IS a purchase order, so an empty
+   * `purchase_orders` is not read as a missing link. */
+  is_purchase_order: boolean;
+  /** False means the id could not be resolved within this organisation. The
+   * lot is still listed: a statement showing fewer lots than it claims would
+   * be worse than one admitting it cannot describe them all. */
+  resolved: boolean;
+}
+
+/** One reason a statement cannot be filed yet — same `{field, message}` shape
+ * as `TracesErrorDetail`, produced by the payload builder's own dry-run. */
+export interface FilingBlocker {
+  field: string;
+  message: string;
 }
 
 export interface RiskAssessment {
@@ -571,6 +634,15 @@ export interface TracesCredential {
    * role the account does not hold.
    */
   operator_role: TracesOperatorRole;
+  /**
+   * The operator's Web Service Identifier, assigned by TRACES and read from
+   * the operator's registration in the TRACES NT UI. Sent as the
+   * `BodyIdentity` SOAP header (Information System release 8.2.1) so a WS user
+   * registered against several operators says which one it acts as. NOT
+   * `web_service_client_id`, which identifies the client application. `""`
+   * sends no header at all.
+   */
+  operator_ws_identifier: string;
   is_active: boolean;
   created_at: string;
   // password is NEVER returned by the API — write-only
@@ -580,7 +652,26 @@ export interface TracesCredential {
 
 export type TracesSubmissionStatus = "QUEUED" | "PROCESSING" | "SUBMITTED" | "FAILED" | "RETRYING";
 export type SubmissionType = "CREATE" | "UPDATE" | "WITHDRAW";
-export type TracesStatus = "SUBMITTED" | "AVAILABLE" | "REJECTED" | "WITHDRAWN" | "GROUPED" | "ARCHIVED";
+/**
+ * `EudrStatusType` in the vendored TRACES XSD — every lifecycle status TRACES
+ * can report. `""` is reachable: a submission that has not yet been polled (or
+ * never reached TRACES) carries no status at all.
+ *
+ * SUSPENDED and UPDATED are marked "not active in current release" in the
+ * schema; they are modelled because the backend enum mirrors the XSD exactly,
+ * and a status the UI cannot name renders as nothing.
+ */
+export type TracesStatus =
+  | ""
+  | "SUBMITTED"
+  | "AVAILABLE"
+  | "REJECTED"
+  | "WITHDRAWN"
+  | "ARCHIVED"
+  | "SUSPENDED"
+  | "UPDATED"
+  | "GROUPED"
+  | "OBSOLETE";
 
 /** One field-level error, e.g. `{ field: "batch[0].harvest_period", message: "..." }`. */
 export interface TracesErrorDetail {
@@ -594,6 +685,12 @@ export interface TracesSubmission {
   submission_type: SubmissionType;
   status: TracesSubmissionStatus;
   traces_status: TracesStatus;
+  /** The identifier TRACES holds this filing under — the only honest answer to
+   * "does the regulator still have this?". `DueDiligenceStatement.status` says
+   * a statement was submitted, not whether TRACES has a record of it, and
+   * `traces_reference_number` appears only once a poll resolves it to
+   * AVAILABLE. `""` on a submission that never reached TRACES. */
+  traces_uuid: string;
   verification_number: string;
   traces_reference_number: string;
   error_message: string;

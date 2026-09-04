@@ -28,6 +28,14 @@ const credentialSchema = z.object({
   web_service_client_id: z.string().min(1, "Web service client ID is required"),
   // "" is a real, meaningful value: fall back to the deployment-wide default.
   operator_role: z.enum(["", "OPERATOR", "REPRESENTATIVE_OPERATOR"]),
+  // `OperatorAccessIdentifierType` is maxLength 16, validated rather than
+  // clamped with the input's own `maxLength`. A pasted 20-character value
+  // silently cut to 16 is still a well-formed identifier — for a different
+  // operator — and nothing downstream would say so. Better to refuse and
+  // explain than to quietly change what the person entered.
+  operator_ws_identifier: z
+    .string()
+    .max(16, "TRACES web service identifiers are at most 16 characters"),
 });
 
 type CredentialFormValues = z.infer<typeof credentialSchema>;
@@ -61,6 +69,7 @@ export function CredentialsForm({
       password: "",
       web_service_client_id: credential?.web_service_client_id ?? "",
       operator_role: credential?.operator_role ?? "",
+      operator_ws_identifier: credential?.operator_ws_identifier ?? "",
     },
   });
 
@@ -76,6 +85,7 @@ export function CredentialsForm({
         username: values.username,
         web_service_client_id: values.web_service_client_id,
         operator_role: values.operator_role,
+        operator_ws_identifier: values.operator_ws_identifier.trim(),
       };
       if (!isEditing || (values.password && values.password.length > 0)) {
         body.password = values.password ?? "";
@@ -206,6 +216,29 @@ export function CredentialsForm({
               Must match how this web-service user is registered in TRACES.
               Claiming a role the account does not hold is rejected with
               &ldquo;user activity not allowed&rdquo;.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="operator_ws_identifier">Web Service Identifier</Label>
+            <Input
+              id="operator_ws_identifier"
+              {...register("operator_ws_identifier")}
+              placeholder="e.g. OPWS-0042"
+              autoComplete="off"
+            />
+            {errors.operator_ws_identifier && (
+              <p className="text-xs text-destructive">
+                {errors.operator_ws_identifier.message}
+              </p>
+            )}
+            <p className="text-[11px] text-muted-foreground">
+              Your operator&rsquo;s Web Service Identifier, shown on your
+              operator registration in TRACES. It tells TRACES which operator a
+              submission is filed for &mdash; without it a filing carries no
+              operator identity, which TRACES rejects with &ldquo;operator EORI
+              for activity missing&rdquo;. This is not the Web Service Client
+              ID above: that identifies the software, this identifies you.
             </p>
           </div>
 

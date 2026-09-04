@@ -23,6 +23,7 @@ function baseSubmission(overrides: Partial<TracesSubmission>): TracesSubmission 
     submission_type: "CREATE",
     status: "SUBMITTED",
     traces_status: "SUBMITTED",
+    traces_uuid: "9f925115-2858-4370-9288-2f4c8605c0bb",
     verification_number: "",
     traces_reference_number: "",
     error_message: "",
@@ -477,5 +478,192 @@ describe("TracesPanel — submit confirmation copy", () => {
   it("still warns that filing is regulated when no activity is set", async () => {
     const dialog = await openConfirm(undefined);
     expect(dialog.textContent).toMatch(/regulated action/i);
+  });
+});
+
+describe("TracesPanel — amending and withdrawing a filed statement", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const availableSubmission = () =>
+    baseSubmission({
+      traces_status: "AVAILABLE",
+      traces_reference_number: "26FREQVKTA7K2V",
+      verification_number: "VER-1",
+      submitted_at: "2026-06-30T00:00:00Z",
+    });
+
+  it("offers both actions once TRACES holds the statement", async () => {
+    mockApi({ submission: availableSubmission() });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /^amend$/i })).toBeInTheDocument(),
+    );
+    expect(screen.getByRole("button", { name: /^withdraw$/i })).toBeInTheDocument();
+  });
+
+  it("offers neither while the statement is still awaiting TRACES", async () => {
+    // Both are refused server-side outside AVAILABLE; offering them anyway
+    // would trade a clear "not yet" for a rule id the officer cannot action.
+    mockApi({ submission: baseSubmission({ traces_status: "SUBMITTED" }) });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() =>
+      expect(screen.getByText(/waiting for traces to resolve/i)).toBeInTheDocument(),
+    );
+    expect(screen.queryByRole("button", { name: /^amend$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^withdraw$/i })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["withdraw", /withdraw this statement from traces/i],
+    ["amend", /amend this statement at traces/i],
+  ])("confirms before calling TRACES, then posts to the %s endpoint", async (action, heading) => {
+    const submission = availableSubmission();
+    mockApi({ submission });
+    const user = userEvent.setup();
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: new RegExp(`^${action}$`, "i") })).toBeInTheDocument(),
+    );
+    // Nothing is sent by opening the dialog — this is a regulated write.
+    await user.click(screen.getByRole("button", { name: new RegExp(`^${action}$`, "i") }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText(heading)).toBeInTheDocument();
+    expect(
+      mockAuthFetch.mock.calls.some(([u]) => (u as string).includes(`/${action}/`)),
+    ).toBe(false);
+
+    await user.click(within(dialog).getByRole("button", { name: new RegExp(`^${action}$`, "i") }));
+
+    await waitFor(() =>
+      expect(mockAuthFetch).toHaveBeenCalledWith(
+        `/api/v1/traces/submissions/sub-1/${action}/`,
+        { method: "POST" },
+      ),
+    );
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it("surfaces the regulator's refusal instead of reporting success", async () => {
+    // The 72-hour window is TRACES's to judge, so a refusal is an expected
+    // outcome of pressing the button — not an error state to swallow.
+    const submission = availableSubmission();
+    mockApi({ submission });
+    mockAuthFetch.mockImplementation((url: string, init?: RequestInit) => {
+      if (init?.method === "POST" && url.includes("/withdraw/")) {
+        return Promise.resolve(
+          jsonRes({ detail: "Only an AVAILABLE filing can be withdrawn by TRACES" }, 400),
+        );
+      }
+      if (url.includes("/auth/users/me/")) {
+        return Promise.resolve(jsonRes({ id: "u1", role: "ADMIN", organization_id: "org-1" }));
+      }
+      if (url.includes("/traces/credentials/")) return Promise.resolve(jsonRes({ results: [{ id: "c1" }] }));
+      if (url.includes("/traces/submissions/?dds_id")) {
+        return Promise.resolve(jsonRes({ results: [{ id: submission.id }] }));
+      }
+      if (url === `/api/v1/traces/submissions/${submission.id}/`) {
+        return Promise.resolve(jsonRes(submission));
+      }
+      return Promise.resolve(jsonRes({}));
+    });
+    const user = userEvent.setup();
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /^withdraw$/i })).toBeInTheDocument(),
+    );
+    await user.click(screen.getByRole("button", { name: /^withdraw$/i }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: /^withdraw$/i }));
+
+    await waitFor(() =>
+      expect(
+        within(dialog).getByText(/only an available filing can be withdrawn/i),
+      ).toBeInTheDocument(),
+    );
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+});
+
+describe("TracesPanel — what the officer is told to do about a failure", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("does not blame the lots for a fault about the operator's TRACES registration", async () => {
+    // The live 2026-09-03 rejection. The panel said "Fix the issue on the
+    // underlying batches/plots", and neither broken rule concerned a batch or
+    // a plot — so the advice sent someone hunting through their lots for a
+    // problem that was not there (eudr-app#202).
+    mockApi({
+      submission: baseSubmission({
+        status: "FAILED",
+        traces_status: "",
+        error_message: "Some business rules are not met",
+        error_detail: [
+          {
+            field: "EUDR-OPERATOR-EORI-FOR-ACTIVITY-MISSING",
+            message: "eudr.validation.error.operator.eori.for.activity.missing",
+          },
+        ],
+      }),
+    });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() =>
+      expect(screen.getByText(/registered with traces/i)).toBeInTheDocument(),
+    );
+    expect(screen.queryByText(/fix the issue on the underlying/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /settings/i })).toHaveAttribute("href", "/settings");
+  });
+
+  it("still points at the lots when the fault really is about the goods", async () => {
+    mockApi({
+      submission: baseSubmission({
+        status: "FAILED",
+        traces_status: "",
+        error_message: "Payload validation failed",
+        error_detail: [
+          {
+            field: "batch[BCH-2026-012].harvest_period",
+            message: "Lot is missing a harvest period.",
+          },
+        ],
+      }),
+    });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() =>
+      expect(screen.getByText(/fix the issue on the underlying lots or plots/i)).toBeInTheDocument(),
+    );
+  });
+
+  it("shows a failed poll instead of claiming the statement is still in flight", async () => {
+    // `poll.py._fail_business_rejection` sets `status=FAILED` and leaves
+    // `traces_status` at SUBMITTED, and the row stops being swept. Reading
+    // `traces_status` first made the panel say "waiting for TRACES to
+    // resolve…" forever for a submission nothing was still polling.
+    mockApi({
+      submission: baseSubmission({
+        status: "FAILED",
+        traces_status: "SUBMITTED",
+        error_message: "Unknown uuid",
+        error_detail: [{ field: "getDds", message: "Unknown uuid" }],
+      }),
+    });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() => expect(screen.getByText("Unknown uuid")).toBeInTheDocument());
+    expect(screen.queryByText(/waiting for traces to resolve/i)).not.toBeInTheDocument();
+  });
+
+  it("names a lifecycle status the schema allows but the UI had no entry for", async () => {
+    // `EudrStatusType` includes OBSOLETE. It used to render as nothing at all.
+    mockApi({ submission: baseSubmission({ traces_status: "OBSOLETE" }) });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    // Rendered in both the status badge and the timeline's final step.
+    await waitFor(() => expect(screen.getAllByText("Obsolete").length).toBeGreaterThan(0));
   });
 });
