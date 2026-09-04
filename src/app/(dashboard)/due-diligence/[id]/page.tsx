@@ -221,6 +221,23 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
               </Button>
             </>
           )}
+          {/* An APPROVED statement had no action but Submit — and if it could
+              never be filed (a blank activity type, say), Submit failed every
+              time. It cannot be edited, re-reviewed or withdrawn from here, so
+              there was no way forward and no way back. Sending it back to the
+              officer is the only exit, and it has to be visible to be usable.
+              Called what it does rather than "Reject": nobody is rejecting the
+              statement, they are returning it for correction. */}
+          {stmt.status === "APPROVED" && (
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={isPending}
+              onClick={() => actionMutation.mutate("reject")}
+            >
+              Send back for correction
+            </Button>
+          )}
           {stmt.status === "SUBMITTED" && !heldByTraces && (
             <Button
               size="sm"
