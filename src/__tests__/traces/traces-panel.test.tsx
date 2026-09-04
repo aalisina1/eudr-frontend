@@ -23,7 +23,10 @@ function baseSubmission(overrides: Partial<TracesSubmission>): TracesSubmission 
     submission_type: "CREATE",
     status: "SUBMITTED",
     traces_status: "SUBMITTED",
-    traces_uuid: "9f925115-2858-4370-9288-2f4c8605c0bb",
+    // Blank by default: a submission that failed before reaching TRACES has no
+    // uuid, and that is what separates a retryable transport failure from a
+    // filing that already exists. Tests that mean "this reached TRACES" set it.
+    traces_uuid: "",
     verification_number: "",
     traces_reference_number: "",
     error_message: "",
@@ -487,6 +490,7 @@ describe("TracesPanel — amending and withdrawing a filed statement", () => {
   const availableSubmission = () =>
     baseSubmission({
       traces_status: "AVAILABLE",
+      traces_uuid: "9f925115-2858-4370-9288-2f4c8605c0bb",
       traces_reference_number: "26FREQVKTA7K2V",
       verification_number: "VER-1",
       submitted_at: "2026-06-30T00:00:00Z",
@@ -694,6 +698,7 @@ describe("TracesPanel — a failed amendment or withdrawal", () => {
       submission_type: type,
       status: "FAILED",
       traces_status: "",
+      traces_uuid: "9f925115-2858-4370-9288-2f4c8605c0bb",
       traces_reference_number: "26FREQVKTA7K2V",
       verification_number: "VER-1",
       error_message: "Some business rules are not met",
@@ -791,6 +796,7 @@ describe("TracesPanel — a failed amendment or withdrawal", () => {
       submission_type: "UPDATE",
       status: "FAILED",
       traces_status: "",
+      traces_uuid: "9f925115-2858-4370-9288-2f4c8605c0bb",
       traces_reference_number: "26FREQVKTA7K2V",
       error_message: "Amendment failed earlier",
     });
@@ -873,5 +879,99 @@ describe("TracesPanel — a failed amendment or withdrawal", () => {
     // Otherwise the withdrawal dialog opens carrying an error about an
     // amendment — describing an action the reader did not take.
     expect(within(dialog).queryByText(/amendment window closed/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("TracesPanel — a filing that exists but whose status we could not read", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  /** `poll._fail_business_rejection` marks the row FAILED on a getDds SOAP
+   * fault while leaving `traces_uuid` in place, because the filing itself is
+   * fine. So a CREATE row can be FAILED *and* describe a live filing. */
+  const filedButUnread = () =>
+    baseSubmission({
+      submission_type: "CREATE",
+      status: "FAILED",
+      traces_status: "SUBMITTED",
+      traces_uuid: "9f925115-2858-4370-9288-2f4c8605c0bb",
+      traces_reference_number: "26FREQVKTA7K2V",
+      error_message: "Unknown uuid",
+    });
+
+  it("never offers to resubmit a CREATE that already reached TRACES", async () => {
+    // Keying on `submission_type` missed this case entirely: the row IS a
+    // CREATE, so "Resubmit to TRACES" was offered for a statement TRACES
+    // already holds — a second regulated declaration under a new reference
+    // number. `traces_uuid` is the question, not the row's type.
+    mockApi({ submission: filedButUnread() });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() =>
+      expect(screen.getByText(/what failed was checking its status/i)).toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByRole("button", { name: /resubmit to traces/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers to re-read the status instead, and says that is what it does", async () => {
+    // The backend re-polls this row rather than re-filing it. An officer told
+    // to "resubmit" a statement TRACES already holds would reasonably expect
+    // a second filing.
+    mockApi({ submission: filedButUnread() });
+    const user = userEvent.setup();
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    const button = await screen.findByRole("button", { name: /check status at traces/i });
+    expect(screen.getByText("26FREQVKTA7K2V")).toBeInTheDocument();
+    await user.click(button);
+
+    await waitFor(() =>
+      expect(mockAuthFetch).toHaveBeenCalledWith(
+        "/api/v1/traces/submissions/sub-1/retry/",
+        { method: "POST" },
+      ),
+    );
+  });
+
+  it("does not claim a statement is unsubmitted when the lookup itself failed", async () => {
+    // A flat "Not submitted to TRACES." on a failed request is a claim about a
+    // regulated filing, made most often for exactly the statements that are
+    // filed. The page header already hides its withdraw control in this case.
+    mockAuthFetch.mockImplementation((url: string) => {
+      if (url.includes("/auth/users/me/")) {
+        return Promise.resolve(jsonRes({ id: "u1", role: "ADMIN", organization_id: "org-1" }));
+      }
+      if (url.includes("/traces/submissions/?dds_id")) {
+        return Promise.resolve(jsonRes({ detail: "Forbidden" }, 403));
+      }
+      return Promise.resolve(jsonRes({}));
+    });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() =>
+      expect(screen.getByText(/could not load this statement/i)).toBeInTheDocument(),
+    );
+    expect(screen.queryByText(/not submitted to traces/i)).not.toBeInTheDocument();
+  });
+
+  it("does not point at a message TRACES never sent", async () => {
+    // `ErrorDetail` says "failed before TRACES could process it" for this row.
+    // "Resolve the problem TRACES names above" then sends the officer looking
+    // for something that is not there.
+    mockApi({
+      submission: baseSubmission({
+        status: "FAILED",
+        traces_status: "",
+        error_message: "",
+        error_detail: [],
+      }),
+    });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="APPROVED" />);
+
+    await waitFor(() =>
+      expect(screen.getByText(/no detail was recorded for this failure/i)).toBeInTheDocument(),
+    );
+    expect(screen.queryByText(/problem traces names above/i)).not.toBeInTheDocument();
   });
 });

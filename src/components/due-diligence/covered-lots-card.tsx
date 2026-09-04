@@ -199,13 +199,27 @@ function LotBlock({ lot }: { lot: CoveredLot }) {
   );
 }
 
-function Blockers({ blockers }: { blockers: FilingBlocker[] }) {
+/** `filing_blockers` is a live dry-run over the batch data as it stands now,
+ * not a record of what was true when the statement was filed. So an
+ * already-filed statement whose plots were later excluded, or whose harvest
+ * period was cleared, starts reporting blockers — and "must be fixed before
+ * this can be filed" is then simply false, printed beside a verification
+ * number the regulator issued. The problems are still worth showing; the
+ * claim about them has to change. */
+function Blockers({
+  blockers,
+  alreadyFiled,
+}: {
+  blockers: FilingBlocker[];
+  alreadyFiled: boolean;
+}) {
   return (
     <div className="mb-4 rounded-xl border border-destructive/15 bg-destructive/8 px-4 py-3">
       <p className="flex items-center gap-1.5 text-[13px] font-medium text-destructive">
         <AlertTriangle className="size-3.5" />
-        {blockers.length} thing{blockers.length === 1 ? "" : "s"} must be fixed
-        before this can be filed
+        {alreadyFiled
+          ? `${blockers.length} thing${blockers.length === 1 ? "" : "s"} would block re-filing this statement today`
+          : `${blockers.length} thing${blockers.length === 1 ? "" : "s"} must be fixed before this can be filed`}
       </p>
       <ul className="mt-2 space-y-1.5">
         {blockers.map((blocker, i) => (
@@ -232,9 +246,14 @@ function Blockers({ blockers }: { blockers: FilingBlocker[] }) {
 export function CoveredLotsCard({
   lots,
   blockers,
+  alreadyFiled = false,
 }: {
   lots: CoveredLot[] | undefined;
   blockers: FilingBlocker[] | undefined;
+  /** True once the statement has been filed with TRACES. `filing_blockers` is
+   * a live dry-run, so past that point it describes what would block a
+   * re-filing, not what is stopping this one. */
+  alreadyFiled?: boolean;
 }) {
   const rows = lots ?? [];
   // `undefined` means the field was not sent — the list serializer omits it,
@@ -267,7 +286,9 @@ export function CoveredLotsCard({
         )}
       </div>
 
-      {blockers && blockers.length > 0 && <Blockers blockers={blockers} />}
+      {blockers && blockers.length > 0 && (
+        <Blockers blockers={blockers} alreadyFiled={alreadyFiled} />
+      )}
 
       {notLoaded ? (
         <p className="text-[12.5px] text-muted-foreground">

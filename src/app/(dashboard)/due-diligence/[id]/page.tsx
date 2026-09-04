@@ -252,7 +252,11 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
         <div className="flex flex-col gap-5 min-w-0">
           {/* What the statement declares comes first. Everything below it —
               the metadata, the risk assessments — is *about* this. */}
-          <CoveredLotsCard lots={stmt.covered_lots} blockers={stmt.filing_blockers} />
+          <CoveredLotsCard
+            lots={stmt.covered_lots}
+            blockers={stmt.filing_blockers}
+            alreadyFiled={stmt.status === "SUBMITTED" || stmt.status === "WITHDRAWN"}
+          />
 
           <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
             <h2 className="text-base font-medium mb-4">Statement details</h2>

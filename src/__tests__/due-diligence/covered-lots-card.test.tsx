@@ -198,3 +198,36 @@ describe("CoveredLotsCard", () => {
     expect(screen.getByText(/what this statement covers/i)).toBeInTheDocument();
   });
 });
+
+describe("CoveredLotsCard — blockers on a statement that is already filed", () => {
+  it("does not claim a filed statement cannot be filed", () => {
+    // `filing_blockers` is a live dry-run over current batch data, not a
+    // record of what was true at filing time. So an AVAILABLE statement whose
+    // plots were later excluded started reporting "must be fixed before this
+    // can be filed" — printed beside a verification number the regulator
+    // issued. The problems are still worth showing; the claim is what changes.
+    render(
+      <CoveredLotsCard
+        lots={[lot()]}
+        blockers={[{ field: "batch[X].harvest_period", message: "missing" }]}
+        alreadyFiled
+      />,
+    );
+
+    expect(screen.getByText(/would block re-filing this statement today/i)).toBeInTheDocument();
+    expect(screen.queryByText(/before this can be filed/i)).not.toBeInTheDocument();
+    // The blocker itself must still be listed either way.
+    expect(screen.getByText("batch[X].harvest_period")).toBeInTheDocument();
+  });
+
+  it("still says what it means for a statement that has not been filed", () => {
+    render(
+      <CoveredLotsCard
+        lots={[lot()]}
+        blockers={[{ field: "batch[X].harvest_period", message: "missing" }]}
+      />,
+    );
+
+    expect(screen.getByText(/must be fixed before this can be filed/i)).toBeInTheDocument();
+  });
+});

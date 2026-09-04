@@ -10,6 +10,7 @@ import {
   FileText,
   Loader2,
   PenLine,
+  RefreshCw,
   Send,
   Undo2,
   XCircle,
@@ -238,6 +239,22 @@ function RemediationHint({ submission }: { submission: TracesSubmission }) {
       </p>
     );
   }
+  if (haystack.trim() === "") {
+    // `ErrorDetail` renders "The submission failed before TRACES could process
+    // it." for this row. Telling the officer to resolve the problem TRACES
+    // named, when TRACES named nothing and may never have seen the statement,
+    // sends them looking for a message that does not exist.
+    return (
+      <p className="text-xs text-muted-foreground">
+        No detail was recorded for this failure. Retry it, and if it fails again
+        check the TRACES connection in{" "}
+        <Link href="/settings" className="text-primary hover:underline">
+          Settings
+        </Link>
+        .
+      </p>
+    );
+  }
   return (
     <p className="text-xs text-muted-foreground">
       Resolve the problem TRACES names above, then resubmit. If it names a rule
@@ -373,7 +390,7 @@ export function TracesPanel({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [modifyOpen, setModifyOpen] = useState<"amend" | "withdraw" | null>(null);
 
-  const { data: submission, isLoading } = useLatestTracesSubmission(ddsId);
+  const { data: submission, isLoading, isError } = useLatestTracesSubmission(ddsId);
 
   const { data: currentUser } = useCurrentUser();
   const isAdmin = currentUser?.role === "ADMIN";
@@ -400,6 +417,9 @@ export function TracesPanel({
       // TRACES-side REJECTED — that row was already consumed by TRACES) is
       // a new CREATE.
       const retryTarget = display === "failed" && sub ? sub.id : null;
+      // For a CREATE row that already reached TRACES the backend re-polls
+      // rather than re-files, which is why "Check status at TRACES" routes
+      // here too.
       // The backend re-runs the row's OWN operation, so a retry here is never
       // a disguised CREATE. The button that offers it is gated separately
       // (`canResubmit`) — a failed amendment is retried through the amend
@@ -472,19 +492,21 @@ export function TracesPanel({
 
   const style = STATUS_META[display];
   const pending = isPending(sub);
-  // A failed CREATE can be resubmitted. A failed amendment or withdrawal
-  // cannot: the statement is still filed, and the row it would re-queue is an
-  // UPDATE/WITHDRAW. Offering "Resubmit to TRACES" there sent officers at the
-  // one action that must not happen — before the backend was hardened it
-  // filed a duplicate declaration.
-  const isModification = !!sub && sub.submission_type !== "CREATE";
+  // `traces_uuid` is the question, not `submission_type`. A row carrying one
+  // describes a filing TRACES already has — whether it is a failed amendment,
+  // or a CREATE that filed successfully and then failed on a *poll*
+  // (`poll._fail_business_rejection` leaves the uuid in place, because the
+  // filing itself is fine). Offering "Resubmit to TRACES" in either case
+  // points at the one action that must not happen: a second regulated
+  // declaration under a new reference number. Keying on the row's type missed
+  // the second case entirely.
+  const reachedTraces = !!sub?.traces_uuid;
   const canResubmit =
-    !sub || ((display === "rejected" || display === "failed") && !isModification);
-  // A failed modification leaves the ORIGINAL filing untouched at TRACES. The
-  // panel showed "Failed" with no reference number and no way to act on the
-  // statement that still exists, so the amendment could not even be retried.
-  const filingSurvives =
-    isModification && (display === "failed" || display === "rejected");
+    !sub || ((display === "rejected" || display === "failed") && !reachedTraces);
+  // A failed call leaves the filing itself untouched at TRACES. The panel
+  // showed "Failed" with no reference number and no way to act on the
+  // statement that still exists, so it could not even be retried.
+  const filingSurvives = display === "failed" && reachedTraces;
   // The "must be Approved" gate mirrors the backend's submit-time check
   // (#50) for a *fresh* submission only. Remediation after a TRACES
   // rejection/failure is keyed on the submission's own `traces_status` +
@@ -520,6 +542,16 @@ export function TracesPanel({
 
       {isLoading ? (
         <Skeleton className="h-10 w-full rounded-lg" />
+      ) : isError ? (
+        // Never "Not submitted to TRACES." on a failed lookup. That is a flat
+        // claim about a regulated filing, and it would be made most often for
+        // exactly the statements that are filed. The page header hides its own
+        // withdraw control in the same case; this is the other half.
+        <p className="flex items-start gap-2 text-sm text-muted-foreground">
+          <AlertTriangle className="size-4 mt-0.5 shrink-0" />
+          Could not load this statement&rsquo;s TRACES status. It may still be
+          filed — reload before acting on it.
+        </p>
       ) : display === "available" ? (
         <div className="space-y-3">
           <div className="flex flex-wrap gap-6">
@@ -557,15 +589,33 @@ export function TracesPanel({
           {filingSurvives && (
             <div className="space-y-3 rounded-xl border border-border/40 bg-secondary/25 px-4 py-3">
               <p className="text-xs text-muted-foreground">
-                The{" "}
-                {sub!.submission_type === "WITHDRAW" ? "withdrawal" : "amendment"}{" "}
-                failed. The statement is still filed with TRACES.
+                {sub!.submission_type === "CREATE"
+                  ? "The statement is filed with TRACES — what failed was checking its status."
+                  : `The ${
+                      sub!.submission_type === "WITHDRAW" ? "withdrawal" : "amendment"
+                    } failed. The statement is still filed with TRACES.`}
               </p>
               <div className="flex flex-wrap gap-6">
                 <CopyChip label="Reference Number" value={sub!.traces_reference_number} />
                 <CopyChip label="Verification Number" value={sub!.verification_number} />
               </div>
               <div className="flex flex-wrap gap-2">
+                {sub!.submission_type === "CREATE" && (
+                  // Retry re-polls a CREATE row that already reached TRACES,
+                  // rather than re-filing it. Labelled for what it does: an
+                  // officer told to "resubmit" a statement TRACES already
+                  // holds would reasonably expect a second filing.
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="gap-1.5"
+                    disabled={submitMutation.isPending}
+                    onClick={() => submitMutation.mutate()}
+                  >
+                    <RefreshCw className="size-3.5" />
+                    Check status at TRACES
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="secondary"
