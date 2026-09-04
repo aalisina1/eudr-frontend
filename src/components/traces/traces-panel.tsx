@@ -64,6 +64,21 @@ const STATUS_META: Record<
   obsolete: { label: "Obsolete", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
 };
 
+/** Body copy for every lifecycle state TRACES can report and the officer
+ * cannot act on. Keyed exhaustively so a status added to the badge and the
+ * timeline cannot quietly fall through to "Not submitted to TRACES." — which
+ * is what happened when SUSPENDED, UPDATED and OBSOLETE were added: the badge
+ * said "Suspended", the timeline showed a completed step, and the body said
+ * the statement had never been submitted. */
+const SETTLED_COPY: Partial<Record<DisplayKey, string>> = {
+  withdrawn: "This DDS was withdrawn from TRACES.",
+  grouped: "This DDS is grouped under another submission.",
+  archived: "This DDS is archived in TRACES.",
+  suspended: "TRACES has suspended this DDS.",
+  updated: "This DDS was superseded by an updated version in TRACES.",
+  obsolete: "TRACES marks this DDS obsolete.",
+};
+
 /** "a domestic activity" but "an import activity".
  *
  * The activity is never invented here. This dialog is the last thing an officer
@@ -420,6 +435,11 @@ export function TracesPanel({
 
   /** Amend and withdraw both address one existing filing by its TRACES uuid,
    * and both are refused by the backend unless that filing is AVAILABLE. */
+  // `pk` names the statement; the backend resolves which filing to act on
+  // (`authoritative_filing`). That matters here: after a failed amendment the
+  // latest row is that FAILED UPDATE, and the client cannot identify the live
+  // AVAILABLE filing itself — the submissions list serializer carries no
+  // `traces_status`, so it would take a detail fetch per row.
   const modifyMutation = useMutation({
     mutationFn: async (action: "amend" | "withdraw") => {
       const res = await authFetch(
@@ -439,6 +459,16 @@ export function TracesPanel({
     },
     onError: (err) => toast.error(getErrorMessage(err)),
   });
+
+  /** Open the confirm dialog for one action, clearing whatever the previous
+   * one left behind. Cancel is a plain button rather than a `DialogClose`, so
+   * it never fires `onOpenChange` — without this, an amendment's error greeted
+   * whoever opened the withdraw dialog next, describing an action they had not
+   * taken. Every entry point goes through here for that reason. */
+  function openModify(action: "amend" | "withdraw") {
+    modifyMutation.reset();
+    setModifyOpen(action);
+  }
 
   const style = STATUS_META[display];
   const pending = isPending(sub);
@@ -504,10 +534,7 @@ export function TracesPanel({
               size="sm"
               variant="secondary"
               className="gap-1.5"
-              onClick={() => {
-                modifyMutation.reset();
-                setModifyOpen("amend");
-              }}
+              onClick={() => openModify("amend")}
             >
               <PenLine className="size-3.5" />
               Amend
@@ -516,10 +543,7 @@ export function TracesPanel({
               size="sm"
               variant="ghost"
               className="gap-1.5 text-destructive hover:text-destructive"
-              onClick={() => {
-                modifyMutation.reset();
-                setModifyOpen("withdraw");
-              }}
+              onClick={() => openModify("withdraw")}
             >
               <Undo2 className="size-3.5" />
               Withdraw
@@ -546,7 +570,7 @@ export function TracesPanel({
                   size="sm"
                   variant="secondary"
                   className="gap-1.5"
-                  onClick={() => setModifyOpen("amend")}
+                  onClick={() => openModify("amend")}
                 >
                   <PenLine className="size-3.5" />
                   Amend
@@ -555,7 +579,7 @@ export function TracesPanel({
                   size="sm"
                   variant="ghost"
                   className="gap-1.5 text-destructive hover:text-destructive"
-                  onClick={() => setModifyOpen("withdraw")}
+                  onClick={() => openModify("withdraw")}
                 >
                   <Undo2 className="size-3.5" />
                   Withdraw
@@ -569,13 +593,9 @@ export function TracesPanel({
           <Loader2 className="size-4 animate-spin" />
           {display === "submitting" ? "Submitting to TRACES…" : "Submitted — waiting for TRACES to resolve…"}
         </p>
-      ) : display === "withdrawn" || display === "grouped" || display === "archived" ? (
+      ) : SETTLED_COPY[display] ? (
         <p className="text-sm text-muted-foreground">
-          {display === "withdrawn"
-            ? "This DDS was withdrawn from TRACES."
-            : display === "grouped"
-              ? "This DDS is grouped under another submission."
-              : "This DDS is archived in TRACES."}
+          {SETTLED_COPY[display]}
           {sub!.traces_reference_number && (
             <span className="ml-1 font-mono">({sub!.traces_reference_number})</span>
           )}
@@ -667,7 +687,14 @@ export function TracesPanel({
             <p className="text-sm text-destructive">{modifyMutation.error.message}</p>
           )}
           <DialogFooter>
-            <Button variant="ghost" size="sm" onClick={() => setModifyOpen(null)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setModifyOpen(null);
+                modifyMutation.reset();
+              }}
+            >
               Cancel
             </Button>
             <Button

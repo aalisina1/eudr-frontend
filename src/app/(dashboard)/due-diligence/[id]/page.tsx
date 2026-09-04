@@ -92,6 +92,14 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
   // "Held" excludes every status TRACES has finished with, matching the
   // backend's own list — a REJECTED filing is not held, and treating it as
   // such left it with no withdrawal route at all.
+  //
+  // Known limitation: this reads the latest row only, while the backend scans
+  // every row for the statement. So a newer settled row (a rejected
+  // amendment, say) can leave this button visible over an older AVAILABLE
+  // filing. It is the safe direction — the backend refuses with a 409 naming
+  // the filing to withdraw at TRACES, which this page renders — and closing
+  // it properly means the API telling the client whether a live filing
+  // exists, rather than the client inferring it from one row.
   const settledAtTraces = ["REJECTED", "WITHDRAWN", "ARCHIVED", "OBSOLETE"];
   const heldByTraces =
     submissionLoading ||

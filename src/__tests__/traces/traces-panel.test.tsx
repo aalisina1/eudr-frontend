@@ -658,14 +658,32 @@ describe("TracesPanel — what the officer is told to do about a failure", () =>
     expect(screen.queryByText(/waiting for traces to resolve/i)).not.toBeInTheDocument();
   });
 
-  it("names a lifecycle status the schema allows but the UI had no entry for", async () => {
-    // `EudrStatusType` includes OBSOLETE. It used to render as nothing at all.
-    mockApi({ submission: baseSubmission({ traces_status: "OBSOLETE" }) });
-    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+  it.each([
+    ["OBSOLETE", "Obsolete", /marks this dds obsolete/i],
+    ["SUSPENDED", "Suspended", /has suspended this dds/i],
+    ["UPDATED", "Updated", /superseded by an updated version/i],
+  ])(
+    "names %s in the badge AND says what it means in the body",
+    async (tracesStatus, badge, body) => {
+      // These were added to the badge and timeline maps but not to the body's
+      // render chain, so they fell through to "Not submitted to TRACES." — a
+      // card showing a "Suspended" badge, a completed timeline step, and copy
+      // saying the statement had never been submitted. Asserting only that the
+      // label appears somewhere (as the first version of this test did) passes
+      // straight through that contradiction.
+      mockApi({
+        submission: baseSubmission({
+          traces_status: tracesStatus as never,
+          traces_reference_number: "26FREQVKTA7K2V",
+        }),
+      });
+      renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
 
-    // Rendered in both the status badge and the timeline's final step.
-    await waitFor(() => expect(screen.getAllByText("Obsolete").length).toBeGreaterThan(0));
-  });
+      await waitFor(() => expect(screen.getByText(body)).toBeInTheDocument());
+      expect(screen.getAllByText(badge).length).toBeGreaterThan(0);
+      expect(screen.queryByText(/not submitted to traces/i)).not.toBeInTheDocument();
+    },
+  );
 });
 
 describe("TracesPanel — a failed amendment or withdrawal", () => {
@@ -736,6 +754,80 @@ describe("TracesPanel — a failed amendment or withdrawal", () => {
     expect(screen.getByText("26FREQVKTA7K2V")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^amend$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^withdraw$/i })).toBeInTheDocument();
+  });
+
+  it("retries the amendment against the statement, not the failed row's state", async () => {
+    // The endpoint takes a submission id but resolves the live filing from its
+    // statement — which is what makes retrying from a FAILED UPDATE row work
+    // at all. The client cannot pick the right row: the submissions list
+    // serializer carries no `traces_status`.
+    const submission = failedModification("UPDATE");
+    mockApi({ submission });
+    const user = userEvent.setup();
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /^amend$/i })).toBeInTheDocument(),
+    );
+    await user.click(screen.getByRole("button", { name: /^amend$/i }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: /^amend$/i }));
+
+    await waitFor(() =>
+      expect(mockAuthFetch).toHaveBeenCalledWith(
+        `/api/v1/traces/submissions/${submission.id}/amend/`,
+        { method: "POST" },
+      ),
+    );
+  });
+
+  it("does not carry an error between actions on a failed modification either", async () => {
+    // The first version of this fix only reset on the AVAILABLE branch's
+    // buttons. Cancel is a plain button, not a `DialogClose`, so it never
+    // fires `onOpenChange` — and the surviving-filing branch is exactly where
+    // an officer lands after a failure, so it is where a stale error is most
+    // likely and most confusing.
+    const submission = baseSubmission({
+      submission_type: "UPDATE",
+      status: "FAILED",
+      traces_status: "",
+      traces_reference_number: "26FREQVKTA7K2V",
+      error_message: "Amendment failed earlier",
+    });
+    mockApi({ submission });
+    mockAuthFetch.mockImplementation((url: string, init?: RequestInit) => {
+      if (init?.method === "POST" && url.includes("/amend/")) {
+        return Promise.resolve(jsonRes({ detail: "Amendment window closed" }, 400));
+      }
+      if (url.includes("/auth/users/me/")) {
+        return Promise.resolve(jsonRes({ id: "u1", role: "ADMIN", organization_id: "org-1" }));
+      }
+      if (url.includes("/traces/credentials/")) return Promise.resolve(jsonRes({ results: [{ id: "c1" }] }));
+      if (url.includes("/traces/submissions/?dds_id")) {
+        return Promise.resolve(jsonRes({ results: [{ id: submission.id }] }));
+      }
+      if (url === `/api/v1/traces/submissions/${submission.id}/`) {
+        return Promise.resolve(jsonRes(submission));
+      }
+      return Promise.resolve(jsonRes({}));
+    });
+    const user = userEvent.setup();
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /^amend$/i })).toBeInTheDocument(),
+    );
+    await user.click(screen.getByRole("button", { name: /^amend$/i }));
+    let dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: /^amend$/i }));
+    await waitFor(() =>
+      expect(within(dialog).getByText(/amendment window closed/i)).toBeInTheDocument(),
+    );
+    await user.click(within(dialog).getByRole("button", { name: /cancel/i }));
+
+    await user.click(screen.getByRole("button", { name: /^withdraw$/i }));
+    dialog = await screen.findByRole("dialog");
+    expect(within(dialog).queryByText(/amendment window closed/i)).not.toBeInTheDocument();
   });
 
   it("does not show one action's error under the other", async () => {
