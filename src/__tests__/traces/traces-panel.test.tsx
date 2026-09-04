@@ -975,3 +975,134 @@ describe("TracesPanel — a filing that exists but whose status we could not rea
     expect(screen.queryByText(/problem traces names above/i)).not.toBeInTheDocument();
   });
 });
+
+describe("TracesPanel — states the last review round found unactionable", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("keeps a remediation route on a REJECTED filing", async () => {
+    // Keying resubmit off `traces_uuid` removed every action from a rejection:
+    // a REJECTED row necessarily HAS a uuid — that is what getDds polled with
+    // — so the panel showed a hint reading "then resubmit" above no button at
+    // all. TRACES has finished with a rejected filing, so re-filing is not a
+    // duplicate, and the backend has a matching carve-out.
+    mockApi({
+      submission: baseSubmission({
+        traces_status: "REJECTED",
+        traces_uuid: "9f925115-2858-4370-9288-2f4c8605c0bb",
+        error_detail: [{ field: "EUDR-X", message: "rule broken" }],
+      }),
+    });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /resubmit to traces/i })).toBeEnabled(),
+    );
+  });
+
+  it("offers only the action that can succeed on a filed-but-unread CREATE", async () => {
+    // Amend and withdraw need an AVAILABLE filing, and the status of this one
+    // is exactly what we failed to read — so offering them would be two
+    // guaranteed refusals beside the one action that works.
+    mockApi({
+      submission: baseSubmission({
+        submission_type: "CREATE",
+        status: "FAILED",
+        traces_status: "SUBMITTED",
+        traces_uuid: "9f925115-2858-4370-9288-2f4c8605c0bb",
+      }),
+    });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /check status at traces/i })).toBeInTheDocument(),
+    );
+    expect(screen.queryByRole("button", { name: /^amend$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^withdraw$/i })).not.toBeInTheDocument();
+  });
+
+  it("does not invite the officer to copy an identifier that does not exist", async () => {
+    // A CREATE that fails on its FIRST poll has neither number — only
+    // `perform_poll` ever sets them.
+    mockApi({
+      submission: baseSubmission({
+        submission_type: "CREATE",
+        status: "FAILED",
+        traces_status: "SUBMITTED",
+        traces_uuid: "9f925115-2858-4370-9288-2f4c8605c0bb",
+        traces_reference_number: "",
+        verification_number: "",
+      }),
+    });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() =>
+      expect(screen.getByText(/what failed was checking its status/i)).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("Reference Number")).not.toBeInTheDocument();
+    expect(screen.queryByText("Verification Number")).not.toBeInTheDocument();
+  });
+
+  it("does not show a pending withdrawal as an available filing", async () => {
+    // `withdrawDds` can answer with the filing's current status, and the poll
+    // reads the same uuid — so the row carries AVAILABLE. Rendering it
+    // directly said "Available" and offered a fresh 72-hour amendment window,
+    // measured off the withdrawal's own timestamp, to someone who had just
+    // withdrawn the statement.
+    mockApi({
+      submission: baseSubmission({
+        submission_type: "WITHDRAW",
+        status: "SUBMITTED",
+        traces_status: "AVAILABLE",
+        traces_uuid: "9f925115-2858-4370-9288-2f4c8605c0bb",
+        traces_reference_number: "26FREQVKTA7K2V",
+        submitted_at: "2026-06-30T00:00:00Z",
+      }),
+    });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() =>
+      expect(screen.getByText(/waiting for traces to retract/i)).toBeInTheDocument(),
+    );
+    expect(screen.queryByText(/amendment window/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^amend$/i })).not.toBeInTheDocument();
+  });
+
+  it("says the status is unknown, not that nothing was submitted, when the lookup fails", async () => {
+    // Previously the copy said one thing while the badge said "Not submitted"
+    // and the timeline said "Not yet submitted" — and the Submit button was
+    // still rendered, disabled under a reason that was not the real one.
+    mockAuthFetch.mockImplementation((url: string) => {
+      if (url.includes("/auth/users/me/")) {
+        return Promise.resolve(jsonRes({ id: "u1", role: "ADMIN", organization_id: "org-1" }));
+      }
+      if (url.includes("/traces/submissions/?dds_id")) {
+        return Promise.resolve(jsonRes({ detail: "Server error" }, 500));
+      }
+      return Promise.resolve(jsonRes({}));
+    });
+    renderWithProviders(
+      <TracesPanel ddsId="dds-1" ddsStatus="APPROVED" ddsCreatedAt="2026-06-01T00:00:00Z" />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("Status unknown")).toBeInTheDocument(),
+    );
+    // The timeline's TRACES step must not assert a filing state either.
+    expect(screen.getByText("Could not be read")).toBeInTheDocument();
+    expect(screen.queryByText("Not yet submitted")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /submit to traces/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("describes an in-flight amendment as an amendment", async () => {
+    mockApi({
+      submission: baseSubmission({ submission_type: "UPDATE", status: "QUEUED" }),
+    });
+    renderWithProviders(<TracesPanel ddsId="dds-1" ddsStatus="SUBMITTED" />);
+
+    await waitFor(() =>
+      expect(screen.getByText(/sending the amendment to traces/i)).toBeInTheDocument(),
+    );
+  });
+});

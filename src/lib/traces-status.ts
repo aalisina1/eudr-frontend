@@ -35,7 +35,8 @@ export type TracesDisplayKey =
   | "archived"
   | "suspended"
   | "updated"
-  | "obsolete";
+  | "obsolete"
+  | "withdrawing";
 
 /** Every `EudrStatusType` the backend can store maps to a display state. A
  * status with no entry derived to `null`, and the list then fell back to
@@ -88,6 +89,7 @@ export const TRACES_DISPLAY_STYLE: Record<
   suspended: { bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", label: "Suspended", icon: AlertTriangle },
   updated: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Updated", icon: FileText },
   obsolete: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Obsolete", icon: FileText },
+  withdrawing: { bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", label: "Withdrawing", icon: Loader2, spin: true },
 };
 
 /**
@@ -100,7 +102,11 @@ export const TRACES_DISPLAY_STYLE: Record<
  * for why the regulator-side states below require a follow-up detail fetch.
  */
 export function deriveTracesDisplay(
-  sub: Pick<TracesSubmission, "status"> & Partial<Pick<TracesSubmission, "traces_status">> | null | undefined,
+  sub:
+    | (Pick<TracesSubmission, "status"> &
+        Partial<Pick<TracesSubmission, "traces_status" | "submission_type">>)
+    | null
+    | undefined,
 ): TracesDisplayKey | null {
   if (!sub) return null;
   // Our own pipeline failing is checked BEFORE the regulator's last known
@@ -111,5 +117,18 @@ export function deriveTracesDisplay(
   // It also keeps a FAILED amendment from reading as "Available".
   if (sub.status === "FAILED") return "failed";
   if (isInFlight(sub.status)) return "submitting";
+
+  // A withdrawal row's `traces_status` is the FILING's status, not the
+  // withdrawal's outcome — `withdrawDds` can answer with the filing's current
+  // state, and the poll reads the same uuid. Rendering it directly showed
+  // "Available", with a fresh 72-hour amendment window measured off the
+  // withdrawal's own `submitted_at`, immediately after someone withdrew the
+  // statement. The backend excludes these rows from `authoritative_filing` for
+  // the same reason: a withdrawal request is not a filing.
+  if (sub.submission_type === "WITHDRAW" && sub.traces_status !== "WITHDRAWN") {
+    return TRACES_STATUS_KEYS[sub.traces_status ?? ""] === "rejected"
+      ? "rejected"
+      : "withdrawing";
+  }
   return TRACES_STATUS_KEYS[sub.traces_status ?? ""] ?? null;
 }

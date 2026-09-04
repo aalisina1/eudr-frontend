@@ -32,7 +32,12 @@ import { getErrorMessage } from "@/lib/api/errors";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useLatestTracesSubmission } from "@/hooks/use-latest-traces-submission";
 import { deriveTracesDisplay, type TracesDisplayKey } from "@/lib/traces-status";
-import type { DDSStatus, TracesErrorDetail, TracesSubmission } from "@/lib/api/types";
+import type {
+  DDSStatus,
+  SubmissionType,
+  TracesErrorDetail,
+  TracesSubmission,
+} from "@/lib/api/types";
 
 /**
  * Local, derived display state for the panel — collapses the internal
@@ -45,15 +50,20 @@ import type { DDSStatus, TracesErrorDetail, TracesSubmission } from "@/lib/api/t
  * submission at all. Everything else is `TracesDisplayKey`, derived by the
  * shared `deriveTracesDisplay` so the two surfaces cannot disagree about the
  * same row again. */
-type DisplayKey = TracesDisplayKey | "not_submitted";
+type DisplayKey = TracesDisplayKey | "not_submitted" | "unknown";
 
 const STATUS_META: Record<
   DisplayKey,
   { label: string; bg: string; text: string; dot: string; pending?: boolean }
 > = {
   not_submitted: { label: "Not submitted", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
+  // The lookup failed, so we do not know. Saying "Not submitted" here is a
+  // claim about a regulated filing, and it would be made most often for
+  // exactly the statements that are filed.
+  unknown: { label: "Status unknown", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
   submitting: { label: "Submitting…", bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", pending: true },
   submitted: { label: "Submitted", bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", pending: true },
+  withdrawing: { label: "Withdrawing", bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", pending: true },
   available: { label: "Available", bg: "bg-[#34D399]/10", text: "text-[#1B7A5A]", dot: "bg-[#34D399]" },
   rejected: { label: "Rejected", bg: "bg-destructive/10", text: "text-destructive", dot: "bg-destructive" },
   failed: { label: "Failed", bg: "bg-destructive/10", text: "text-destructive", dot: "bg-destructive" },
@@ -71,6 +81,14 @@ const STATUS_META: Record<
  * is what happened when SUSPENDED, UPDATED and OBSOLETE were added: the badge
  * said "Suspended", the timeline showed a completed step, and the body said
  * the statement had never been submitted. */
+/** What is actually being sent. "Submitting to TRACES…" described an
+ * amendment or a withdrawal as a first filing. */
+const IN_FLIGHT_COPY: Record<SubmissionType, string> = {
+  CREATE: "Submitting to TRACES…",
+  UPDATE: "Sending the amendment to TRACES…",
+  WITHDRAW: "Sending the withdrawal to TRACES…",
+};
+
 const SETTLED_COPY: Partial<Record<DisplayKey, string>> = {
   withdrawn: "This DDS was withdrawn from TRACES.",
   grouped: "This DDS is grouped under another submission.",
@@ -328,6 +346,12 @@ function buildTimeline(
     { title: "Drafted", meta: ddsCreatedAt ? fmt(ddsCreatedAt) : "Locally, not yet submitted", icon: FileText, state: "done" },
   ];
 
+  if (display === "unknown") {
+    // Not "Not yet submitted" — that is the claim we cannot make.
+    steps.push({ title: "Submitted to TRACES", meta: "Could not be read", icon: AlertTriangle, state: "error" });
+    return steps;
+  }
+
   if (!submission) {
     steps.push({ title: "Submitted to TRACES", meta: "Not yet submitted", icon: Send, state: "pending" });
     return steps;
@@ -405,7 +429,7 @@ export function TracesPanel({
   });
 
   const sub = submission ?? null;
-  const display = deriveDisplay(sub);
+  const display: DisplayKey = isError ? "unknown" : deriveDisplay(sub);
 
   const submitMutation = useMutation({
     mutationFn: async () => {
@@ -446,7 +470,12 @@ export function TracesPanel({
     },
     onSuccess: () => {
       setConfirmOpen(false);
-      toast.success("Submitted to TRACES");
+      toast.success(
+        // The same mutation serves three actions: a first filing, a retry of
+        // one, and — for a row that already reached TRACES — a re-poll that
+        // files nothing at all.
+        reachedTraces ? "Checking status with TRACES" : "Submitted to TRACES",
+      );
       queryClient.invalidateQueries({ queryKey: ["traces-submission", ddsId] });
       queryClient.invalidateQueries({ queryKey: ["dds", ddsId] });
     },
@@ -501,12 +530,27 @@ export function TracesPanel({
   // declaration under a new reference number. Keying on the row's type missed
   // the second case entirely.
   const reachedTraces = !!sub?.traces_uuid;
+  // REJECTED is its own case, and keying it off `reachedTraces` removed every
+  // action from it: a rejected row necessarily HAS a uuid — that is what
+  // getDds polled with — so the statement was left with a hint reading "then
+  // resubmit" above no button at all. TRACES has finished with a rejected
+  // filing, so re-filing is not a duplicate; the backend has a matching
+  // carve-out for exactly this.
   const canResubmit =
-    !sub || ((display === "rejected" || display === "failed") && !reachedTraces);
+    display !== "unknown" &&
+    (!sub || display === "rejected" || (display === "failed" && !reachedTraces));
   // A failed call leaves the filing itself untouched at TRACES. The panel
   // showed "Failed" with no reference number and no way to act on the
   // statement that still exists, so it could not even be retried.
   const filingSurvives = display === "failed" && reachedTraces;
+  // Amend and withdraw need an AVAILABLE filing, which the backend resolves
+  // for itself. A failed CREATE proves only that a filing EXISTS — its status
+  // is precisely what we failed to read — so offering them there would be two
+  // guaranteed refusals beside the one action that works. A failed
+  // amendment/withdrawal is different: the backend only ever raises those
+  // against an AVAILABLE filing, so one is there by construction.
+  const filingIsKnownAvailable =
+    filingSurvives && sub!.submission_type !== "CREATE";
   // The "must be Approved" gate mirrors the backend's submit-time check
   // (#50) for a *fresh* submission only. Remediation after a TRACES
   // rejection/failure is keyed on the submission's own `traces_status` +
@@ -542,7 +586,7 @@ export function TracesPanel({
 
       {isLoading ? (
         <Skeleton className="h-10 w-full rounded-lg" />
-      ) : isError ? (
+      ) : display === "unknown" ? (
         // Never "Not submitted to TRACES." on a failed lookup. That is a flat
         // claim about a regulated filing, and it would be made most often for
         // exactly the statements that are filed. The page header hides its own
@@ -595,10 +639,25 @@ export function TracesPanel({
                       sub!.submission_type === "WITHDRAW" ? "withdrawal" : "amendment"
                     } failed. The statement is still filed with TRACES.`}
               </p>
-              <div className="flex flex-wrap gap-6">
-                <CopyChip label="Reference Number" value={sub!.traces_reference_number} />
-                <CopyChip label="Verification Number" value={sub!.verification_number} />
-              </div>
+              {/* A CREATE that fails on its FIRST poll has neither number —
+                  only `perform_poll` ever sets them — and an empty chip
+                  invites the officer to copy nothing. */}
+              {(sub!.traces_reference_number || sub!.verification_number) && (
+                <div className="flex flex-wrap gap-6">
+                  {sub!.traces_reference_number && (
+                    <CopyChip
+                      label="Reference Number"
+                      value={sub!.traces_reference_number}
+                    />
+                  )}
+                  {sub!.verification_number && (
+                    <CopyChip
+                      label="Verification Number"
+                      value={sub!.verification_number}
+                    />
+                  )}
+                </div>
+              )}
               <div className="flex flex-wrap gap-2">
                 {sub!.submission_type === "CREATE" && (
                   // Retry re-polls a CREATE row that already reached TRACES,
@@ -616,24 +675,28 @@ export function TracesPanel({
                     Check status at TRACES
                   </Button>
                 )}
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="gap-1.5"
-                  onClick={() => openModify("amend")}
-                >
-                  <PenLine className="size-3.5" />
-                  Amend
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="gap-1.5 text-destructive hover:text-destructive"
-                  onClick={() => openModify("withdraw")}
-                >
-                  <Undo2 className="size-3.5" />
-                  Withdraw
-                </Button>
+                {filingIsKnownAvailable && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="gap-1.5"
+                      onClick={() => openModify("amend")}
+                    >
+                      <PenLine className="size-3.5" />
+                      Amend
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="gap-1.5 text-destructive hover:text-destructive"
+                      onClick={() => openModify("withdraw")}
+                    >
+                      <Undo2 className="size-3.5" />
+                      Withdraw
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -641,7 +704,11 @@ export function TracesPanel({
       ) : pending ? (
         <p className="text-sm text-muted-foreground flex items-center gap-2">
           <Loader2 className="size-4 animate-spin" />
-          {display === "submitting" ? "Submitting to TRACES…" : "Submitted — waiting for TRACES to resolve…"}
+          {display === "submitting"
+            ? IN_FLIGHT_COPY[sub?.submission_type ?? "CREATE"]
+            : display === "withdrawing"
+              ? "Withdrawal sent — waiting for TRACES to retract the statement…"
+              : "Submitted — waiting for TRACES to resolve…"}
         </p>
       ) : SETTLED_COPY[display] ? (
         <p className="text-sm text-muted-foreground">
