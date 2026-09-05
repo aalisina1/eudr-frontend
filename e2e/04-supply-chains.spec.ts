@@ -347,13 +347,30 @@ test.describe("PO Detail — Gaps (earlier stage, blocked) state (#29)", () => {
     await expect(page).toHaveURL(new RegExp(`/supply-chains/${GAPS_DETAIL.id}$`));
   });
 
-  test("'Review plots' deep-link navigates to /plots", async ({ page }) => {
+  /**
+   * DELIBERATE UX CHANGE — eudr-frontend#80.
+   *
+   * "Review plots" used to navigate to `/plots`, which dropped the officer on
+   * an unfiltered map with no memory of the lot they came from (the
+   * "context-free remediation CTA" class, #84). It now opens the Assign plots
+   * sheet in place, targeted at the specific lot carrying the blocker.
+   *
+   * Pinning the in-place sheet, not the old navigation: leaving the page is
+   * the regression here.
+   */
+  test("'Review plots' opens the Assign plots sheet for the blocking lot, in place (#80)", async ({ page }) => {
     await routeReadinessDetail(page, GAPS_DETAIL);
     await stubLookups(page);
     await page.goto(`/supply-chains/${GAPS_DETAIL.id}`);
     await expect(page.getByRole("heading", { name: "PO-2026-E2E8" })).toBeVisible();
 
     await page.getByRole("button", { name: /Review plots/ }).click();
-    await expect(page).toHaveURL(/\/plots$/);
+
+    await expect(page.getByRole("dialog").getByText("Assign plots")).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page.getByText(/Pick the land plots that cover this lot/),
+    ).toBeVisible();
+    // Still on the PO — the whole point of the change.
+    await expect(page).toHaveURL(new RegExp(`/supply-chains/${GAPS_DETAIL.id}$`));
   });
 });

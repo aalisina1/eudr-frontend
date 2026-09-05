@@ -79,15 +79,51 @@ function routeConsignmentsList(page: Page, body: unknown) {
 /** Route a specific fake consignment's detail endpoint. `sequence` lets a
  * test return a different payload per successive GET (stateful stub, same
  * pattern as `10-submissions.spec.ts`'s `routeSubmissions`); the last entry
- * repeats once exhausted. A single status (e.g. 404) can be passed instead. */
+ * repeats once exhausted. A single status (e.g. 404) can be passed instead.
+ *
+ * Matches the detail path EXACTLY. The detail page also mounts
+ * `ReferenceLedgerCard`, which fetches the sibling `{id}/ledger/` endpoint
+ * (#77) — a `{id}/**` glob swallows that too and answers it with a
+ * consignment body, whose missing `po_references` array took the whole page
+ * down with a client-side exception. So the ledger gets its own coherent
+ * stub below, derived from the first payload. */
 function routeConsignmentDetail(
   page: Page,
   id: string,
   sequence: unknown[] | { status: number },
 ) {
-  let call = 0;
-  return page.route(`**/api/v1/supply-chain/consignments/${id}/**`, async (route: Route) => {
+  const detailPath = `/api/v1/supply-chain/consignments/${id}/`;
+  const ledgerPath = `${detailPath}ledger/`;
+  const first = Array.isArray(sequence)
+    ? (sequence[0] as Record<string, unknown> | undefined)
+    : undefined;
+
+  void page.route(`**${ledgerPath}`, async (route: Route) => {
     if (route.request().method() !== "GET") return route.fallback();
+    if (!Array.isArray(sequence)) {
+      await route.fulfill({ status: sequence.status, json: { detail: "Not found." } });
+      return;
+    }
+    await route.fulfill({
+      json: {
+        id,
+        reference: (first?.reference as string) ?? "E2E-REF",
+        customs_declaration_reference: "",
+        expected_clearance_date: (first?.expected_clearance_date as string | null) ?? null,
+        created_at: (first?.created_at as string) ?? "2026-01-01T00:00:00Z",
+        po_references: [],
+        dds_rows: [],
+        uncovered_lot_count: 0,
+      },
+    });
+  });
+
+  let call = 0;
+  return page.route(`**${detailPath}*`, async (route: Route) => {
+    const req = route.request();
+    if (req.method() !== "GET" || new URL(req.url()).pathname !== detailPath) {
+      return route.fallback();
+    }
     if (!Array.isArray(sequence)) {
       await route.fulfill({ status: sequence.status, json: { detail: "Not found." } });
       return;
@@ -102,6 +138,9 @@ function baseConsignment(overrides: Record<string, unknown>) {
   return {
     id: "e2e-fixture",
     reference: "E2E-FIXTURE",
+    // Required on ConsignmentRow since the Customs Reference Ledger (#77) —
+    // blank string when not yet recorded, never null.
+    customs_declaration_reference: "",
     expected_clearance_date: null,
     tracking_number: null,
     t49_request_id: null,
@@ -129,22 +168,38 @@ function baseDetail(overrides: Record<string, unknown>) {
 // COMPLIANCE_OFFICER — core triage → resolve → file journey (live backend)
 // ===========================================================================
 test.describe("COMPLIANCE_OFFICER — dashboard entry + list filters (criteria 1-2, live)", () => {
-  test("dashboard lead-time card click lands on /shipments pre-filtered to RED", async ({ page }) => {
+  /**
+   * The dashboard's shipments entry point moved with the decision-ladder
+   * redesign (#75): the "Shipment lead time" stat card was replaced by Tier 1
+   * "Priority Alert" (`priority-alert-banner.tsx`). The JOURNEY is what this
+   * test owns — an officer landing on /dashboard can see that something is
+   * about to miss clearance uncovered, and get to it in one click.
+   *
+   * The banner has two CTA shapes by design: exactly one at-risk shipment
+   * deep-links to it ("Cover it now →"); more than one goes to the RED-
+   * filtered list ("View all →"). The seeded fixture produces one
+   * (MSCU-884210, today+3, 0/2 covered), so accept either and assert we
+   * reached the RED consignment's cockpit.
+   */
+  test("dashboard Priority Alert routes the officer to the at-risk shipment", async ({ page }) => {
     await page.goto("/dashboard");
-    await expect(page.getByText("Shipment lead time")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Priority Alert")).toBeVisible({ timeout: 15_000 });
 
-    const link = page.getByRole("link", { name: /within 10 days with incomplete DDS/ });
-    await expect(link).toBeVisible({ timeout: 10_000 });
-    await link.click();
+    const cta = page.getByRole("link", { name: /Cover it now|View all/ });
+    await expect(cta).toBeVisible({ timeout: 10_000 });
+    await cta.click();
 
-    await expect(page).toHaveURL(/\/shipments\?rag=RED/);
-    await expect(page.getByLabel("RAG status")).toHaveValue("RED");
-
-    const rows = await expectListResponded(page);
-    await expect(rows).toHaveCount(1);
-    await expect(rows.first()).toContainText(REF.red);
-    // GREEN/AMBER rows must NOT appear under the RED prefilter.
-    await expect(page.getByText(REF.green)).toHaveCount(0);
+    // Either shape must end with the RED consignment on screen.
+    if (/\/shipments\?rag=RED/.test(page.url())) {
+      await expect(page.getByLabel("RAG status")).toHaveValue("RED");
+      const rows = await expectListResponded(page);
+      await expect(rows.filter({ hasText: REF.red })).toHaveCount(1);
+      // A covered/green shipment must never appear under the RED prefilter.
+      await expect(page.getByText(REF.green)).toHaveCount(0);
+    } else {
+      await expect(page).toHaveURL(/\/shipments\/[^/?]+$/);
+      await expect(page.getByRole("heading", { name: REF.red })).toBeVisible({ timeout: 10_000 });
+    }
   });
 
   test("RAG filter narrows the list to exactly the selected value (server-side, #121)", async ({ page }) => {
@@ -177,37 +232,60 @@ test.describe("COMPLIANCE_OFFICER — dashboard entry + list filters (criteria 1
     await expect(await rows.count()).toBeGreaterThan(1);
   });
 
+  /**
+   * The window is derived from today, NOT hardcoded. `seed_demo_data` sets
+   * every clearance date relative to the seed date (BKG = today+45, the next
+   * nearest = today+37), so a fixed calendar window only selects the intended
+   * row for as long as the fixture is fresh — the original 2026-09-01..09-30
+   * window silently stopped isolating one row once the seed moved on.
+   * [today+41, today+49] brackets BKG alone whenever the data was seeded.
+   */
   test("date-range filter narrows to consignments whose countdown_to falls in range (server-side)", async ({ page }) => {
+    const iso = (offsetDays: number) => {
+      const d = new Date();
+      d.setDate(d.getDate() + offsetDays);
+      return d.toISOString().slice(0, 10);
+    };
+    const after = iso(41);
+    const before = iso(49);
+
     await page.goto("/shipments");
     await expectListResponded(page);
 
     const nextRequest = page.waitForRequest(
-      (req) => req.url().includes("countdown_after=2026-09-01") && req.url().includes("countdown_before=2026-09-30"),
+      (req) => req.url().includes(`countdown_after=${after}`) && req.url().includes(`countdown_before=${before}`),
     );
-    await page.getByLabel("Lands after").fill("2026-09-01");
-    await page.getByLabel("Lands before").fill("2026-09-30");
+    await page.getByLabel("Lands after").fill(after);
+    await page.getByLabel("Lands before").fill(before);
     await nextRequest;
 
     const rows = await expectListResponded(page);
-    await expect(rows).toHaveCount(1);
-    await expect(rows.first()).toContainText(REF.amberRotterdam);
+    await expect(rows.filter({ hasText: REF.amberRotterdam })).toHaveCount(1);
+    // The next-nearest fixture (today+37) sits just outside the window.
+    await expect(rows.filter({ hasText: REF.amberTema })).toHaveCount(0);
   });
 });
 
 test.describe("COMPLIANCE_OFFICER — RED detail, blocker deep-link, Compose DDS (criteria 3-4, live)", () => {
-  test("RED consignment detail shows coverage, countdown, and an uncovered lot with a stage chip + blocker deep-link", async ({ page }) => {
+  test("RED consignment detail shows coverage, countdown, and an uncovered lot whose remediation opens in place", async ({ page }) => {
     await openConsignmentByReference(page, REF.red);
 
     await expect(page.getByRole("heading", { name: REF.red })).toBeVisible();
     await expect(page.locator('[data-slot="badge"]', { hasText: /^RED/ })).toBeVisible();
     await expect(page.getByText(/Coverage\s*0\/2\s*·\s*0%/)).toBeVisible();
 
-    // Uncovered lot, ALLOCATED stage chip, and its blocker deep-link.
+    // Uncovered lot + ALLOCATED stage chip.
     await expect(page.locator('[data-slot="badge"]', { hasText: "Allocated" }).first()).toBeVisible();
-    const fixIt = page.getByRole("link", { name: "Complete plots" }).first();
+
+    // DELIBERATE UX CHANGE (#80, same as PO Detail's "Review plots"):
+    // "Complete plots" was a link to /plots — an unfiltered map with no memory
+    // of the lot. It is now a button opening the Assign plots sheet targeted
+    // at this lot. Navigating away is the regression.
+    const fixIt = page.getByRole("button", { name: "Complete plots" }).first();
     await expect(fixIt).toBeVisible();
     await fixIt.click();
-    await expect(page).toHaveURL(/\/plots$/);
+    await expect(page.getByRole("dialog").getByText("Assign plots")).toBeVisible({ timeout: 10_000 });
+    await expect(page).toHaveURL(/\/shipments\/[^/?]+$/);
   });
 
   test("Compose DDS from consignment detail lands on the DDS composer pre-filled with its lots", async ({ page }) => {

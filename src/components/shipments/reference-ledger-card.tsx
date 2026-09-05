@@ -96,8 +96,14 @@ export function ReferenceLedgerCard({
         </Row>
 
         <Row label="Purchase orders">
-          {data.po_references.length > 0 ? (
-            data.po_references.map((po) => (
+          {/* Defaulted, not asserted. A 200 whose body predates #77 (frontend
+              deployed ahead of the backend, as the two services deploy
+              independently) has no `po_references`, and reading `.length` off
+              it threw a client-side exception that took the WHOLE shipment
+              detail page down — a blank screen, not a degraded card. The
+              quality bar is that a page always renders something. */}
+          {(data.po_references ?? []).length > 0 ? (
+            (data.po_references ?? []).map((po) => (
               <span key={po} className="font-mono">{po}</span>
             ))
           ) : (
@@ -106,7 +112,7 @@ export function ReferenceLedgerCard({
         </Row>
 
         <Row label="Due diligence">
-          {data.dds_rows.length === 0 ? (
+          {(data.dds_rows ?? []).length === 0 ? (
             <span className="text-muted-foreground">No DDS covers this consignment yet</span>
           ) : (
             <div className="space-y-3">

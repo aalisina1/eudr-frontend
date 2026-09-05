@@ -16,7 +16,16 @@ test.describe("Settings & Admin (A2/I1)", () => {
   test("Profile card shows the real role and organization from /auth/users/me/ (#72/#70)", async ({ page }) => {
     await page.goto("/settings");
     await expect(page.getByText("Profile", { exact: true })).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText("Compliance Officer")).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText("Canopy Trading GmbH")).toBeVisible({ timeout: 10_000 });
+
+    // Scope to the Profile card. The org name also renders in the sidebar
+    // chrome, so a page-wide getByText is a strict-mode violation — the
+    // assertion is about THIS card reading /auth/users/me/, not about the
+    // string existing somewhere on the page.
+    const profileCard = page
+      .locator("div")
+      .filter({ has: page.getByText("Profile", { exact: true }) })
+      .last();
+    await expect(profileCard.getByText("Compliance Officer")).toBeVisible({ timeout: 10_000 });
+    await expect(profileCard.getByText("Canopy Trading GmbH")).toBeVisible({ timeout: 10_000 });
   });
 });
