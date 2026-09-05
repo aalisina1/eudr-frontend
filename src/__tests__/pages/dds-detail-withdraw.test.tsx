@@ -24,7 +24,7 @@ function jsonRes(data: unknown, status = 200): Response {
   return { ok: status >= 200 && status < 300, status, json: async () => data } as Response;
 }
 
-function statement(): DueDiligenceStatement {
+function statement(overrides: Partial<DueDiligenceStatement> = {}): DueDiligenceStatement {
   return {
     id: "dds-1",
     reference_number: "DDS-2026-0001",
@@ -46,6 +46,7 @@ function statement(): DueDiligenceStatement {
     risk_assessments: [],
     covered_lots: [],
     filing_blockers: [],
+    ...overrides,
   };
 }
 
@@ -73,13 +74,16 @@ function submission(overrides: Partial<TracesSubmission>): TracesSubmission {
   };
 }
 
-function mockApi(latest: TracesSubmission | null) {
+function mockApi(
+  latest: TracesSubmission | null,
+  stmt: DueDiligenceStatement = statement(),
+) {
   mockAuthFetch.mockImplementation((url: string) => {
     if (url.includes("/auth/users/me/")) {
       return Promise.resolve(jsonRes({ id: "u1", role: "COMPLIANCE_OFFICER", organization_id: "org-1" }));
     }
     if (url.includes("/due-diligence/statements/dds-1/")) {
-      return Promise.resolve(jsonRes(statement()));
+      return Promise.resolve(jsonRes(stmt));
     }
     if (url.includes("/traces/submissions/?dds_id")) {
       return Promise.resolve(jsonRes({ results: latest ? [{ id: latest.id }] : [] }));
@@ -218,5 +222,50 @@ describe("DDS detail — withdrawing a statement TRACES holds", () => {
     // The panel no longer offers its own — TRACES is done with this filing.
     // (The phrase appears in both the panel body and its timeline step.)
     expect(screen.getAllByText(/withdrawn from traces/i).length).toBeGreaterThan(0);
+  });
+});
+
+describe("DDS detail — an approved statement that cannot be filed", () => {
+  afterEach(() => vi.clearAllMocks());
+
+  it("offers the only exit an APPROVED statement has", async () => {
+    // APPROVED has no action but Submit, and Submit fails forever when the
+    // statement is unfilable — it cannot be edited, re-reviewed or withdrawn
+    // from here. A live prod statement failed on a blank activity type 22
+    // times with nothing else on screen to click.
+    mockApi(
+      null,
+      statement({
+        status: "APPROVED",
+        activity_type: "",
+        filing_blockers: [
+          {
+            field: "activity_type",
+            message:
+              "activity_type is required and must be one of DOMESTIC, EXPORT, IMPORT (got '').",
+          },
+        ],
+      }),
+    );
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText("DDS-2026-0001")).toBeInTheDocument());
+    const button = await screen.findByRole("button", {
+      name: /send back for correction/i,
+    });
+    expect(button).toBeEnabled();
+    // And the reason is on the page, not only in a failed submission's JSON.
+    expect(screen.getByText("activity_type")).toBeInTheDocument();
+  });
+
+  it("does not offer it on a statement TRACES already holds", async () => {
+    // Once filed the route is amend or withdraw, not a local status change.
+    mockApi(submission({}), statement({ status: "SUBMITTED" }));
+    renderPage();
+
+    await waitFor(() => expect(screen.getByText("DDS-2026-0001")).toBeInTheDocument());
+    expect(
+      screen.queryByRole("button", { name: /send back for correction/i }),
+    ).not.toBeInTheDocument();
   });
 });
