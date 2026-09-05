@@ -15,12 +15,50 @@ suite (it doesn't replace it) — this drives the real app in a browser.
 ## Run
 
 ```bash
+# 1. Reseed FIRST — see "The fixture is time-relative" below.
+docker compose exec -T web python manage.py seed_demo_data   # in eudr-backend
+
+# 2. Then run.
 npm run test:e2e          # headless, all journeys
 npm run test:e2e:ui       # Playwright UI mode (debug)
 npx playwright show-report
 ```
 
 First run only: `npx playwright install chromium`.
+
+## ⚠️ The fixture is time-relative — reseed before you run
+
+`seed_demo_data` derives every clearance date, ETA and certification window
+from **the date it runs** (`today + timedelta(...)`). The database stores the
+resulting absolute dates; it does not re-derive them. So a fixture seeded two
+weeks ago has silently rotted: shipments drift past their clearance dates and
+flip AMBER→RED, certifications expire, and the RAG/date-range assertions start
+failing for reasons that have nothing to do with your change.
+
+**A local failure in `12-shipments` or the dashboard is a stale fixture until
+proven otherwise.** Reseed, then re-run, then start debugging. CI never hits
+this — it seeds fresh on every run, which is why the suite can be green there
+and red on your laptop.
+
+Reseeding does **not** undo manual changes made through the UI (eudr-app#159):
+a lot assigned to a consignment by hand stays assigned, so the seeded
+"MSCU-884210 has exactly 2 lots" fixture can end up with 3. If a count
+assertion is off by one after reseeding, look for a manually attached row
+before touching the spec.
+
+## When a journey fails, decide which of these it is
+
+The suite exists to tell these apart — say which one in the PR:
+
+| It's… | Then… |
+|---|---|
+| a **regression** — the journey used to work | fix the app, not the spec |
+| a **deliberate change** — the flow moved on purpose | update the spec, and leave a comment naming the issue that changed it, plus an assertion on the *replacement* path |
+| a **stale fixture** | reseed (above); change nothing |
+| a **brittle locator/stub** | fix the spec; don't loosen the assertion into something that can't fail |
+
+Never make a failing journey pass by deleting it or marking it skipped — CI
+fails the job on *any* skip for exactly that reason.
 
 ## How it's structured
 

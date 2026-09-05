@@ -15,10 +15,31 @@ test.describe("Due Diligence Statements (E1/E2)", () => {
     await expect(page).toHaveURL(/\/due-diligence\/[^/]+$/);
   });
 
-  test("create affordance opens the DDS form", async ({ page }) => {
+  /**
+   * DELIBERATE DEPRECATION — eudr-frontend#104/#109.
+   *
+   * There used to be a "New statement" button here that opened a lotless DDS
+   * form. `commodities` is mandatory in the TRACES XSD, so every statement
+   * that path produced was unfilable. It was retired, and the only supported
+   * way to compose a statement is now from a purchase order and its lots.
+   *
+   * This test pins the retirement in both directions: the old dialog path
+   * must stay gone, and the replacement entry point must still work. Do not
+   * "fix" this by reinstating a create dialog — that is the defect.
+   */
+  test("the lotless create path stays retired; filing starts from a purchase order (#104/#109)", async ({ page }) => {
     await page.goto("/due-diligence");
-    await page.getByRole("button", { name: /new|add|create/i }).first().click();
-    await expect(page.getByRole("dialog")).toBeVisible();
+    await expectListResponded(page);
+
+    // The retired affordance: no control here opens a statement form.
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^(new|add|create).*statement/i })).toHaveCount(0);
+
+    // The supported path, and it goes to Sourcing.
+    const fileFromPo = page.getByRole("link", { name: /File from a purchase order/i });
+    await expect(fileFromPo).toBeVisible({ timeout: 10_000 });
+    await fileFromPo.click();
+    await expect(page).toHaveURL(/\/supply-chains$/);
   });
 
   test("DDS detail renders the statement and reflects its lifecycle state", async ({ page }) => {
