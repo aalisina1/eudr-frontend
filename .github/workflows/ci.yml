@@ -148,6 +148,11 @@ jobs:
         working-directory: backend
         run: |
           python manage.py migrate --noinput
+          # Reference data first — `seed_demo_data` reads Commodity "COCOA" with a
+          # hard get() and dies on a genuinely empty database. This is the order
+          # `make seed` documents; it is easy to miss because every dev DB already
+          # has these rows.
+          python manage.py loaddata apps/commodities/fixtures/commodities.json
           python manage.py seed_demo_data
 
       - name: Start the backend
