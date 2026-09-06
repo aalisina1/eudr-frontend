@@ -517,7 +517,7 @@ function SyncJobsView({
                       <td className="px-4 py-2.5">
                         <Badge
                           variant="secondary"
-                          className={`border-0 rounded-lg text-xs px-2 py-0.5 ${
+                          className={`border-0 text-xs px-2 py-0.5 ${
                             SYNC_JOB_STATUS_STYLES[job.status] ?? "bg-muted text-muted-foreground"
                           }`}
                         >

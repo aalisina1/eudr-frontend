@@ -588,7 +588,7 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
                 onChange={(e) =>
                   setChosenActivityType(e.target.value as ActivityType | "")
                 }
-                className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+                className="w-full h-9 rounded-lg border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
               >
                 <option value="">Choose an activity…</option>
                 {ACTIVITY_TYPE_OPTIONS.map(([value, label]) => (

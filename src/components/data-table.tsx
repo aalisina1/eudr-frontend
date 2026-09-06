@@ -240,7 +240,7 @@ export function DataTable<T>({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="pl-9 h-9 bg-secondary/50 border-border/60 focus:bg-card rounded-xl text-sm"
+                className="pl-9 h-9 bg-secondary/50 border-border/60 focus:bg-card rounded-lg text-sm"
               />
             </div>
           )}
@@ -249,7 +249,7 @@ export function DataTable<T>({
               key={filter.key}
               value={activeFilters[filter.key] ?? ""}
               onChange={(e) => handleFilterChange(filter.key, e.target.value)}
-              className="h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 transition-colors appearance-none cursor-pointer"
+              className="h-9 rounded-lg border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 transition-colors appearance-none cursor-pointer"
             >
               <option value="">{filter.label}</option>
               {filter.options.map((opt) => (
@@ -265,7 +265,7 @@ export function DataTable<T>({
               variant="outline"
               size="sm"
               onClick={handleExportCSV}
-              className="h-9 gap-1.5 text-xs rounded-xl border-border/60 ml-auto"
+              className="h-9 gap-1.5 text-xs rounded-lg border-border/60 ml-auto"
             >
               <Download className="size-3.5" />
               Export CSV

@@ -165,7 +165,7 @@ export function SourceCard({
       <CardContent className="p-5">
         <div className="flex items-start justify-between mb-4">
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            className="w-10 h-10 rounded-lg flex items-center justify-center"
             style={{
               backgroundColor: `${typeMeta.color}12`,
               color: typeMeta.color,
@@ -202,13 +202,13 @@ export function SourceCard({
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <Badge
             variant="secondary"
-            className="border-0 rounded-lg font-medium text-xs px-2 py-0.5 bg-muted text-muted-foreground"
+            className="border-0 font-medium text-xs px-2 py-0.5 bg-muted text-muted-foreground"
           >
             {typeMeta.label}
           </Badge>
           <Badge
             variant="secondary"
-            className={`border-0 rounded-lg font-medium text-xs px-2 py-0.5 gap-1.5 ${statusMeta.bg} ${statusMeta.text}`}
+            className={`border-0 font-medium text-xs px-2 py-0.5 gap-1.5 ${statusMeta.bg} ${statusMeta.text}`}
           >
             <span className={`w-1.5 h-1.5 rounded-full ${statusMeta.dot}`} />
             {statusMeta.label}
@@ -216,7 +216,7 @@ export function SourceCard({
           {runMeta && RunIcon && (
             <Badge
               variant="secondary"
-              className={`border-0 rounded-lg font-medium text-xs px-2 py-0.5 gap-1 ${runMeta.cls}`}
+              className={`border-0 font-medium text-xs px-2 py-0.5 gap-1 ${runMeta.cls}`}
             >
               <RunIcon
                 className={`size-3 ${

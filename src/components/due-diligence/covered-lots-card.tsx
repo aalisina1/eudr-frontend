@@ -78,7 +78,7 @@ function PlotRow({ plot }: { plot: CoveredPlot }) {
         {validation && (
           <Badge
             variant="secondary"
-            className={`${validation.className} border-0 rounded-md text-xs px-1.5 font-medium`}
+            className={`${validation.className} border-0 text-xs px-1.5 font-medium`}
           >
             {validation.label}
           </Badge>
@@ -86,7 +86,7 @@ function PlotRow({ plot }: { plot: CoveredPlot }) {
         {resolution && (
           <Badge
             variant="secondary"
-            className="bg-muted text-muted-foreground border-0 rounded-md text-xs px-1.5 font-medium"
+            className="bg-muted text-muted-foreground border-0 text-xs px-1.5 font-medium"
           >
             {resolution}
           </Badge>
@@ -129,7 +129,7 @@ function LotBlock({ lot }: { lot: CoveredLot }) {
         {lot.is_purchase_order && (
           <Badge
             variant="secondary"
-            className="bg-muted text-muted-foreground border-0 rounded-md text-xs px-1.5"
+            className="bg-muted text-muted-foreground border-0 text-xs px-1.5"
           >
             Purchase order
           </Badge>
@@ -141,7 +141,7 @@ function LotBlock({ lot }: { lot: CoveredLot }) {
         {period ? (
           <span className="text-sm text-muted-foreground">{period}</span>
         ) : (
-          <Badge variant="destructive" className="rounded-md text-xs px-1.5">
+          <Badge variant="destructive" className="text-xs px-1.5">
             No harvest period
           </Badge>
         )}

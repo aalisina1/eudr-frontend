@@ -127,14 +127,14 @@ function PlotsPageInner() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by reference, code, country or region..."
-                className="pl-9 h-9 bg-secondary/50 border-border/60 focus:bg-card rounded-xl text-sm"
+                className="pl-9 h-9 bg-secondary/50 border-border/60 focus:bg-card rounded-lg text-sm"
               />
             </div>
             <select
               aria-label="Validation status"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 transition-colors appearance-none cursor-pointer"
+              className="w-full h-9 rounded-lg border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 transition-colors appearance-none cursor-pointer"
             >
               {STATUS_FILTER_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>

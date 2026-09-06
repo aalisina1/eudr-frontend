@@ -85,7 +85,7 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
       <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
               <MapPin className="size-5 text-primary" />
             </div>
             <div>
@@ -95,7 +95,7 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
               <p className="text-sm text-muted-foreground">{plot.area_hectares} hectares</p>
             </div>
           </div>
-          <Badge variant="secondary" className={`${status.bg} ${status.text} border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5`}>
+          <Badge variant="secondary" className={`${status.bg} ${status.text} border-0 font-medium text-xs gap-1.5 px-2.5`}>
             <StatusIcon className="size-3" />
             {status.label}
           </Badge>
@@ -157,7 +157,7 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
                     <TableCell>
                       <Badge
                         variant="secondary"
-                        className={`border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5 ${
+                        className={`border-0 font-medium text-xs gap-1.5 px-2.5 ${
                           vr.deforestation_detected
                             ? "bg-destructive/10 text-destructive"
                             : "bg-success/10 text-success-foreground"

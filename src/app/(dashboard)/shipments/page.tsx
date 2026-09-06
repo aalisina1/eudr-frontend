@@ -154,14 +154,14 @@ function ShipmentsPageInner() {
         aria-label="RAG status"
         value={rag}
         onChange={(e) => setRag(e.target.value)}
-        className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+        className="h-9 cursor-pointer appearance-none rounded-lg border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
       >
         {RAG_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
-      <Input type="date" aria-label="Lands after" value={after} onChange={(e) => setAfter(e.target.value)} className="h-9 w-[150px] rounded-xl bg-secondary/50 text-sm" />
-      <Input type="date" aria-label="Lands before" value={before} onChange={(e) => setBefore(e.target.value)} className="h-9 w-[150px] rounded-xl bg-secondary/50 text-sm" />
+      <Input type="date" aria-label="Lands after" value={after} onChange={(e) => setAfter(e.target.value)} className="h-9 w-[150px] rounded-lg bg-secondary/50 text-sm" />
+      <Input type="date" aria-label="Lands before" value={before} onChange={(e) => setBefore(e.target.value)} className="h-9 w-[150px] rounded-lg bg-secondary/50 text-sm" />
       {canWrite && (
-        <Button size="sm" onClick={() => setFormOpen(true)} className="h-9 gap-1.5 rounded-xl">
+        <Button size="sm" onClick={() => setFormOpen(true)} className="h-9 gap-1.5 rounded-lg">
           <Plus className="size-3.5" /> New consignment
         </Button>
       )}
@@ -213,7 +213,7 @@ function ShipmentsPageInner() {
               aria-label="RAG status"
               value={rag}
               onChange={(e) => setRag(e.target.value)}
-              className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              className="h-9 cursor-pointer appearance-none rounded-lg border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             >
               {RAG_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
@@ -222,10 +222,10 @@ function ShipmentsPageInner() {
               placeholder="Search reference or tracking #…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-9 w-[240px] rounded-xl bg-secondary/50 text-sm"
+              className="h-9 w-[240px] rounded-lg bg-secondary/50 text-sm"
             />
             {canWrite && (
-              <Button size="sm" onClick={() => setFormOpen(true)} className="h-9 gap-1.5 rounded-xl">
+              <Button size="sm" onClick={() => setFormOpen(true)} className="h-9 gap-1.5 rounded-lg">
                 <Plus className="size-3.5" /> New consignment
               </Button>
             )}

@@ -103,7 +103,7 @@ export default function LoginPage() {
         <div className="w-full max-w-[360px]">
           {/* Mobile logo */}
           <div className="flex items-center gap-2.5 mb-10 lg:hidden">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
               <GrovetraceMark variant="small" className="w-[19px] h-[19px] text-primary-foreground" />
             </div>
             <span className="font-semibold text-lg tracking-tight">{PRODUCT_NAME}</span>

@@ -120,7 +120,7 @@ export function OperatorIdentityForm({
             <select
               id="default_activity_type"
               {...register("default_activity_type")}
-              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              className="w-full h-9 rounded-lg border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             >
               <option value="">{ACTIVITY_TYPE_UNSET_LABEL}</option>
               {ACTIVITY_TYPE_OPTIONS.map(([value, label]) => (

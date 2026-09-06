@@ -231,7 +231,7 @@ export default function SourcingPage() {
             aria-label="Filter by stage"
             value={stageFilter}
             onChange={(e) => setStageFilter(e.target.value)}
-            className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
+            className="h-9 cursor-pointer appearance-none rounded-lg border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
           >
             {STAGE_FILTER_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
