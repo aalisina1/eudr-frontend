@@ -78,18 +78,18 @@ export const TRACES_DISPLAY_STYLE: Record<
   TracesDisplayKey,
   { bg: string; text: string; dot: string; label: string; icon: LucideIcon; spin?: boolean }
 > = {
-  submitting: { bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", label: "Submitting", icon: Loader2, spin: true },
-  submitted: { bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", label: "Submitted", icon: Send },
-  available: { bg: "bg-[#34D399]/10", text: "text-[#1A6B5A]", dot: "bg-[#34D399]", label: "Available", icon: CheckCircle2 },
-  rejected: { bg: "bg-[#C23D3D]/10", text: "text-[#C23D3D]", dot: "bg-[#C23D3D]", label: "Rejected", icon: AlertTriangle },
-  failed: { bg: "bg-[#C23D3D]/10", text: "text-[#C23D3D]", dot: "bg-[#C23D3D]", label: "Failed", icon: AlertTriangle },
+  submitting: { bg: "bg-warning/10", text: "text-warning-foreground", dot: "bg-warning", label: "Submitting", icon: Loader2, spin: true },
+  submitted: { bg: "bg-warning/10", text: "text-warning-foreground", dot: "bg-warning", label: "Submitted", icon: Send },
+  available: { bg: "bg-success/10", text: "text-success-foreground", dot: "bg-success", label: "Available", icon: CheckCircle2 },
+  rejected: { bg: "bg-destructive/10", text: "text-destructive", dot: "bg-destructive", label: "Rejected", icon: AlertTriangle },
+  failed: { bg: "bg-destructive/10", text: "text-destructive", dot: "bg-destructive", label: "Failed", icon: AlertTriangle },
   withdrawn: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Withdrawn", icon: XCircle },
   grouped: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Grouped", icon: FileText },
   archived: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Archived", icon: FileText },
-  suspended: { bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", label: "Suspended", icon: AlertTriangle },
+  suspended: { bg: "bg-warning/10", text: "text-warning-foreground", dot: "bg-warning", label: "Suspended", icon: AlertTriangle },
   updated: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Updated", icon: FileText },
   obsolete: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Obsolete", icon: FileText },
-  withdrawing: { bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", label: "Withdrawing", icon: Loader2, spin: true },
+  withdrawing: { bg: "bg-warning/10", text: "text-warning-foreground", dot: "bg-warning", label: "Withdrawing", icon: Loader2, spin: true },
 };
 
 /**

@@ -60,8 +60,8 @@ export default function LoginPage() {
         {/* Content */}
         <div className="relative z-10 p-12 pt-14">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#34D399] flex items-center justify-center">
-              <GrovetraceMark variant="small" className="w-[22px] h-[22px] text-[#0B1D1C]" />
+            <div className="w-10 h-10 rounded-2xl bg-success flex items-center justify-center">
+              <GrovetraceMark variant="small" className="w-[22px] h-[22px] text-sidebar" />
             </div>
             <div>
               <span className="text-white text-lg font-semibold tracking-tight block leading-none">
@@ -77,7 +77,7 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 p-12 flex-1 flex flex-col justify-center max-w-xl">
-          <p className="text-[#34D399] text-sm font-medium tracking-wider uppercase mb-5">
+          <p className="text-success text-sm font-medium tracking-wider uppercase mb-5">
             EU Regulation 2023/1115
           </p>
           <h1 className="text-display text-white text-[clamp(2.5rem,4vw,3.5rem)] font-light leading-[1.1] mb-6 italic">
@@ -92,7 +92,7 @@ export default function LoginPage() {
 
         <div className="relative z-10 p-12 pb-10">
           <div className="flex items-center gap-2.5 text-sm text-white/30">
-            <span className="w-1 h-1 rounded-full bg-[#34D399]/40" />
+            <span className="w-1 h-1 rounded-full bg-success/40" />
             <span>Statements file directly to TRACES</span>
           </div>
         </div>

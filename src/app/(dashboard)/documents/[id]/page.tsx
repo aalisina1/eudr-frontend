@@ -123,7 +123,7 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
       </div>
 
       {/* Header Card */}
-      <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-info/10 flex items-center justify-center">
@@ -233,7 +233,7 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
       <div>
         <h2 className="text-sm font-medium mb-3">Version history</h2>
         {doc.versions && doc.versions.length > 0 ? (
-          <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+          <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-card">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-border/50">

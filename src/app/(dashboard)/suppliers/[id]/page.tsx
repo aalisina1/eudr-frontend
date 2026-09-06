@@ -147,7 +147,7 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
       </div>
 
       {/* Header Card */}
-      <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
         <div className="flex items-start justify-between mb-4">
           <div>
             <h1 className="text-xl font-medium mb-1">{supplier.name}</h1>
@@ -201,7 +201,7 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
           Certifications
         </h2>
         {supplier.certifications && supplier.certifications.length > 0 ? (
-          <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+          <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-card">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-border/50">
