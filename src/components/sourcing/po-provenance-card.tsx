@@ -40,8 +40,11 @@ export function PoProvenanceCard({ supplierId, supplierName, countryOfOrigin, pl
           </Link>
           {countryOfOrigin && <span className="text-sm text-muted-foreground">{countryOfOrigin}</span>}
           <span className="text-sm text-muted-foreground">
-            <span className="font-mono text-foreground">{plotCount}</span> plots across{" "}
-            <span className="font-mono text-foreground">{lotCount}</span> lot{lotCount === 1 ? "" : "s"}
+            {/* #133: the count goes somewhere — the plot list filtered to this supplier. */}
+            <Link href={`/plots?supplier_id=${encodeURIComponent(supplierId)}`} className="text-primary hover:underline">
+              <span className="font-mono">{plotCount}</span> plots
+            </Link>{" "}
+            across <span className="font-mono text-foreground">{lotCount}</span> lot{lotCount === 1 ? "" : "s"}
           </span>
         </div>
       </CardContent>

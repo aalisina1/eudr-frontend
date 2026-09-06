@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -15,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ExternalLink } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { getErrorMessage } from "@/lib/api/errors";
 import { plotIdentity } from "@/lib/plot-identity";
@@ -160,10 +162,13 @@ export function AssignPlotsSheet({ open, onOpenChange, lotId, currentPlotIds, on
             {plots.map((p) => {
               const { primary, secondary } = plotIdentity(p);
               return (
+                // #133: the row is a <label> so the whole thing toggles; the
+                // Open link sits outside it so following it never does, and
+                // opens in a new tab so the half-made selection survives.
+                <div key={p.id} className="flex items-center gap-1">
                 <label
-                  key={p.id}
                   htmlFor={`plot-${p.id}`}
-                  className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-border/60 px-3 py-2 text-sm transition-colors has-data-checked:border-primary has-data-checked:bg-primary/5"
+                  className="flex flex-1 min-w-0 cursor-pointer items-center gap-2.5 rounded-lg border border-border/60 px-3 py-2 text-sm transition-colors has-data-checked:border-primary has-data-checked:bg-primary/5"
                 >
                   <Checkbox
                     id={`plot-${p.id}`}
@@ -182,6 +187,17 @@ export function AssignPlotsSheet({ open, onOpenChange, lotId, currentPlotIds, on
                     {p.validation_status}
                   </Badge>
                 </label>
+                <Link
+                  href={`/plots/${p.id}`}
+                  target="_blank"
+                  rel="noopener"
+                  aria-label={`Open plot ${primary}`}
+                  title="Open plot in a new tab"
+                  className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-primary"
+                >
+                  <ExternalLink className="size-3.5" />
+                </Link>
+                </div>
               );
             })}
             {plotsPage && plots.length === 0 && (

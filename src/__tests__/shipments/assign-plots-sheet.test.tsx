@@ -223,3 +223,18 @@ describe("AssignPlotsSheet", () => {
     expect(searchCall).toBeDefined();
   });
 });
+
+/** eudr-frontend#133: a plot named in the picker should be openable without
+ * leaving the flow half-done — the link opens in a new tab. It sits outside the
+ * row's <label> so following it never toggles the checkbox. */
+describe("AssignPlotsSheet — plot detail reachable (#133)", () => {
+  it("each plot row carries an Open link to its detail that does not toggle selection", async () => {
+    mockFetch({ batch: batch({ land_plot_ids: [] }), plots: [plot({ id: "plot-c", reference: "PLOT-C", external_id: "PLOT-C" })] });
+    renderWithProviders(<AssignPlotsSheet open onOpenChange={vi.fn()} lotId="lot-1" />);
+    const link = await screen.findByRole("link", { name: /Open plot PLOT-C/ });
+    expect(link).toHaveAttribute("href", "/plots/plot-c");
+    expect(link).toHaveAttribute("target", "_blank");
+    await userEvent.click(link);
+    expect(screen.getByRole("checkbox")).not.toBeChecked();
+  });
+});
