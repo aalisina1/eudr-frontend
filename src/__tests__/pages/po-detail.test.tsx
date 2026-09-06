@@ -181,7 +181,7 @@ describe("PoDetailPage", () => {
       mockApi();
       await renderPage();
       await waitFor(() =>
-        expect(screen.getByText("All data complete — this PO is ready to file")).toBeInTheDocument()
+        expect(screen.getByText("All data complete. This PO is ready to file.")).toBeInTheDocument()
       );
     });
 
@@ -286,7 +286,7 @@ describe("PoDetailPage", () => {
 
       await waitFor(() => expect(screen.getByText("2 lots missing harvest period")).toBeInTheDocument());
       expect(screen.getByText("3 plots failed deforestation validation")).toBeInTheDocument();
-      expect(screen.queryByText("All data complete — this PO is ready to file")).toBeNull();
+      expect(screen.queryByText("All data complete. This PO is ready to file.")).toBeNull();
 
       // Deep-link ghost buttons mapped by blocker code.
       expect(screen.getByRole("button", { name: /Fix/ })).toBeInTheDocument();

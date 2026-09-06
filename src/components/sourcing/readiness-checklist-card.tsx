@@ -131,7 +131,7 @@ export function ReadinessChecklistCard({ blockers, lots, canWrite, onAssignPlots
         ) : (
           <div className="flex items-center gap-2.5 rounded-lg border border-primary/40 bg-primary/8 px-3.5 py-3">
             <CheckCircle2 className="size-4 shrink-0 text-primary" />
-            <span className="text-[13.5px] font-medium">All data complete — this PO is ready to file</span>
+            <span className="text-[13.5px] font-medium">All data complete. This PO is ready to file.</span>
           </div>
         )}
       </CardContent>

@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { authFetch } from "@/lib/api/client";
 import type { DueDiligenceStatement } from "@/lib/api/types";
+import { ACTIVITY_TYPE_OPTIONS } from "@/lib/activity-type";
 
 const ddsSchema = z.object({
   statement_type: z.enum(["OPERATOR", "REFERENCE"]),
@@ -172,9 +173,11 @@ export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
               className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:opacity-50"
             >
               <option value="">Choose an activity…</option>
-              <option value="DOMESTIC">Domestic — placing on the EU market</option>
-              <option value="IMPORT">Import — release for free circulation</option>
-              <option value="EXPORT">Export — leaving the EU</option>
+              {ACTIVITY_TYPE_OPTIONS.map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </select>
             <p className="text-[11px] text-muted-foreground">
               What this statement declares. TRACES requires one before it can be

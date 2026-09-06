@@ -124,7 +124,7 @@ export function CredentialsCard() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
-              TRACES Connection
+              TRACES connection
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
               Credentials used to submit Due Diligence Statements to the EU TRACES system.
@@ -211,7 +211,7 @@ export function CredentialsCard() {
                       >
                         {cred.operator_ws_identifier
                           ? `WS identifier ${cred.operator_ws_identifier}`
-                          : "No web service identifier — filings carry no operator identity"}
+                          : "No web service identifier, so filings carry no operator identity"}
                       </p>
                     </div>
                   </div>
@@ -261,7 +261,7 @@ export function CredentialsCard() {
             {testState === "ok" && (
               <p className="text-xs text-emerald-600 flex items-center gap-1.5 mt-1">
                 <CheckCircle2 className="size-3.5" />
-                Credential confirmed — the API is reachable and the credential persisted.
+                Credential confirmed. The API is reachable and the credential persisted.
               </p>
             )}
             {testState === "err" && (

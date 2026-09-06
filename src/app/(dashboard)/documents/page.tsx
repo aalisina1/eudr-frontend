@@ -8,6 +8,7 @@ import { FolderOpen, FileQuestion, Plus } from "lucide-react";
 import { DataTable, type ColumnDef, type FilterDef } from "@/components/data-table";
 import { DocumentForm } from "@/components/forms/document-form";
 import type { Document, DocumentType } from "@/lib/api/types";
+import { formatDate } from "@/lib/format";
 
 const TYPE_LABEL: Record<DocumentType, string> = {
   SUPPLIER_DECLARATION: "Supplier Declaration",
@@ -88,7 +89,7 @@ const columns: ColumnDef<Document>[] = [
     sortable: true,
     render: (doc) => (
       <span className="text-muted-foreground text-[13px]">
-        {new Date(doc.uploaded_at).toLocaleDateString()}
+        {formatDate(doc.uploaded_at)}
       </span>
     ),
   },

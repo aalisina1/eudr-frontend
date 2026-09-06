@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { authFetch } from "@/lib/api/client";
 import { getErrorMessage } from "@/lib/api/errors";
 import type { Organization } from "@/lib/api/types";
+import { ACTIVITY_TYPE_OPTIONS, ACTIVITY_TYPE_UNSET_LABEL } from "@/lib/activity-type";
 
 const operatorIdentitySchema = z.object({
   eori_number: z
@@ -86,9 +87,9 @@ export function OperatorIdentityForm({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>Edit Operator Identity</SheetTitle>
+          <SheetTitle>Edit operator identity</SheetTitle>
           <SheetDescription>
-            The EORI number used to identify your organization as an operator
+            The EORI number used to identify your organisation as an operator
             in Due Diligence Statements submitted to TRACES.
           </SheetDescription>
         </SheetHeader>
@@ -121,10 +122,12 @@ export function OperatorIdentityForm({
               {...register("default_activity_type")}
               className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             >
-              <option value="">No default — ask each time</option>
-              <option value="DOMESTIC">Domestic — placing on the EU market</option>
-              <option value="IMPORT">Import — release for free circulation</option>
-              <option value="EXPORT">Export — leaving the EU</option>
+              <option value="">{ACTIVITY_TYPE_UNSET_LABEL}</option>
+              {ACTIVITY_TYPE_OPTIONS.map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </select>
             <p className="text-[11px] text-muted-foreground">
               Prefills the commercial activity on each new statement. TRACES
@@ -135,7 +138,7 @@ export function OperatorIdentityForm({
           <div className="space-y-1.5">
             <Label>TRACES Actor ID</Label>
             <p className="text-xs text-muted-foreground">
-              {organization.traces_actor_id || "Not yet assigned"} — assigned by
+              {organization.traces_actor_id || "Not yet assigned"}, assigned by
               TRACES after your first successful submission; not editable here.
             </p>
           </div>

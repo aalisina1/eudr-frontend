@@ -1,3 +1,4 @@
+import { PRODUCT_NAME } from "@/lib/brand";
 /**
  * The Grovetrace mark.
  *
@@ -33,7 +34,7 @@ export function GrovetraceMark({ variant = "full", className }: GrovetraceMarkPr
       viewBox="0 0 100 100"
       className={className}
       role="img"
-      aria-label="Grovetrace"
+      aria-label={PRODUCT_NAME}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >

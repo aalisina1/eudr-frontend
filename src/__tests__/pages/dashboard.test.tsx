@@ -1,7 +1,7 @@
 /**
  * The "Decision Ladder" compliance cockpit (dashboard-redesign.md) —
  * replaces the flat four-card worklist (#30). Four severity-ranked tiers
- * (Priority Alert -> Action Queue -> Awaiting Data -> Risk Concentration)
+ * (Priority Alert -> Action Queue -> Awaiting Data -> Risk concentration)
  * plus the demoted StatStrip footer, gated by `currentUser.role`.
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
@@ -123,7 +123,7 @@ describe("DashboardPage — decision ladder cockpit", () => {
     renderWithProviders(<DashboardPage />);
 
     await waitFor(() => expect(screen.getByText("Priority Alert")).toBeInTheDocument());
-    const tierTitles = ["Priority Alert", "Action Queue", "Awaiting data", "Risk Concentration"];
+    const tierTitles = ["Priority Alert", "Action Queue", "Awaiting data", "Risk concentration"];
     const elements = tierTitles.map((t) => screen.getByText(t));
     for (let i = 1; i < elements.length; i++) {
       expect(elements[i - 1].compareDocumentPosition(elements[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -166,11 +166,11 @@ describe("DashboardPage — decision ladder cockpit", () => {
     renderWithProviders(<DashboardPage />);
 
     await waitFor(() =>
-      expect(screen.getByText(/You don't have access to organization-wide compliance data/i)).toBeInTheDocument()
+      expect(screen.getByText(/You don't have access to organisation-wide compliance data/i)).toBeInTheDocument()
     );
     expect(screen.queryByText("Priority Alert")).not.toBeInTheDocument();
     expect(screen.queryByText("Action Queue")).not.toBeInTheDocument();
-    expect(screen.queryByText("Risk Concentration")).not.toBeInTheDocument();
+    expect(screen.queryByText("Risk concentration")).not.toBeInTheDocument();
     expect(screen.queryByText("POs in flight")).not.toBeInTheDocument();
   });
 

@@ -80,7 +80,7 @@ describe("AwaitingDataCard", () => {
     ]);
     renderWithProviders(<AwaitingDataCard />);
 
-    await waitFor(() => expect(screen.getByText("No orders waiting on data — syncs are up to date")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("No orders waiting on data. Syncs are up to date.")).toBeInTheDocument());
     expect(screen.queryByText("PO-BLOCKED")).not.toBeInTheDocument();
     expect(screen.queryByText("PO-READY")).not.toBeInTheDocument();
     expect(screen.queryByText("PO-FILED")).not.toBeInTheDocument();
@@ -106,6 +106,6 @@ describe("AwaitingDataCard", () => {
   it("shows the quiet empty state when nothing is waiting on data", async () => {
     mockApi([]);
     renderWithProviders(<AwaitingDataCard />);
-    await waitFor(() => expect(screen.getByText("No orders waiting on data — syncs are up to date")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("No orders waiting on data. Syncs are up to date.")).toBeInTheDocument());
   });
 });

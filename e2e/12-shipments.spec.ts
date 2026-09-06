@@ -296,7 +296,7 @@ test.describe("COMPLIANCE_OFFICER — RED detail, blocker deep-link, Compose DDS
     await composeBtn.click();
 
     await expect(page).toHaveURL(new RegExp(`/due-diligence\\?consignment=${id}`));
-    await expect(page.getByRole("heading", { name: "New Due Diligence Statement" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "New due diligence statement" })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(`Pre-filled from ${REF.amberRotterdam}`)).toBeVisible();
   });
 });
@@ -477,7 +477,9 @@ test.describe("States matrix (stubbed, no live fixture produces these)", () => {
     await page.goto(`/shipments/${id}`);
 
     await expect(page.locator('[data-slot="badge"]', { hasText: "No date" })).toBeVisible();
-    await expect(page.getByText("No clearance date or ETA set — set one via Edit.")).toBeVisible();
+    // Copy updated by #118 (em dashes removed from user-visible strings); this
+    // asserts the replacement wording, not the retired one.
+    await expect(page.getByText("No clearance date or ETA set. Set one via Edit.")).toBeVisible();
   });
 
   test("divergence badge: destructive when the manual date is later than the feed ETA, muted otherwise", async ({ page }) => {

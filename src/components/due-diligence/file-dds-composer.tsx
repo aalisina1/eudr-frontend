@@ -53,6 +53,8 @@ import {
   summarizeNetMass,
 } from "@/lib/file-dds-composer";
 import { UNIT_LABELS } from "@/lib/readiness-format";
+import { formatNumber } from "@/lib/format";
+import { ACTIVITY_TYPE_OPTIONS } from "@/lib/activity-type";
 
 async function fetchPoReadiness(poId: string): Promise<POReadinessDetail> {
   const res = await authFetch(`/api/v1/supply-chain/batches/${encodeURIComponent(poId)}/readiness/`);
@@ -400,7 +402,7 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
       </Button>
 
       <div>
-        <h1 className="text-display text-3xl font-light italic">New Due Diligence Statement</h1>
+        <h1 className="text-display text-3xl font-light italic">New due diligence statement</h1>
         <p className="mt-2 text-sm text-muted-foreground">Pre-filled from {po.reference_number}</p>
       </div>
 
@@ -459,7 +461,7 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
                           </span>
                         </TableCell>
                         <TableCell className="text-right font-mono">
-                          {Math.round(Number(lot.quantity)).toLocaleString()} {unitLabel}
+                          {formatNumber(Math.round(Number(lot.quantity)))} {unitLabel}
                         </TableCell>
                         <TableCell>
                           <span className="text-[12.5px] text-muted-foreground">
@@ -537,7 +539,7 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
                   <div className="space-y-1.5">
                     <p className={`text-sm ${exceedsLimit ? "font-medium text-destructive" : "text-foreground"}`}>
                       {exceedsLimit
-                        ? `${formatMb(estimate.estimated_bytes)} — exceeds the TRACES ${formatMb(estimate.limit_bytes)} limit`
+                        ? `${formatMb(estimate.estimated_bytes)}, over the TRACES ${formatMb(estimate.limit_bytes)} limit`
                         : `Estimated payload ${formatMb(estimate.estimated_bytes)} of ${formatMb(estimate.limit_bytes)} limit`}
                     </p>
                     <Progress
@@ -549,7 +551,7 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
                   {estimate.errors.length > 0 && (
                     <p className="text-xs text-muted-foreground">
                       {estimate.errors.length} checked lot{estimate.errors.length === 1 ? "" : "s"} excluded
-                      from this estimate — missing resolvable plot geometry.
+                      from this estimate. They have no resolvable plot geometry.
                     </p>
                   )}
 
@@ -589,9 +591,11 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
                 className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
               >
                 <option value="">Choose an activity…</option>
-                <option value="DOMESTIC">Domestic — placing on the EU market</option>
-                <option value="IMPORT">Import — release for free circulation</option>
-                <option value="EXPORT">Export — leaving the EU</option>
+                {ACTIVITY_TYPE_OPTIONS.map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
               </select>
               {/* Three states, not two. "Your operator has no default" and
                   "the organisation could not be read" are different things,
@@ -655,7 +659,7 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Submit to TRACES?</AlertDialogTitle>
             <AlertDialogDescription>
-              After submission this statement locks — you have 72 hours to amend it. Some covered lots may
+              After submission this statement locks. You have 72 hours to amend it. Some covered lots may
               not have shipped yet; if allocations change after filing, the declaration will no longer match
               the physical shipment.
             </AlertDialogDescription>

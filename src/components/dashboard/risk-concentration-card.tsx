@@ -64,7 +64,7 @@ function summariseExpiringCerts(rows: CertificationExpiring[]): string {
 const MAX_CERT_TYPES_SHOWN = 2;
 
 /**
- * Tier 4 "Risk Concentration" (dashboard-redesign.md) — standing exposure
+ * Tier 4 "Risk concentration" (dashboard-redesign.md) — standing exposure
  * that predicts tomorrow's Tier 1 alerts. All four designed metrics now
  * ship: 4c (certifications expiring) was omitted in Phase 1 pending backend
  * surface, and landed once eudr-app#139 supplied the row-level feed and
@@ -106,7 +106,7 @@ export function RiskConcentrationCard() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Risk Concentration</CardTitle>
+          <CardTitle className="text-base">Risk concentration</CardTitle>
           <CardDescription>Standing exposure that predicts tomorrow&apos;s Tier 1 alerts</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 px-0" aria-hidden>
@@ -172,7 +172,7 @@ export function RiskConcentrationCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Risk Concentration</CardTitle>
+        <CardTitle className="text-base">Risk concentration</CardTitle>
         <CardDescription>Standing exposure that predicts tomorrow&apos;s Tier 1 alerts</CardDescription>
       </CardHeader>
       <CardContent className="px-0">

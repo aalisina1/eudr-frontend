@@ -1,7 +1,7 @@
 /**
  * Dashboard "Decision Ladder" (dashboard-redesign-phase1) — four
  * severity-ranked tiers (Priority Alert -> Action Queue -> Awaiting Data ->
- * Risk Concentration) replacing the flat four-card worklist (#30). Live
+ * Risk concentration) replacing the flat four-card worklist (#30). Live
  * seeded data is sparse, so the "busy" (something in every tier) state is
  * stubbed with `page.route`, following the same pattern `10-submissions.spec.ts`
  * uses for TRACES: stubs registered BEFORE navigation, real backend for
@@ -192,7 +192,7 @@ async function stubWorklist(
       },
     });
   });
-  // Tier 4b (Risk Concentration's "Plots failing validation") shares this
+  // Tier 4b (Risk concentration's "Plots failing validation") shares this
   // same endpoint with the stat strip's "Plots pending validation" — routed
   // by `validation_status` in the URL, mirroring the vitest mocks for
   // `usePlotsPendingValidationCount`/`usePlotsFailingValidationCount`.
@@ -216,7 +216,7 @@ test.describe("Dashboard decision ladder (dashboard-redesign-phase1)", () => {
     await expect(page.getByText("Priority Alert")).toBeVisible();
     await expect(page.getByText("Action Queue")).toBeVisible();
     await expect(page.getByText("Awaiting data")).toBeVisible();
-    await expect(page.getByText("Risk Concentration")).toBeVisible();
+    await expect(page.getByText("Risk concentration")).toBeVisible();
     await expect(page.getByText("Due Diligence by Status")).toHaveCount(0);
     await expect(page.getByText("Welcome to Canopy")).toHaveCount(0);
   });
@@ -284,8 +284,10 @@ test.describe("Dashboard decision ladder (dashboard-redesign-phase1)", () => {
 
     await page.goto("/dashboard");
 
-    await expect(page.getByText("Nothing needs action — you're caught up.")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText("No orders waiting on data — syncs are up to date")).toBeVisible();
+    // Copy updated by #118 (em dashes removed from user-visible strings); this
+    // asserts the replacement wording, not the retired one.
+    await expect(page.getByText("Nothing needs action. You're caught up.")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("No orders waiting on data. Syncs are up to date.")).toBeVisible();
     await expect(page.getByText("0 t")).toBeVisible();
   });
 });

@@ -64,7 +64,7 @@ describe("PriorityAlertBanner", () => {
     renderWithProviders(<PriorityAlertBanner />);
 
     await waitFor(() =>
-      expect(screen.getByText("Clear — no shipments landing soon without a DDS on file.")).toBeInTheDocument()
+      expect(screen.getByText("Clear. No shipments landing soon without a DDS on file.")).toBeInTheDocument()
     );
     expect(screen.getByText("30 Dec 2026")).toBeInTheDocument();
     expect(screen.getByText(/days out/)).toBeInTheDocument();

@@ -19,6 +19,7 @@ import { ArrowLeft, MapPin, AlertTriangle, CheckCircle2, Clock } from "lucide-re
 import { authFetch } from "@/lib/api/client";
 import { plotIdentity } from "@/lib/plot-identity";
 import type { LandPlot, ValidationStatus } from "@/lib/api/types";
+import { formatDate } from "@/lib/format";
 
 const LandPlotMap = dynamic(
   () => import("@/components/map/land-plot-map").then((m) => m.LandPlotMap),
@@ -77,7 +78,7 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
     <div className="space-y-6">
       {/* Back */}
       <Button variant="ghost" size="sm" onClick={() => router.push("/plots")} className="gap-1.5">
-        <ArrowLeft className="size-4" /> Land Plots
+        <ArrowLeft className="size-4" /> Land plots
       </Button>
 
       {/* Header Card */}
@@ -123,7 +124,7 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
           </div>
           <div>
             <p className="text-muted-foreground text-xs mb-0.5">Collection Date</p>
-            <p className="text-xs">{plot.collection_date ? new Date(plot.collection_date).toLocaleDateString() : "—"}</p>
+            <p className="text-xs">{plot.collection_date ? formatDate(plot.collection_date) : "—"}</p>
           </div>
         </div>
       </div>
@@ -133,9 +134,9 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
         <LandPlotMap plots={[plot]} selectedPlotId={plot.id} />
       </div>
 
-      {/* Validation Results */}
+      {/* Validation results */}
       <div>
-        <h2 className="text-sm font-medium mb-3">Validation Results</h2>
+        <h2 className="text-sm font-medium mb-3">Validation results</h2>
         {plot.validation_results && plot.validation_results.length > 0 ? (
           <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
             <Table>
@@ -170,10 +171,10 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
                       {vr.confidence_score !== null ? `${(vr.confidence_score * 100).toFixed(0)}%` : "—"}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-[13px]">
-                      {vr.alert_date ? new Date(vr.alert_date).toLocaleDateString() : "—"}
+                      {vr.alert_date ? formatDate(vr.alert_date) : "—"}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-[13px]">
-                      {new Date(vr.validated_at).toLocaleDateString()}
+                      {formatDate(vr.validated_at)}
                     </TableCell>
                     <TableCell className="text-[13px] max-w-[200px] truncate">{vr.notes || "—"}</TableCell>
                   </TableRow>

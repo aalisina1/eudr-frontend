@@ -8,6 +8,7 @@
  */
 import { KG_PER_UNIT } from "@/lib/readiness-format";
 import type { BatchReadiness, DueDiligenceStatement, Supplier, User } from "@/lib/api/types";
+import { formatNumber } from "@/lib/format";
 
 // ── Greeting + date line ──
 
@@ -78,7 +79,7 @@ export function isWithinQuarter(dateStr: string | null | undefined, now: Date = 
  * list (`app/(dashboard)/supply-chains/page.tsx`), generalised to accept a
  * plain number too (the summary endpoint's counts aren't `DecimalField`s). */
 export function formatWholeNumber(value: string | number): string {
-  return Math.round(Number(value)).toLocaleString();
+  return formatNumber(Math.round(Number(value)));
 }
 
 /** The readiness *summary* endpoint always normalises tonnage to KG

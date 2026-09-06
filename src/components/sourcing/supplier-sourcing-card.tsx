@@ -29,6 +29,7 @@ import { DeadlineChip } from "@/components/sourcing/deadline-chip";
 import { TonnageBar } from "@/components/sourcing/tonnage-bar";
 import { KG_PER_UNIT, UNIT_LABELS } from "@/lib/readiness-format";
 import type { BatchReadiness } from "@/lib/api/types";
+import { formatNumber } from "@/lib/format";
 
 /** DOM anchor the "Data gaps" callout scrolls to for lot/PO-shaped gaps
  * (there's no separate "lots" page to deep-link to — the fix lives inside a
@@ -37,7 +38,7 @@ import type { BatchReadiness } from "@/lib/api/types";
 export const SOURCING_TABLE_ANCHOR_ID = "supplier-sourcing-pos";
 
 function formatQty(value: string): string {
-  return Math.round(Number(value)).toLocaleString();
+  return formatNumber(Math.round(Number(value)));
 }
 
 /** Mirrors `DeadlineChip`'s own eta/day-count math. Kept local to this file

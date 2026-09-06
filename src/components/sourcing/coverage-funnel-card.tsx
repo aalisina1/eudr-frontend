@@ -6,6 +6,7 @@ import { HATCH_BACKGROUND } from "@/components/sourcing/tonnage-bar";
 import { cn } from "@/lib/utils";
 import { UNIT_LABELS, daysUntil, formatEta } from "@/lib/readiness-format";
 import type { CoverageFunnel } from "@/lib/api/types";
+import { formatNumber } from "@/lib/format";
 
 interface FunnelRowProps {
   label: string;
@@ -35,7 +36,7 @@ function FunnelRow({ label, value, max, unitLabel, hatched, danger, fillClassNam
           danger ? "font-medium text-destructive" : "text-foreground"
         )}
       >
-        {Math.round(value).toLocaleString()} {unitLabel}
+        {formatNumber(Math.round(value))} {unitLabel}
         {note ? ` · ${note}` : ""}
       </span>
     </div>

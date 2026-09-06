@@ -131,7 +131,7 @@ async function openCreateForm(user: ReturnType<typeof userEvent.setup>) {
   });
   await user.click(screen.getByRole("button", { name: /create mapping/i }));
   await waitFor(() => {
-    expect(screen.getByText("Create Mapping Configuration")).toBeInTheDocument();
+    expect(screen.getByText("Create mapping configuration")).toBeInTheDocument();
   });
 }
 
@@ -142,7 +142,7 @@ async function openEditForm(user: ReturnType<typeof userEvent.setup>) {
   });
   await user.click(screen.getByRole("button", { name: /edit/i }));
   await waitFor(() => {
-    expect(screen.getByText("Edit Mapping Configuration")).toBeInTheDocument();
+    expect(screen.getByText("Edit mapping configuration")).toBeInTheDocument();
   });
 }
 

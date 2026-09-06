@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { StageBadge } from "@/components/sourcing/stage-badge";
 import { UNIT_LABELS } from "@/lib/readiness-format";
 import type { ConsignmentLot } from "@/lib/api/types";
+import { formatNumber } from "@/lib/format";
 
 const COLUMN_COUNT = 5;
 
@@ -109,7 +110,7 @@ export function ConsignmentLotsTable({ lots, canWrite, onCompletePlots }: Consig
                       <span className="font-mono text-[13px] font-medium">{lot.reference_number}</span>
                     </TableCell>
                     <TableCell className="text-right font-mono">
-                      {Math.round(Number(lot.quantity)).toLocaleString()} {unitLabel}
+                      {formatNumber(Math.round(Number(lot.quantity)))} {unitLabel}
                     </TableCell>
                     <TableCell><StageBadge stage={lot.stage} /></TableCell>
                     <TableCell><DdsCell lot={lot} /></TableCell>

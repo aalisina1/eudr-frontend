@@ -6,6 +6,7 @@ import { User, Building2, Shield, Mail } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { CredentialsCard } from "@/components/traces/credentials-card";
 import { OperatorIdentityCard } from "@/components/traces/operator-identity-card";
+import { PRODUCT_TITLE } from "@/lib/brand";
 
 export default function SettingsPage() {
   const { data: user, isLoading } = useCurrentUser();
@@ -86,10 +87,10 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* TRACES Connection */}
+      {/* TRACES connection */}
       <CredentialsCard />
 
-      {/* TRACES Operator Identity (EORI + actor ID) */}
+      {/* TRACES Operator identity (EORI + actor ID) */}
       <OperatorIdentityCard />
 
       {/* App Info */}
@@ -101,7 +102,7 @@ export default function SettingsPage() {
           <div className="grid gap-2 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Platform</span>
-              <span>Grovetrace EUDR Compliance</span>
+              <span>{PRODUCT_TITLE}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Version</span>

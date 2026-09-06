@@ -44,7 +44,7 @@ function ActiveAccentBar() {
 const navMain = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/suppliers", label: "Suppliers", icon: Users },
-  { href: "/plots", label: "Land Plots", icon: MapPin },
+  { href: "/plots", label: "Land plots", icon: MapPin },
 ];
 
 const navCompliance = [

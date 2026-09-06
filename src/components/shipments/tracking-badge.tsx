@@ -11,7 +11,7 @@ const TRACKING_META: Record<TrackingState, { label: string; className: string; t
   error: {
     label: "Tracking error",
     className: "border-destructive/40 bg-destructive/10 text-destructive",
-    title: "Feed unavailable — readiness still reflects DDS coverage",
+    title: "Feed unavailable. Readiness still reflects DDS coverage.",
   },
   quota_reached: {
     label: "Quota reached",

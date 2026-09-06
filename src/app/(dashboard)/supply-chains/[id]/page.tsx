@@ -18,11 +18,12 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { authFetch } from "@/lib/api/client";
 import { UNIT_LABELS } from "@/lib/readiness-format";
 import type { LotReadiness, POReadinessDetail, Product, Supplier } from "@/lib/api/types";
+import { formatNumber } from "@/lib/format";
 
 /** Whole-number, thousands-separated quantity — see the Sourcing list's
  * identically-named helper; funnel values are decimal strings. */
 function formatQty(value: string): string {
-  return Math.round(Number(value)).toLocaleString();
+  return formatNumber(Math.round(Number(value)));
 }
 
 /**

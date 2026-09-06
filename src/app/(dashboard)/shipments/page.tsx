@@ -174,7 +174,7 @@ function ShipmentsPageInner() {
         <div>
           <h1 className="text-display text-4xl leading-[1.04] italic font-light">Shipments</h1>
           <p className="mt-2.5 text-[15px] text-muted-foreground">
-            Which arriving consignments still lack a ready DDS — and when they land.
+            Which arriving consignments still lack a ready DDS, and when they land.
           </p>
         </div>
         {/* List ⇄ Calendar toggle (no Tabs primitive exists — minimal segmented control) */}

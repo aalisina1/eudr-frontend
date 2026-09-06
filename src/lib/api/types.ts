@@ -648,7 +648,7 @@ export interface TracesCredential {
   // password is NEVER returned by the API — write-only
 }
 
-// ── TRACES Submissions ──
+// ── TRACES submissions ──
 
 export type TracesSubmissionStatus = "QUEUED" | "PROCESSING" | "SUBMITTED" | "FAILED" | "RETRYING";
 export type SubmissionType = "CREATE" | "UPDATE" | "WITHDRAW";
@@ -923,7 +923,7 @@ export interface SyncRecord {
   created_at: string;
 }
 
-// ── Ingestion Schedule ──
+// ── Ingestion schedule ──
 
 export interface IngestionSchedule {
   id: string;

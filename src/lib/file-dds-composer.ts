@@ -8,6 +8,7 @@
  */
 import type { LotReadiness, PayloadEstimateBatchRow } from "@/lib/api/types";
 import { KG_PER_UNIT } from "@/lib/readiness-format";
+import { formatNumber } from "@/lib/format";
 
 // ── Declaration summary: net mass + harvest-period range ──
 
@@ -67,12 +68,12 @@ export function harvestPeriodRange(lots: LotReadiness[], checkedIds: ReadonlySet
 /** Primary vocabulary is tonnes (Round-2 item 2: "totals display in tonnes to
  * match Sourcing"); whole tonnes, thousands-separated. */
 export function formatTonnes(totalKg: number): string {
-  return `${Math.round(totalKg / 1000).toLocaleString()} t`;
+  return `${formatNumber(Math.round(totalKg / 1000))} t`;
 }
 
 /** "kg may remain as fine print" (Round-2 item 2) — the precise figure. */
 export function formatKgFinePrint(totalKg: number): string {
-  return `${Math.round(totalKg).toLocaleString()} kg`;
+  return `${formatNumber(Math.round(totalKg))} kg`;
 }
 
 /** "Oct – Dec 2025" / "Nov 2025 – Jan 2026" — same vocabulary as the PO

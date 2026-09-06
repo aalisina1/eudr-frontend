@@ -70,7 +70,7 @@ describe("AppSidebar", () => {
     renderWithProviders(<AppSidebar />);
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
     expect(screen.getByText("Suppliers")).toBeInTheDocument();
-    expect(screen.getByText("Land Plots")).toBeInTheDocument();
+    expect(screen.getByText("Land plots")).toBeInTheDocument();
   });
 
   it("renders all compliance navigation items", () => {

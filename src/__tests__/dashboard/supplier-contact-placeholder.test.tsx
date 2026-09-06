@@ -8,12 +8,12 @@ describe("SupplierContactPlaceholder", () => {
     renderWithProviders(<SupplierContactPlaceholder />);
     expect(
       screen.getByText(
-        /You don't have access to organization-wide compliance data — contact your organization administrator\./i
+        /You don't have access to organisation-wide compliance data\. Ask your organisation administrator for access\./i
       )
     ).toBeInTheDocument();
   });
 
-  it("renders no organization-wide compliance data (no RAG, PO, or supplier references)", () => {
+  it("renders no organisation-wide compliance data (no RAG, PO, or supplier references)", () => {
     renderWithProviders(<SupplierContactPlaceholder />);
     expect(screen.queryByText(/PO-/)).not.toBeInTheDocument();
     expect(screen.queryByText(/on time|at risk|breached/i)).not.toBeInTheDocument();

@@ -33,6 +33,7 @@ import {
 import { SourceForm } from "@/components/forms/source-form";
 import { ScheduleSection } from "@/components/integrations/schedule-section";
 import { authFetch } from "@/lib/api/client";
+import { formatNumber } from "@/lib/format";
 import type {
   DataSource,
   DataSourceSchema,
@@ -475,7 +476,7 @@ function ConfigureStep({
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground">
-              Connection Configuration
+              Connection configuration
             </h3>
             <Button variant="outline" size="sm" onClick={onEdit} className="gap-1.5">
               <Pencil className="size-3.5" />
@@ -553,7 +554,7 @@ function DiscoverStep({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium">Metadata Discovery</h3>
+          <h3 className="text-sm font-medium">Metadata discovery</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             Introspect the source to discover tables, views, and their schemas.
           </p>
@@ -619,7 +620,7 @@ function DiscoverStep({
                         {s.schema?.columns?.length ?? 0}
                       </td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-muted-foreground">
-                        {s.row_count?.toLocaleString() ?? "\u2014"}
+                        {formatNumber(s.row_count)}
                       </td>
                     </tr>
                   ))}
@@ -722,7 +723,7 @@ function SelectStep({
               <div className="flex items-center gap-3 mt-1.5 text-[10px] text-muted-foreground">
                 <span>{s.schema?.columns?.length ?? 0} columns</span>
                 {s.row_count != null && (
-                  <span>{s.row_count.toLocaleString()} rows</span>
+                  <span>{formatNumber(s.row_count)} rows</span>
                 )}
               </div>
             </button>
@@ -733,7 +734,7 @@ function SelectStep({
   );
 }
 
-// ── Step 4: Raw Data ──
+// ── Step 4: Raw data ──
 
 function RawStep({
   schemas,
@@ -754,7 +755,7 @@ function RawStep({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium">Raw Data</h3>
+          <h3 className="text-sm font-medium">Raw data</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             Ingest selected objects into the immutable raw data layer.
             {schemas.length > 0 && (
@@ -787,7 +788,7 @@ function RawStep({
           <CardContent className="p-0">
             <div className="px-4 py-3 border-b">
               <h4 className="text-xs font-medium text-muted-foreground">
-                Recent Ingestion Jobs
+                Recent ingestion jobs
               </h4>
             </div>
             <div className="overflow-x-auto">
@@ -820,7 +821,7 @@ function RawStep({
                         {job.records_failed}
                       </td>
                       <td className="px-4 py-2 text-xs text-muted-foreground">
-                        {new Date(job.started_at).toLocaleString()}
+                        {formatNumber(job.started_at)}
                       </td>
                     </tr>
                   ))}
@@ -869,7 +870,7 @@ function RawStep({
                         </Badge>
                       </td>
                       <td className="px-4 py-2 text-xs text-muted-foreground">
-                        {new Date(r.received_at).toLocaleString()}
+                        {formatNumber(r.received_at)}
                       </td>
                     </tr>
                   ))}

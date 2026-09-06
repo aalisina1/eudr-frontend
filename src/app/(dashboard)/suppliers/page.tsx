@@ -9,6 +9,7 @@ import { Users, Plus } from "lucide-react";
 import { DataTable, type ColumnDef, type FilterDef } from "@/components/data-table";
 import { SupplierForm } from "@/components/forms/supplier-form";
 import type { Supplier, KYCStatus, RiskRating } from "@/lib/api/types";
+import { formatDate } from "@/lib/format";
 
 const KYC_COLORS: Record<KYCStatus, { bg: string; text: string; dot: string; label: string }> = {
   PENDING: { bg: "bg-[#C7956D]/10", text: "text-[#A07850]", dot: "bg-[#C7956D]", label: "Pending" },
@@ -84,7 +85,7 @@ const columns: ColumnDef<Supplier>[] = [
     sortable: true,
     render: (s) => (
       <span className="text-muted-foreground text-[13px]">
-        {new Date(s.created_at).toLocaleDateString()}
+        {formatDate(s.created_at)}
       </span>
     ),
   },

@@ -139,13 +139,13 @@ export function PriorityAlertBanner({ showCta = true }: { showCta?: boolean }) {
         {isLoading ? (
           <Skeleton className="h-16 w-full" />
         ) : summaryError ? (
-          <p className="text-sm text-muted-foreground">Shipments summary unavailable — see the Shipments page.</p>
+          <p className="text-sm text-muted-foreground">Shipments summary unavailable. Open the Shipments page.</p>
         ) : (
           <>
             {n === 0 && (
               <div className="flex items-center gap-2.5 rounded-lg border border-primary/30 bg-primary/5 px-3.5 py-2.5 text-[13.5px] text-foreground">
                 <CheckCircle2 className="size-4 shrink-0 text-primary" />
-                Clear — no shipments landing soon without a DDS on file.
+                Clear. No shipments landing soon without a DDS on file.
               </div>
             )}
             {n === 1 && exemplar && (

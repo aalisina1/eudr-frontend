@@ -123,7 +123,7 @@ test.describe("File DDS composer — prefill + declaration summary + payload met
     });
     await page.goto(`/due-diligence?po=${PO_ID}`);
 
-    await expect(page.getByRole("heading", { name: "New Due Diligence Statement" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "New due diligence statement" })).toBeVisible();
     await expect(page.getByText("Pre-filled from PO-2026-E2E-FD")).toBeVisible();
 
     await expect(page.getByText("LOT-GH-26-9001")).toBeVisible();
@@ -160,7 +160,9 @@ test.describe("File DDS composer — over-limit payload meter + split-by-shipmen
     await stubComposerDependencies(page, OVER_LIMIT_ESTIMATE);
     await page.goto(`/due-diligence?po=${PO_ID}`);
 
-    await expect(page.getByText("31.2 MB — exceeds the TRACES 25.0 MB limit")).toBeVisible();
+    // Copy updated by #118 (em dashes removed from user-visible strings); this
+    // asserts the replacement wording, not the retired one.
+    await expect(page.getByText("31.2 MB, over the TRACES 25.0 MB limit")).toBeVisible();
     await expect(
       page.getByText("Split into 2 statements by shipment: MV Elbe Trader (14.1 MB) · MV Baltic Star (17.1 MB)"),
     ).toBeVisible();
@@ -222,7 +224,9 @@ test.describe("File DDS composer — 72h lock dialog + submit hand-off (#26)", (
 
     await expect(page.getByRole("alertdialog")).toBeVisible();
     await expect(page.getByText("Submit to TRACES?")).toBeVisible();
-    await expect(page.getByText(/locks — you have 72 hours to amend it/)).toBeVisible();
+    // Copy updated by #118 (em dashes removed from user-visible strings); this
+    // asserts the replacement wording, not the retired one.
+    await expect(page.getByText(/locks\. You have 72 hours to amend it/)).toBeVisible();
 
     await page.getByRole("button", { name: "Submit statement" }).click();
 

@@ -215,7 +215,7 @@ describe("SyncRecordsView request contracts", () => {
 
     // Switch the status filter to Success so the promotable record shows up.
     await waitFor(() => {
-      expect(screen.getByText("Sync Records")).toBeInTheDocument();
+      expect(screen.getByText("Sync records")).toBeInTheDocument();
     });
     await user.selectOptions(screen.getByRole("combobox"), "SUCCESS");
 

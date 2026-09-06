@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AlertTriangle, MapPin, Package, ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { UNIT_LABELS } from "@/lib/readiness-format";
+import { formatNumber } from "@/lib/format";
 import type {
   CoveredLot,
   CoveredPlot,
@@ -107,8 +108,8 @@ function LotBlock({ lot }: { lot: CoveredLot }) {
         </p>
         <p className="mt-1 text-[12px] text-muted-foreground">
           The statement claims to cover it, but no batch with this id belongs to
-          your organisation. It is listed rather than hidden — a statement
-          showing fewer lots than it declares would be worse.
+          your organisation. It is listed rather than hidden, because a
+          statement showing fewer lots than it declares would be worse.
         </p>
       </div>
     );
@@ -134,7 +135,7 @@ function LotBlock({ lot }: { lot: CoveredLot }) {
           </Badge>
         )}
         <span className="text-[13px] text-muted-foreground tabular-nums">
-          {lot.quantity ? Number(lot.quantity).toLocaleString() : "—"} {unit}
+          {lot.quantity ? formatNumber(Number(lot.quantity)) : "—"} {unit}
         </span>
         <span className="text-[13px] text-muted-foreground">{lot.country_of_harvest}</span>
         {period ? (
@@ -191,7 +192,7 @@ function LotBlock({ lot }: { lot: CoveredLot }) {
         )}
         {lot.plot_count === 0 && (
           <p className="text-[12.5px] text-destructive">
-            No plots — a statement must declare the land its goods came from.
+            No plots. A statement must declare the land its goods came from.
           </p>
         )}
       </div>

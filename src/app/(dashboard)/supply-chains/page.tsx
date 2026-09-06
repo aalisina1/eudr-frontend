@@ -13,13 +13,14 @@ import { TonnageBar, CoverageLegend } from "@/components/sourcing/tonnage-bar";
 import { authFetch } from "@/lib/api/client";
 import { UNIT_LABELS } from "@/lib/readiness-format";
 import type { BatchReadiness, PaginatedResponse, Product, Supplier } from "@/lib/api/types";
+import { formatNumber } from "@/lib/format";
 
 /** Whole-number, thousands-separated quantity — funnel values are decimal
  * strings (e.g. "250000.0000"); display the PO's native unit rather than
  * inventing a tonnes conversion (eudr-app PR #83: "per-PO list/detail views
  * show native units", only the aggregate/summary endpoint normalises to KG). */
 function formatQty(value: string): string {
-  return Math.round(Number(value)).toLocaleString();
+  return formatNumber(Math.round(Number(value)));
 }
 
 function SupplierCell({ sellerId, suppliersById }: { sellerId: string; suppliersById?: Record<string, Supplier> }) {
