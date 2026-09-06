@@ -25,17 +25,17 @@ async function fetchPlots(): Promise<PaginatedResponse<LandPlot>> {
 }
 
 const STATUS_DOT: Record<ValidationStatus, string> = {
-  PENDING: "bg-[#C7956D]",
-  PASSED: "bg-[#34D399]",
-  FAILED: "bg-[#C23D3D]",
-  REQUIRES_REVIEW: "bg-[#E8C468]",
+  PENDING: "bg-pending",
+  PASSED: "bg-success",
+  FAILED: "bg-destructive",
+  REQUIRES_REVIEW: "bg-warning",
 };
 
 const STATUS_TEXT: Record<ValidationStatus, string> = {
-  PENDING: "text-[#A07850]",
-  PASSED: "text-[#1A6B5A]",
-  FAILED: "text-[#C23D3D]",
-  REQUIRES_REVIEW: "text-[#A07850]",
+  PENDING: "text-pending-foreground",
+  PASSED: "text-success-foreground",
+  FAILED: "text-destructive",
+  REQUIRES_REVIEW: "text-pending-foreground",
 };
 
 const STATUS_LABEL: Record<ValidationStatus, string> = {

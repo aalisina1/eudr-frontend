@@ -208,7 +208,7 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
                 size="sm"
                 disabled={isPending}
                 onClick={() => actionMutation.mutate("approve")}
-                className="bg-[#34D399] hover:bg-[#2CB889] text-white"
+                className="bg-success hover:bg-success/90 text-white"
               >
                 Approve
               </Button>

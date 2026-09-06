@@ -28,6 +28,14 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-pending: var(--pending);
+  --color-pending-foreground: var(--pending-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -73,6 +81,23 @@
   --accent-foreground: #3A1E08;
 
   --destructive: #C23D3D;
+
+  /* Semantic status tokens (eudr-frontend#125). The app's badge idiom is a
+     10% tint of the base with the -foreground as text on it, plus a solid
+     dot in the base. `-foreground` here is therefore tuned for text ON THE
+     TINT, not on a solid fill — every value below clears WCAG AA (4.5:1) on
+     its own tint over --card, in this theme and in .dark, and
+     status-token-contrast.test.ts holds that line.
+     These existed only as hardcoded hexes before, which cannot flip with
+     the theme: the light-mode green on a dark card measured 2.12:1. */
+  --success: #34D399;
+  --success-foreground: #1A6B5A;
+  --warning: #E8C468;
+  --warning-foreground: #866D28;
+  --pending: #C7956D;
+  --pending-foreground: #8C6946;
+  --info: #6366F1;
+  --info-foreground: #4F52D9;
 
   --border: #D6D0C4;
   --input: #D6D0C4;
@@ -125,6 +150,17 @@
   --accent-foreground: #1A0E04;
 
   --destructive: #EF6B6B;
+
+  /* On a dark card the base colours themselves read as text; only the
+     copper needs the lighter --accent variant. */
+  --success: #34D399;
+  --success-foreground: #34D399;
+  --warning: #E8C468;
+  --warning-foreground: #E8C468;
+  --pending: #D4A574;
+  --pending-foreground: #D4A574;
+  --info: #6366F1;
+  --info-foreground: #8B8DF5;
 
   --border: #1E3836;
   --input: #1E3836;

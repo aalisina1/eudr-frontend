@@ -23,9 +23,9 @@ import type { BatchReadiness, PaginatedResponse, Supplier, KYCStatus, RiskRating
 import { formatDate } from "@/lib/format";
 
 const KYC_COLORS: Record<KYCStatus, { bg: string; text: string; dot: string; label: string }> = {
-  PENDING: { bg: "bg-[#C7956D]/10", text: "text-[#A07850]", dot: "bg-[#C7956D]", label: "Pending" },
-  VERIFIED: { bg: "bg-[#34D399]/10", text: "text-[#1A6B5A]", dot: "bg-[#34D399]", label: "Verified" },
-  REJECTED: { bg: "bg-[#C23D3D]/10", text: "text-[#C23D3D]", dot: "bg-[#C23D3D]", label: "Rejected" },
+  PENDING: { bg: "bg-pending/10", text: "text-pending-foreground", dot: "bg-pending", label: "Pending" },
+  VERIFIED: { bg: "bg-success/10", text: "text-success-foreground", dot: "bg-success", label: "Verified" },
+  REJECTED: { bg: "bg-destructive/10", text: "text-destructive", dot: "bg-destructive", label: "Rejected" },
   EXPIRED: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Expired" },
 };
 
@@ -39,9 +39,9 @@ const RISK_COLORS: Record<
   { bg: string; text: string; dot: string; label: string; suffixed: string }
 > = {
   NOT_ASSESSED: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Not assessed", suffixed: "Not assessed" },
-  LOW: { bg: "bg-[#34D399]/10", text: "text-[#1A6B5A]", dot: "bg-[#34D399]", label: "Low", suffixed: "Low Risk" },
-  STANDARD: { bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", label: "Standard", suffixed: "Standard Risk" },
-  HIGH: { bg: "bg-[#C23D3D]/10", text: "text-[#C23D3D]", dot: "bg-[#C23D3D]", label: "High", suffixed: "High Risk" },
+  LOW: { bg: "bg-success/10", text: "text-success-foreground", dot: "bg-success", label: "Low", suffixed: "Low Risk" },
+  STANDARD: { bg: "bg-warning/10", text: "text-warning-foreground", dot: "bg-warning", label: "Standard", suffixed: "Standard Risk" },
+  HIGH: { bg: "bg-destructive/10", text: "text-destructive", dot: "bg-destructive", label: "High", suffixed: "High Risk" },
 };
 
 const TH = "text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
@@ -226,11 +226,11 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
                         variant="secondary"
                         className={`border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5 ${
                           cert.is_valid
-                            ? "bg-[#34D399]/10 text-[#1A6B5A]"
-                            : "bg-[#C23D3D]/10 text-[#C23D3D]"
+                            ? "bg-success/10 text-success-foreground"
+                            : "bg-destructive/10 text-destructive"
                         }`}
                       >
-                        <span className={`w-1.5 h-1.5 rounded-full ${cert.is_valid ? "bg-[#34D399]" : "bg-[#C23D3D]"}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${cert.is_valid ? "bg-success" : "bg-destructive"}`} />
                         {cert.is_valid ? "Valid" : "Expired"}
                       </Badge>
                     </TableCell>

@@ -196,8 +196,8 @@ function DueDiligencePageInner() {
         sortable: true,
         render: (stmt) => (
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-[#E8C468]/10 flex items-center justify-center shrink-0">
-              <FileText className="size-3.5 text-[#E8C468]" />
+            <div className="w-7 h-7 rounded-lg bg-warning/10 flex items-center justify-center shrink-0">
+              <FileText className="size-3.5 text-warning" />
             </div>
             <span className="font-medium text-[13px] font-mono">{stmt.reference_number}</span>
           </div>
@@ -219,13 +219,13 @@ function DueDiligencePageInner() {
               variant="secondary"
               className={`border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5 ${
                 stmt.risk_conclusion === "NEGLIGIBLE"
-                  ? "bg-[#34D399]/10 text-[#1A6B5A]"
-                  : "bg-[#C23D3D]/10 text-[#C23D3D]"
+                  ? "bg-success/10 text-success-foreground"
+                  : "bg-destructive/10 text-destructive"
               }`}
             >
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
-                  stmt.risk_conclusion === "NEGLIGIBLE" ? "bg-[#34D399]" : "bg-[#C23D3D]"
+                  stmt.risk_conclusion === "NEGLIGIBLE" ? "bg-success" : "bg-destructive"
                 }`}
               />
               {RISK_LABEL[stmt.risk_conclusion] ?? stmt.risk_conclusion}

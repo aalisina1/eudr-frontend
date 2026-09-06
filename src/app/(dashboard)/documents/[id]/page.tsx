@@ -126,8 +126,8 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
       <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#6366F1]/10 flex items-center justify-center">
-              <FolderOpen className="size-5 text-[#6366F1]" />
+            <div className="w-10 h-10 rounded-xl bg-info/10 flex items-center justify-center">
+              <FolderOpen className="size-5 text-info-foreground" />
             </div>
             <div>
               <h1 className="text-xl font-medium">{doc.title}</h1>
@@ -136,7 +136,7 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
           </div>
           <div className="flex gap-2">
             {doc.is_confidential && (
-              <Badge variant="secondary" className="bg-[#E8C468]/10 text-[#9A7D2E] border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5">
+              <Badge variant="secondary" className="bg-warning/10 text-warning-foreground border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5">
                 <Lock className="size-3" />
                 Confidential
               </Badge>
@@ -146,10 +146,10 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
               className={`border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5 ${
                 doc.is_archived
                   ? "bg-muted text-muted-foreground"
-                  : "bg-[#34D399]/10 text-[#1A6B5A]"
+                  : "bg-success/10 text-success-foreground"
               }`}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${doc.is_archived ? "bg-muted-foreground" : "bg-[#34D399]"}`} />
+              <span className={`w-1.5 h-1.5 rounded-full ${doc.is_archived ? "bg-muted-foreground" : "bg-success"}`} />
               {doc.is_archived ? "Archived" : "Active"}
             </Badge>
           </div>
