@@ -67,6 +67,13 @@ The frontend half of the TRACES round-trip. Ships the three v0.2.0 FE surfaces. 
 - **Submissions-hub list** (#22, PR #37) — the shipped DDS list reframed to surface TRACES status; list badge derives from the latest submission's regulator state. Carries the **Due Diligence → Submissions** nav rename (Submissions half). Referenced-statements card deliberately OUT (v0.5.0 / ADR-0015).
 - Known follow-ups filed from this work (v0.2.0 demo-readiness / v0.2.1 cleanup): #36 (COMPLIANCE_OFFICER Submit disabled — credentials pre-check hits an admin-only endpoint; v0.2.0), #41 (single source of truth for in-flight states), #33 (types.ts `Batch` drift), #39 (e2e locator collision).
 
+### Product identity (v0.3.1, merged 2026-09-06)
+The app read as a generic EUDR tool. Spec: vault `10-Specs/product-voice-and-identity.md`; enforcement decision ADR-0027.
+
+- **Brand chrome** (#115, PR #123) — `src/lib/brand.ts` is the single definition of the product name (four competing descriptors existed because nothing defined it once); the real Grovetrace mark replaces three stock lucide glyphs; the stock Next.js favicon is gone.
+- **Login + shared strings** (#116, #117, PR #123) — the hero opens on a customs deadline rather than an ESG tagline; `DataTable` and `getErrorMessage` defaults state the specific fact instead of "Something went wrong".
+- **Copy sweep + CI gate** (#118, #119, PR #124) — 52 em dashes out of copy, en-GB throughout, 39 `toLocale*` calls behind `src/lib/format.ts` pinned to en-GB (and date-only values in UTC, fixing a latent previous-day bug). **`eslint-rules/grovetrace-voice.mjs` gates all of it** in `npm run lint`, with `RuleTester` proving each check reds. Left open: #120 (comment em dashes), #121 (route/label mismatch).
+
 ### Testing
 - 18 Vitest suites: API client, auth, types, utils, DataTable, AppSidebar, cron helpers, integrations (syncs/schedule/source-card), and page-level smoke tests for the major routes.
 
@@ -85,6 +92,13 @@ The compliance-officer reframe's Sourcing/provenance/worklist screens, restructu
 - File DDS composition page — prefill, payload meter + split-by-shipment, 72h lock dialog (#26, re-scoped from the old "select batches" issue).
 - All consume the backend readiness endpoint (`eudr-app` #60) + shipment/deadline fields (`eudr-app` #61).
 
+### v0.3.2 — Visual identity (next; research done 2026-09-06)
+Spec: vault `10-Specs/visual-identity.md`. **The audit inverted the brief:** a good design system already exists in `globals.css` (full light + dark palettes, a derived radius scale); components bypass it with 704 arbitrary-value utilities. Stays inside the "no custom design system" non-objective — this is token consumption, not forked primitives.
+- **#125 (bug, high)** — hardcoded hexes fail WCAG in dark mode; the NEGLIGIBLE badge measures 2.12:1 where the token gives 7.02:1.
+- **#126** — one type scale; 13 arbitrary sizes ship today, six of them half-pixel.
+- **Typography dials + tabular figures** — Fraunces exposes `WONK` and `SOFT` axes and the app loads only `opsz`; extend the display face past page titles; `tabular-nums` by default in tables.
+- **#128** — gate the tokens in CI, after the fixes. **#127** — radius rule (judgement, not lintable).
+
 ### Near-term
 - **Role-aware UI** — hide/disable actions based on `user.role` (ADMIN / COMPLIANCE_OFFICER / VIEWER / SUPPLIER_CONTACT). Today every role sees every button. (The schedule editor and run-now already rely on the backend's admin-only checks; a 403 surfaces via the new error toast, but the actions aren't yet hidden for non-admins.)
 - **`SUPPLIER_CONTACT` portal scope** — once the backend ships object-level permissions, surface only the supplier's own plots / batches / docs.
@@ -97,6 +111,8 @@ The compliance-officer reframe's Sourcing/provenance/worklist screens, restructu
 - **Custom target definition UI** — even though the backend removed `CustomTargetDefinition` in the 4-domain restructure, a future generalisation may bring it back; if so, build it as a tab inside Mappings.
 
 ### Longer-term
+- **A typeface that is legally ours — modified-OFL "Grovetrace Serif".** Fraunces and DM Sans are both SIL OFL, which permits modification and redistribution under a new name. A type designer can adjust a handful of glyphs (the capital G, the numerals, a terminal or two) in days. **Do this when:** v0.3.2 has landed, `WONK`/`SOFT` are tuned and the display face is extended past page titles — i.e. once there is a coherent system to judge it against and `WONK` has shown how much idiosyncrasy the brand can carry. Not before: the same 13 half-pixel sizes in a new face still read as unowned.
+- **A bespoke typeface, commissioned from scratch.** Indicatively mid-five to low-six figures for a usable family, 3–12 months. **Do this only when:** a marketing site, sales deck, PDF reports (needs the backend renderer) and the app all need one visual thread **and** the modified-OFL face above has proven insufficient. The buyer decides on plot geometry, not letterforms (`voice.md`), so this is a brand investment that pays off at scale or on consumer-facing surfaces — neither is where Grovetrace is today.
 - **Notifications dropdown** — backend ships notification CRUD + read actions; the UI doesn't surface them yet.
 - **Audit log viewer** — backend has `/audit/logs/`; build a "history" panel on entity detail pages.
 - **Webhook management UI** — backend has CRUD; needs an Admin Settings sub-page.
