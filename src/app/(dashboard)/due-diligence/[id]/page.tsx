@@ -176,7 +176,7 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
           </p>
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-display text-4xl leading-[1.04] italic font-light">{stmt.reference_number}</h1>
-            <Badge variant="secondary" className={`${ss.bg} ${ss.text} border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5`}>
+            <Badge variant="secondary" className={`${ss.bg} ${ss.text} border-0 font-medium text-xs gap-1.5 px-2.5`}>
               <StatusIcon className="size-3" />
               {ss.label}
             </Badge>

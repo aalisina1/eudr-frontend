@@ -403,7 +403,7 @@ function TransformationEditor({
                 <Badge
                   key={s.id}
                   variant="secondary"
-                  className={`border-0 rounded-lg text-xs px-2 py-1 cursor-pointer transition-colors ${
+                  className={`border-0 text-xs px-2 py-1 cursor-pointer transition-colors ${
                     selectedSourceIds.includes(s.id)
                       ? "bg-primary/10 text-primary"
                       : "bg-muted text-muted-foreground hover:bg-muted/80"

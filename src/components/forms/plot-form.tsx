@@ -148,7 +148,7 @@ export function PlotForm({ open, onOpenChange }: PlotFormProps) {
             <select
               id="geometry_source"
               {...register("geometry_source")}
-              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              className="w-full h-9 rounded-lg border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             >
               <option value="GPS_DEVICE">GPS Device</option>
               <option value="SATELLITE_IMAGERY">Satellite Imagery</option>

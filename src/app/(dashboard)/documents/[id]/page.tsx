@@ -126,7 +126,7 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
       <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-info/10 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
               <FolderOpen className="size-5 text-info-foreground" />
             </div>
             <div>
@@ -136,14 +136,14 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
           </div>
           <div className="flex gap-2">
             {doc.is_confidential && (
-              <Badge variant="secondary" className="bg-warning/10 text-warning-foreground border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5">
+              <Badge variant="secondary" className="bg-warning/10 text-warning-foreground border-0 font-medium text-xs gap-1.5 px-2.5">
                 <Lock className="size-3" />
                 Confidential
               </Badge>
             )}
             <Badge
               variant="secondary"
-              className={`border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5 ${
+              className={`border-0 font-medium text-xs gap-1.5 px-2.5 ${
                 doc.is_archived
                   ? "bg-muted text-muted-foreground"
                   : "bg-success/10 text-success-foreground"

@@ -54,7 +54,7 @@ const columns: ColumnDef<Supplier>[] = [
       return (
         <Badge
           variant="secondary"
-          className={`${kyc.bg} ${kyc.text} border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5`}
+          className={`${kyc.bg} ${kyc.text} border-0 font-medium text-xs gap-1.5 px-2.5`}
         >
           <span className={`w-1.5 h-1.5 rounded-full ${kyc.dot}`} />
           {kyc.label}
@@ -71,7 +71,7 @@ const columns: ColumnDef<Supplier>[] = [
       return (
         <Badge
           variant="secondary"
-          className={`${risk.bg} ${risk.text} border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5`}
+          className={`${risk.bg} ${risk.text} border-0 font-medium text-xs gap-1.5 px-2.5`}
         >
           <span className={`w-1.5 h-1.5 rounded-full ${risk.dot}`} />
           {risk.label}
@@ -171,7 +171,7 @@ function SuppliersPageInner() {
         aria-label="Risk rating"
         value={riskRating}
         onChange={(e) => setRiskRating(e.target.value)}
-        className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+        className="h-9 cursor-pointer appearance-none rounded-lg border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
       >
         {RISK_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
@@ -183,7 +183,7 @@ function SuppliersPageInner() {
         aria-label="Certification expiry"
         value={certsExpiring}
         onChange={(e) => setCertsExpiring(e.target.value)}
-        className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+        className="h-9 cursor-pointer appearance-none rounded-lg border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
       >
         {CERTS_EXPIRING_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>

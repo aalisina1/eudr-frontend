@@ -122,7 +122,7 @@ export function SupplierForm({ open, onOpenChange, supplier }: SupplierFormProps
             <select
               id="kyc_status"
               {...register("kyc_status")}
-              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              className="w-full h-9 rounded-lg border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             >
               <option value="PENDING">Pending</option>
               <option value="VERIFIED">Verified</option>
@@ -136,7 +136,7 @@ export function SupplierForm({ open, onOpenChange, supplier }: SupplierFormProps
             <select
               id="risk_rating"
               {...register("risk_rating")}
-              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              className="w-full h-9 rounded-lg border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             >
               <option value="NOT_ASSESSED">Not assessed</option>
               <option value="LOW">Low</option>

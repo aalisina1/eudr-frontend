@@ -141,7 +141,7 @@ export function CredentialsForm({
             <select
               id="environment"
               {...register("environment")}
-              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              className="w-full h-9 rounded-lg border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             >
               <option value="ACCEPTANCE">Acceptance (testing)</option>
               <option value="PRODUCTION">Production</option>
@@ -206,7 +206,7 @@ export function CredentialsForm({
             <select
               id="operator_role"
               {...register("operator_role")}
-              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              className="w-full h-9 rounded-lg border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             >
               <option value="">Use deployment default</option>
               <option value="OPERATOR">Operator</option>

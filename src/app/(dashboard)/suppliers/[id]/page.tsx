@@ -154,11 +154,11 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
             <p className="text-sm text-muted-foreground">{supplier.country_of_origin}</p>
           </div>
           <div className="flex gap-2">
-            <Badge variant="secondary" className={`${kyc.bg} ${kyc.text} border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5`}>
+            <Badge variant="secondary" className={`${kyc.bg} ${kyc.text} border-0 font-medium text-xs gap-1.5 px-2.5`}>
               <span className={`w-1.5 h-1.5 rounded-full ${kyc.dot}`} />
               {kyc.label}
             </Badge>
-            <Badge variant="secondary" className={`${risk.bg} ${risk.text} border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5`}>
+            <Badge variant="secondary" className={`${risk.bg} ${risk.text} border-0 font-medium text-xs gap-1.5 px-2.5`}>
               <span className={`w-1.5 h-1.5 rounded-full ${risk.dot}`} />
               {risk.suffixed}
             </Badge>
@@ -224,7 +224,7 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
                     <TableCell>
                       <Badge
                         variant="secondary"
-                        className={`border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5 ${
+                        className={`border-0 font-medium text-xs gap-1.5 px-2.5 ${
                           cert.is_valid
                             ? "bg-success/10 text-success-foreground"
                             : "bg-destructive/10 text-destructive"

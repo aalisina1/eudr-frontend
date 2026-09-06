@@ -307,7 +307,7 @@ export default function SourceDetailPage() {
               <div className="flex items-center gap-2 mt-1">
                 <Badge
                   variant="secondary"
-                  className="border-0 rounded-lg text-xs px-2 py-0.5 bg-muted text-muted-foreground"
+                  className="border-0 text-xs px-2 py-0.5 bg-muted text-muted-foreground"
                 >
                   {source.source_type.replace("_", " ")}
                 </Badge>
@@ -444,7 +444,7 @@ function ConnectionStatusBadge({ status }: { status: string }) {
   };
   const m = meta[status] ?? meta.UNTESTED;
   return (
-    <Badge variant="secondary" className={`border-0 rounded-lg text-xs px-2 py-0.5 gap-1.5 ${m.bg} ${m.text}`}>
+    <Badge variant="secondary" className={`border-0 text-xs px-2 py-0.5 gap-1.5 ${m.bg} ${m.text}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${m.dot}`} />
       {m.label}
     </Badge>
@@ -606,7 +606,7 @@ function DiscoverStep({
                       <td className="px-4 py-2.5">
                         <Badge
                           variant="secondary"
-                          className="border-0 rounded-lg text-xs px-2 py-0.5 bg-muted text-muted-foreground gap-1"
+                          className="border-0 text-xs px-2 py-0.5 bg-muted text-muted-foreground gap-1"
                         >
                           {s.object_type === "TABLE" ? (
                             <Rows3 className="size-3" />
@@ -893,7 +893,7 @@ function JobStatusBadge({ status }: { status: string }) {
   return (
     <Badge
       variant="secondary"
-      className={`border-0 rounded-lg text-xs px-2 py-0.5 ${colors[status] ?? "bg-muted text-muted-foreground"}`}
+      className={`border-0 text-xs px-2 py-0.5 ${colors[status] ?? "bg-muted text-muted-foreground"}`}
     >
       {status}
     </Badge>

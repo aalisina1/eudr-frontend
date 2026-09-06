@@ -134,7 +134,7 @@ function DueDiligencePageInner() {
       aria-label="Status"
       value={status}
       onChange={(e) => setStatus(e.target.value)}
-      className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+      className="h-9 cursor-pointer appearance-none rounded-lg border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
     >
       {STATUS_OPTIONS.map((o) => (
         <option key={o.value} value={o.value}>
@@ -217,7 +217,7 @@ function DueDiligencePageInner() {
           stmt.risk_conclusion ? (
             <Badge
               variant="secondary"
-              className={`border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5 ${
+              className={`border-0 font-medium text-xs gap-1.5 px-2.5 ${
                 stmt.risk_conclusion === "NEGLIGIBLE"
                   ? "bg-success/10 text-success-foreground"
                   : "bg-destructive/10 text-destructive"
@@ -246,7 +246,7 @@ function DueDiligencePageInner() {
           const ss = derivedKey ? TRACES_DISPLAY_STYLE[derivedKey] : (DDS_STATUS_STYLE[stmt.status] ?? DDS_STATUS_STYLE.DRAFT);
           const StatusIcon = ss.icon;
           return (
-            <Badge variant="secondary" className={`${ss.bg} ${ss.text} border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5`}>
+            <Badge variant="secondary" className={`${ss.bg} ${ss.text} border-0 font-medium text-xs gap-1.5 px-2.5`}>
               <StatusIcon className={`size-3 ${ss.spin ? "animate-spin" : ""}`} />
               {ss.label}
             </Badge>

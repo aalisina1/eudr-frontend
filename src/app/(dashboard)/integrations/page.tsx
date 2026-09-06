@@ -128,7 +128,7 @@ function SourcesContent({
         {[...Array(3)].map((_, i) => (
           <Card key={i} className="border-border/50">
             <CardContent className="p-5">
-              <Skeleton className="h-10 w-10 rounded-xl mb-4" />
+              <Skeleton className="h-10 w-10 rounded-lg mb-4" />
               <Skeleton className="h-5 w-40 mb-2" />
               <Skeleton className="h-4 w-24" />
             </CardContent>

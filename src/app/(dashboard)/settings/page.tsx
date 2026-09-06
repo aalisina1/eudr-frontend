@@ -43,7 +43,7 @@ export default function SettingsPage() {
           ) : user ? (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                   <User className="w-[18px] h-[18px] text-emerald-700 dark:text-emerald-400" />
                 </div>
                 <div>

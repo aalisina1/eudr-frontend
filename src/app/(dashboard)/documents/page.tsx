@@ -72,7 +72,7 @@ const columns: ColumnDef<Document>[] = [
     render: (doc) => (
       <Badge
         variant="secondary"
-        className={`border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5 ${
+        className={`border-0 font-medium text-xs gap-1.5 px-2.5 ${
           doc.is_archived
             ? "bg-muted text-muted-foreground"
             : "bg-success/10 text-success-foreground"

@@ -573,7 +573,7 @@ export function TracesPanel({
         </h2>
         <Badge
           variant="secondary"
-          className={`${style.bg} ${style.text} border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5`}
+          className={`${style.bg} ${style.text} border-0 font-medium text-xs gap-1.5 px-2.5`}
         >
           {pending ? (
             <Loader2 className="size-3 animate-spin" />
