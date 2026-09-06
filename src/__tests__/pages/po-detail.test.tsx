@@ -305,19 +305,20 @@ describe("PoDetailPage", () => {
       expect(badgeTexts).toContain("3 failed");
     });
 
-    it("clicking a plain deep-link ghost button scrolls to its section (e.g. Fix -> #lots)", async () => {
+    it("clicking Fix opens the edit-lot Sheet in place, not a scroll to a read-only table (#132)", async () => {
+      // Retired behaviour: Fix scrolled to #lots, which had no edit affordance.
+      // The replacement lands on a control that can change the field.
       mockApi({ detail: gapsDetail() });
       await renderPage();
       await waitFor(() => expect(screen.getByText("PO-2026-0141")).toBeInTheDocument());
 
-      // jsdom doesn't implement scrollIntoView — stub it on the real element
-      // (same convention as supplier-data-gaps-card.test.tsx).
       const scrollIntoView = vi.fn();
       document.getElementById("lots")!.scrollIntoView = scrollIntoView;
 
       const user = userEvent.setup();
-      await user.click(screen.getByRole("button", { name: /Fix/ }));
-      expect(scrollIntoView).toHaveBeenCalled();
+      await user.click(screen.getByRole("button", { name: /^Fix$/ }));
+      expect(scrollIntoView).not.toHaveBeenCalled();
+      expect(await screen.findByRole("heading", { name: /Edit lot/i })).toBeInTheDocument();
     });
 
     it("clicking Review plots opens the assign-plots Sheet in place (issue #78 — no more dead /plots link)", async () => {

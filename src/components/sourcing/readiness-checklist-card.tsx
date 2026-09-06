@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { LotReadiness, ReadinessBlocker, ReadinessBlockerCode } from "@/lib/api/types";
+import type { BatchUnit, LotReadiness, ReadinessBlocker, ReadinessBlockerCode } from "@/lib/api/types";
 
 /**
  * Deep-link mapping for each blocker code — sourcing-readiness.design-prompt.md
@@ -29,39 +29,75 @@ import type { LotReadiness, ReadinessBlocker, ReadinessBlockerCode } from "@/lib
  */
 type BlockerAction =
   | { kind: "link"; label: string; href: string }
-  | { kind: "assign-plots"; label: string };
+  | { kind: "assign-plots"; label: string }
+  | { kind: "edit-lot"; label: string };
 
+/**
+ * eudr-frontend#132: four of these used to point "Fix" at `#lots`, a read-only
+ * table. A compliance officer was told what was wrong, pressed Fix, scrolled
+ * to a table with no edit affordance, and stopped. Now every code that names
+ * a fixable field lands on a control that can change it:
+ *
+ * - harvest period and unit open the edit-lot Sheet on the lot that has the
+ *   defect (`targetLotFor` picks it from the per-lot breakdown);
+ * - missing geolocation is an assign-plots action, which already existed;
+ * - over-allocation has no single culprit lot, so it still scrolls to the
+ *   table, which now carries an Edit per row;
+ * - PLOT_NOT_FOUND / BATCH_NOT_FOUND stay a context-free link to
+ *   /integrations, deliberately: that dead end is #84's, and fixing it needs
+ *   a per-record view that does not exist yet.
+ */
 const BLOCKER_ACTIONS: Partial<Record<ReadinessBlockerCode, BlockerAction>> = {
-  MISSING_HARVEST_PERIOD: { kind: "link", label: "Fix", href: "#lots" },
-  MISSING_GEOLOCATION: { kind: "link", label: "Fix", href: "#lots" },
+  MISSING_HARVEST_PERIOD: { kind: "edit-lot", label: "Fix" },
+  MISSING_GEOLOCATION: { kind: "assign-plots", label: "Add plots" },
   PLOTS_FAILED_VALIDATION: { kind: "assign-plots", label: "Review plots" },
   PLOTS_PENDING_VALIDATION: { kind: "assign-plots", label: "Review plots" },
   PLOT_NOT_FOUND: { kind: "link", label: "Check integrations", href: "/integrations" },
   BATCH_NOT_FOUND: { kind: "link", label: "Check integrations", href: "/integrations" },
   OPERATOR_IDENTITY_INCOMPLETE: { kind: "link", label: "Complete profile", href: "/settings" },
-  UNIT_MISMATCH: { kind: "link", label: "View lots", href: "#lots" },
+  UNIT_MISMATCH: { kind: "edit-lot", label: "Fix unit" },
   OVER_ALLOCATED: { kind: "link", label: "View lots", href: "#lots" },
 };
 
-/** First lot whose per-lot breakdown actually has the plots issue this
- * blocker code names — `undefined` when nothing matches (renders no action
- * rather than a click that goes nowhere). */
-function targetLotFor(code: ReadinessBlockerCode, lots: LotReadiness[]): LotReadiness | undefined {
-  if (code === "PLOTS_FAILED_VALIDATION") return lots.find((l) => l.plots_failed_count > 0);
-  if (code === "PLOTS_PENDING_VALIDATION") return lots.find((l) => l.plots_pending_count > 0);
-  return undefined;
+/** First lot whose per-lot breakdown actually has the issue this blocker
+ * code names — `undefined` when nothing matches, which renders no action
+ * rather than a click that goes nowhere. A stale blocker (every lot already
+ * has a harvest period) is informational, not a button. */
+function targetLotFor(
+  code: ReadinessBlockerCode,
+  lots: LotReadiness[],
+  poUnit: BatchUnit | undefined
+): LotReadiness | undefined {
+  switch (code) {
+    case "PLOTS_FAILED_VALIDATION":
+      return lots.find((l) => l.plots_failed_count > 0);
+    case "PLOTS_PENDING_VALIDATION":
+      return lots.find((l) => l.plots_pending_count > 0);
+    case "MISSING_GEOLOCATION":
+      return lots.find((l) => l.plot_count === 0);
+    case "MISSING_HARVEST_PERIOD":
+      return lots.find((l) => !l.harvest_period_start || !l.harvest_period_end);
+    case "UNIT_MISMATCH":
+      return poUnit ? lots.find((l) => l.unit !== poUnit) : undefined;
+    default:
+      return undefined;
+  }
 }
 
 function GapRow({
   blocker,
   lots,
+  poUnit,
   canWrite,
   onAssignPlots,
+  onEditLot,
 }: {
   blocker: ReadinessBlocker;
   lots: LotReadiness[];
+  poUnit: BatchUnit | undefined;
   canWrite: boolean;
   onAssignPlots: (lotId: string) => void;
+  onEditLot: (lotId: string) => void;
 }) {
   const router = useRouter();
   const action = BLOCKER_ACTIONS[blocker.code];
@@ -75,9 +111,12 @@ function GapRow({
         router.push(action.href);
       }
     };
-  } else if (action?.kind === "assign-plots" && canWrite) {
-    const target = targetLotFor(blocker.code, lots);
-    if (target) onClick = () => onAssignPlots(target.id);
+  } else if ((action?.kind === "assign-plots" || action?.kind === "edit-lot") && canWrite) {
+    const target = targetLotFor(blocker.code, lots, poUnit);
+    if (target) {
+      const open = action.kind === "assign-plots" ? onAssignPlots : onEditLot;
+      onClick = () => open(target.id);
+    }
   }
 
   return (
@@ -100,13 +139,16 @@ function GapRow({
 
 interface ReadinessChecklistCardProps {
   blockers: ReadinessBlocker[];
-  /** PO's per-lot breakdown — resolves which lot an aggregate plots blocker
-   * is actually about (see `targetLotFor` above). */
+  /** PO's per-lot breakdown — resolves which lot an aggregate blocker is
+   * actually about (see `targetLotFor` above). */
   lots: LotReadiness[];
+  /** The order's unit, so UNIT_MISMATCH can find the lot that disagrees. */
+  poUnit?: BatchUnit;
   /** Write-only affordance gate (ADMIN/COMPLIANCE_OFFICER) for the
-   * assign-plots action only — the other blocker actions stay ungated. */
+   * assign-plots and edit-lot actions; plain links stay ungated. */
   canWrite: boolean;
   onAssignPlots: (lotId: string) => void;
+  onEditLot: (lotId: string) => void;
 }
 
 /**
@@ -116,7 +158,14 @@ interface ReadinessChecklistCardProps {
  * array is empty (matches the design's "All data complete — ready to file"
  * primary-tinted row).
  */
-export function ReadinessChecklistCard({ blockers, lots, canWrite, onAssignPlots }: ReadinessChecklistCardProps) {
+export function ReadinessChecklistCard({
+  blockers,
+  lots,
+  poUnit,
+  canWrite,
+  onAssignPlots,
+  onEditLot,
+}: ReadinessChecklistCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -126,7 +175,15 @@ export function ReadinessChecklistCard({ blockers, lots, canWrite, onAssignPlots
       <CardContent className="flex flex-col gap-2">
         {blockers.length > 0 ? (
           blockers.map((b) => (
-            <GapRow key={b.code} blocker={b} lots={lots} canWrite={canWrite} onAssignPlots={onAssignPlots} />
+            <GapRow
+              key={b.code}
+              blocker={b}
+              lots={lots}
+              poUnit={poUnit}
+              canWrite={canWrite}
+              onAssignPlots={onAssignPlots}
+              onEditLot={onEditLot}
+            />
           ))
         ) : (
           <div className="flex items-center gap-2.5 rounded-lg border border-primary/40 bg-primary/8 px-3.5 py-3">

@@ -376,3 +376,98 @@ test.describe("PO Detail — Gaps (earlier stage, blocked) state (#29)", () => {
     await expect(page).toHaveURL(new RegExp(`/supply-chains/${GAPS_DETAIL.id}$`));
   });
 });
+
+/**
+ * eudr-frontend#132. Before this, Fix scrolled to `#lots`, a table with no
+ * edit affordance — the officer was told what was wrong and could do nothing
+ * about it. This drives MISSING_HARVEST_PERIOD from raised to cleared through
+ * the UI: Fix opens the edit-lot Sheet on the blocking lot, Save PATCHes the
+ * lot, readiness refetches, and the blocker row is gone without a reload.
+ * The backend is stubbed, as every PO-detail journey here is; the serializer
+ * already accepts these fields, which is why the issue is frontend-only.
+ */
+test.describe("PO Detail — a blocker is fixable in place (#132)", () => {
+  const LOT_STUB = {
+    id: "lot-e2e-1",
+    seller_id: READY_DETAIL.seller_id,
+    buyer_id: "buyer-e2e",
+    product_id: READY_DETAIL.product_id,
+    reference_number: "LOT-GH-26-0871",
+    quantity: 25000,
+    unit: "KG",
+    transaction_date: "2026-01-10",
+    country_of_harvest: "GH",
+    harvest_period_start: null,
+    harvest_period_end: null,
+    land_plot_ids: ["p1", "p2", "p3"],
+    status: "CONFIRMED",
+    external_id: "",
+    shipment_reference: null,
+    expected_clearance_date: null,
+    fulfils_reference: null,
+    created_at: "2026-01-10T00:00:00Z",
+    updated_at: "2026-01-10T00:00:00Z",
+  };
+
+  test("Fix opens the edit-lot Sheet; saving a harvest period clears the blocker without a reload", async ({ page }) => {
+    // Readiness returns the gap until the lot is saved, then the all-clear.
+    let saved = false;
+    await page.route("**/api/v1/supply-chain/batches/*/readiness/**", async (route) => {
+      if (route.request().method() !== "GET") return route.fallback();
+      await route.fulfill({
+        json: saved
+          ? { ...GAPS_DETAIL, blocked: false, blockers: [], lots: [{ ...GAPS_DETAIL.lots[0], harvest_period_start: "2026-03-01", harvest_period_end: "2026-04-30" }] }
+          : { ...GAPS_DETAIL, blockers: [GAPS_DETAIL.blockers[0]] },
+      });
+    });
+    let patched: Record<string, unknown> | null = null;
+    await page.route(`**/api/v1/supply-chain/batches/${LOT_STUB.id}/`, async (route) => {
+      if (route.request().method() === "PATCH") {
+        patched = route.request().postDataJSON();
+        saved = true;
+        await route.fulfill({ json: { ...LOT_STUB, ...patched } });
+        return;
+      }
+      await route.fulfill({ json: LOT_STUB });
+    });
+    await stubLookups(page);
+
+    await page.goto(`/supply-chains/${GAPS_DETAIL.id}`);
+    await expect(page.getByRole("heading", { name: "PO-2026-E2E8" })).toBeVisible();
+    await expect(page.getByText("2 lots missing harvest period")).toBeVisible();
+
+    await page.getByRole("button", { name: /^Fix$/ }).click();
+    const sheet = page.getByRole("dialog");
+    await expect(sheet.getByRole("heading", { name: /Edit lot LOT-GH-26-0871/ })).toBeVisible({ timeout: 10_000 });
+    // Prefilled from the lot, with the plot hand-off present.
+    await expect(sheet.getByLabel(/^Quantity/)).toHaveValue("25000");
+    await expect(sheet.getByText(/3 plots assigned/)).toBeVisible();
+
+    await sheet.getByLabel(/Harvest start/).fill("2026-03-01");
+    await sheet.getByLabel(/Harvest end/).fill("2026-04-30");
+    await sheet.getByRole("button", { name: /^Save$/ }).click();
+
+    // The PATCH carried exactly the editable fields.
+    await expect.poll(() => patched).not.toBeNull();
+    expect(patched).toMatchObject({ harvest_period_start: "2026-03-01", harvest_period_end: "2026-04-30", unit: "KG" });
+    expect(patched).not.toHaveProperty("seller_id");
+
+    // Sheet closed, readiness refetched, blocker gone — no navigation.
+    await expect(sheet).toBeHidden();
+    await expect(page.getByText("2 lots missing harvest period")).toBeHidden();
+    await expect(page.getByText(/ready to file/i)).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`/supply-chains/${GAPS_DETAIL.id}$`));
+  });
+
+  test("VIEWER sees the blocker but no Fix and no per-row Edit", async ({ page }) => {
+    await routeReadinessDetail(page, { ...GAPS_DETAIL, blockers: [GAPS_DETAIL.blockers[0]] });
+    await stubLookups(page);
+    await page.route("**/api/v1/accounts/me/", async (route) => {
+      await route.fulfill({ json: { id: "u-viewer", email: "viewer@canopy.test", role: "VIEWER", organization_id: "o", organization_name: "Org" } });
+    });
+    await page.goto(`/supply-chains/${GAPS_DETAIL.id}`);
+    await expect(page.getByText("2 lots missing harvest period")).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Fix$/ })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^Edit$/ })).toHaveCount(0);
+  });
+});

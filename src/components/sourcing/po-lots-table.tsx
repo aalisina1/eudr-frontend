@@ -74,7 +74,7 @@ function DdsCell({ lot }: { lot: LotReadiness }) {
   return <span className="text-sm text-muted-foreground">Not filed</span>;
 }
 
-function LotRow({ lot }: { lot: LotReadiness }) {
+function LotRow({ lot, onEdit }: { lot: LotReadiness; onEdit?: (lotId: string) => void }) {
   const unitLabel = UNIT_LABELS[lot.unit] ?? lot.unit.toLowerCase();
   const harvest = formatHarvestPeriod(lot.harvest_period_start, lot.harvest_period_end);
   return (
@@ -94,6 +94,15 @@ function LotRow({ lot }: { lot: LotReadiness }) {
       <TableCell>
         <DdsCell lot={lot} />
       </TableCell>
+      {/* #132: the row a blocker's "Fix" scrolls to must be able to change
+          the field. Write-only, so absent from the DOM rather than disabled. */}
+      {onEdit && (
+        <TableCell className="text-right">
+          <Button size="sm" variant="ghost" className="text-primary hover:text-primary" onClick={() => onEdit(lot.id)}>
+            Edit
+          </Button>
+        </TableCell>
+      )}
     </TableRow>
   );
 }
@@ -213,6 +222,9 @@ interface PoLotsTableProps {
    * PO detail page owns the Sheet + role check. */
   canAssignUnassigned?: boolean;
   onAssignUnassigned?: (lots: LotReadiness[]) => void;
+  /** Per-row Edit (#132). Gated like every other write: ADMIN/COMPLIANCE_OFFICER. */
+  canEdit?: boolean;
+  onEditLot?: (lotId: string) => void;
 }
 
 /** PO Detail "Lots fulfilling this order" card — a `Table` of the PO's
@@ -221,7 +233,15 @@ interface PoLotsTableProps {
  * prompt.md Prompt B minus the Shipment/ETA columns, which move to the
  * group header row instead (that's genuinely per-shipment data, not
  * per-lot). */
-export function PoLotsTable({ lots, allocatedLabel, canAssignUnassigned, onAssignUnassigned }: PoLotsTableProps) {
+export function PoLotsTable({
+  lots,
+  allocatedLabel,
+  canAssignUnassigned,
+  onAssignUnassigned,
+  canEdit,
+  onEditLot,
+}: PoLotsTableProps) {
+  const onEdit = canEdit && onEditLot ? onEditLot : undefined;
   const groups = groupByShipment(lots);
 
   return (
@@ -241,6 +261,7 @@ export function PoLotsTable({ lots, allocatedLabel, canAssignUnassigned, onAssig
               <TableHead>Harvest period</TableHead>
               <TableHead>Plots</TableHead>
               <TableHead>DDS</TableHead>
+              {onEdit && <TableHead className="w-0" aria-label="Actions" />}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -259,7 +280,7 @@ export function PoLotsTable({ lots, allocatedLabel, canAssignUnassigned, onAssig
                     onAssignUnassigned={onAssignUnassigned}
                   />
                   {group.lots.map((lot) => (
-                    <LotRow key={lot.id} lot={lot} />
+                    <LotRow key={lot.id} lot={lot} onEdit={onEdit} />
                   ))}
                 </Fragment>
               ))

@@ -14,6 +14,7 @@ import { PoLotsTable } from "@/components/sourcing/po-lots-table";
 import { PoProvenanceCard } from "@/components/sourcing/po-provenance-card";
 import { AssignToConsignmentSheet } from "@/components/shipments/assign-to-consignment-sheet";
 import { AssignPlotsSheet } from "@/components/shipments/assign-plots-sheet";
+import { EditLotSheet } from "@/components/sourcing/edit-lot-sheet";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { authFetch } from "@/lib/api/client";
 import { UNIT_LABELS } from "@/lib/readiness-format";
@@ -44,6 +45,18 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
   const [assignLots, setAssignLots] = useState<LotReadiness[]>([]);
   const [assignPlotsOpen, setAssignPlotsOpen] = useState(false);
   const [assignPlotsLotId, setAssignPlotsLotId] = useState<string | null>(null);
+  // #132: the edit-lot Sheet, owned here like the other two so a blocker row,
+  // a table row and the sheet's own "Change plots" all land on the same instance.
+  const [editLotOpen, setEditLotOpen] = useState(false);
+  const [editLotId, setEditLotId] = useState<string | null>(null);
+  const openAssignPlots = (lotId: string) => {
+    setAssignPlotsLotId(lotId);
+    setAssignPlotsOpen(true);
+  };
+  const openEditLot = (lotId: string) => {
+    setEditLotId(lotId);
+    setEditLotOpen(true);
+  };
 
   const {
     data: po,
@@ -179,11 +192,10 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
           <ReadinessChecklistCard
             blockers={po.blockers}
             lots={po.lots}
+            poUnit={po.funnel.unit}
             canWrite={canWrite}
-            onAssignPlots={(lotId) => {
-              setAssignPlotsLotId(lotId);
-              setAssignPlotsOpen(true);
-            }}
+            onAssignPlots={openAssignPlots}
+            onEditLot={openEditLot}
           />
         </div>
 
@@ -195,6 +207,8 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
             setAssignLots(lots);
             setAssignOpen(true);
           }}
+          canEdit={canWrite}
+          onEditLot={openEditLot}
         />
 
         <PoProvenanceCard
@@ -216,6 +230,15 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
               open={assignPlotsOpen}
               onOpenChange={setAssignPlotsOpen}
               lotId={assignPlotsLotId ?? ""}
+            />
+            <EditLotSheet
+              open={editLotOpen}
+              onOpenChange={setEditLotOpen}
+              lotId={editLotId ?? ""}
+              onAssignPlots={(lotId) => {
+                setEditLotOpen(false);
+                openAssignPlots(lotId);
+              }}
             />
           </>
         )}

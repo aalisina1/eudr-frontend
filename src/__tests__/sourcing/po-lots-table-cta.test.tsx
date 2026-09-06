@@ -57,3 +57,23 @@ describe("PoLotsTable unassigned CTA", () => {
     expect(screen.queryByRole("button", { name: /Assign to consignment/i })).not.toBeInTheDocument();
   });
 });
+
+/** eudr-frontend#132: the table the "Fix" buttons used to scroll to had no
+ * edit affordance. Now each row carries one, gated like every other write. */
+describe("PoLotsTable per-row Edit (#132)", () => {
+  it("renders an Edit per lot when canEdit and raises the lot id", async () => {
+    const onEditLot = vi.fn();
+    render(
+      <PoLotsTable allocatedLabel="x" canEdit onEditLot={onEditLot} lots={[lot({ id: "a" }), lot({ id: "b", reference_number: "LOT-2" })]} />
+    );
+    const edits = screen.getAllByRole("button", { name: /^Edit$/i });
+    expect(edits).toHaveLength(2);
+    await userEvent.click(edits[1]);
+    expect(onEditLot).toHaveBeenCalledWith("b");
+  });
+
+  it("renders no Edit at all for VIEWER — absent, not disabled", () => {
+    render(<PoLotsTable allocatedLabel="x" canEdit={false} onEditLot={vi.fn()} lots={[lot()]} />);
+    expect(screen.queryByRole("button", { name: /^Edit$/i })).toBeNull();
+  });
+});
