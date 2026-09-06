@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,9 +33,15 @@ const TABS: { id: TabId; label: string; icon: typeof Database }[] = [
 ];
 
 
-export default function IntegrationsPage() {
+function IntegrationsPageInner() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabId>("sources");
+  // #84: remediation CTAs deep-link here with ?tab=syncs rather than dropping
+  // the user on the bare 4-tab surface. An unknown value degrades to Sources.
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<TabId>(
+    TABS.some((t) => t.id === tabParam) ? (tabParam as TabId) : "sources"
+  );
   const [formOpen, setFormOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
@@ -69,13 +76,15 @@ export default function IntegrationsPage() {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex items-center gap-1 border-b border-border/50">
+      <div role="tablist" className="flex items-center gap-1 border-b border-border/50">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
+              role="tab"
+              aria-selected={isActive}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all border-b-2 -mb-px ${
                 isActive
@@ -169,5 +178,15 @@ function SourcesContent({
         <SourceCard key={source.id} source={source} onNavigate={onNavigate} />
       ))}
     </div>
+  );
+}
+
+/** `useSearchParams` in a statically prerendered page needs a Suspense
+ *  boundary (Next.js App Router); same shape as `/plots`. */
+export default function IntegrationsPage() {
+  return (
+    <Suspense fallback={<Skeleton className="h-10 w-72" />}>
+      <IntegrationsPageInner />
+    </Suspense>
   );
 }

@@ -77,19 +77,22 @@ describe("SupplierDataGapsCard", () => {
   });
 
   it("renders the destructive callout title", () => {
-    render(<SupplierDataGapsCard pos={[]} />);
+    render(<SupplierDataGapsCard supplierId="sup-42" pos={[]} />);
     expect(screen.getByText("Data gaps")).toBeInTheDocument();
   });
 
   it("renders an 'all clear' positive state when there are no blockers", () => {
-    render(<SupplierDataGapsCard pos={[po()]} />);
+    render(<SupplierDataGapsCard supplierId="sup-42" pos={[po()]} />);
     expect(screen.getByText(/All data complete/i)).toBeInTheDocument();
   });
 
-  it("renders an aggregated gap row with a deep-link action", async () => {
+  it("renders an aggregated gap row whose action deep-links to this supplier's plots (#84)", async () => {
+    // Retired: a bare router.push("/plots") — the same context-free dead end
+    // #78 fixed elsewhere. The list honours ?supplier_id= since #133.
     const user = userEvent.setup();
     render(
       <SupplierDataGapsCard
+        supplierId="sup-42"
         pos={[
           po({ blockers: [{ code: "MISSING_GEOLOCATION", message: "1 lot missing plot geolocation", count: 1 }] }),
         ]}
@@ -97,7 +100,7 @@ describe("SupplierDataGapsCard", () => {
     );
     expect(screen.getByText(/1 lot missing plot geolocation/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "View plots" }));
-    expect(push).toHaveBeenCalledWith("/plots");
+    expect(push).toHaveBeenCalledWith("/plots?supplier_id=sup-42");
   });
 
   it("scrolls to the sourcing table for a lot/PO-shaped gap instead of navigating", async () => {

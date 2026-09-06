@@ -132,6 +132,8 @@ export function aggregateSupplierBlockers(pos: BatchReadiness[]): GapRow[] {
 }
 
 interface SupplierDataGapsCardProps {
+  /** #84: the plots action deep-links to this supplier's plots, not the bare list. */
+  supplierId: string;
   pos: BatchReadiness[];
   className?: string;
 }
@@ -141,13 +143,15 @@ interface SupplierDataGapsCardProps {
  * aggregated from the readiness endpoint (sourcing-readiness.design-prompt.md
  * Prompt E, eudr-frontend #31). Sits below "Sourcing from this supplier".
  */
-export function SupplierDataGapsCard({ pos, className }: SupplierDataGapsCardProps) {
+export function SupplierDataGapsCard({ supplierId, pos, className }: SupplierDataGapsCardProps) {
   const router = useRouter();
   const gaps = useMemo(() => aggregateSupplierBlockers(pos), [pos]);
 
   const handleAction = (kind: GapActionKind) => {
     if (kind === "plots") {
-      router.push("/plots");
+      // Was a bare "/plots" — the context-free dead end #78 fixed elsewhere.
+      // /plots honours ?supplier_id= since #133.
+      router.push(`/plots?supplier_id=${encodeURIComponent(supplierId)}`);
       return;
     }
     document

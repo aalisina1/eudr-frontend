@@ -204,3 +204,30 @@ describe("ReadinessChecklistCard — fix paths (#132)", () => {
     expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 });
+
+/** eudr-frontend#84: "Check integrations" dropped the user on a 4-tab surface
+ * with no hint which record was broken. The blocker payload carries only a
+ * count (no references — eudr-app follow-up filed), so the most the frontend
+ * can do is land on the right tab and say what to look for. */
+describe("ReadinessChecklistCard — integrations blockers carry context (#84)", () => {
+  it("PLOT_NOT_FOUND and BATCH_NOT_FOUND land on the Syncs tab and explain what to look for", async () => {
+    const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+    vi.doMock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+    render(
+      <ReadinessChecklistCard
+        blockers={[
+          blocker({ code: "PLOT_NOT_FOUND", message: "3 referenced plots not found in your organisation", count: 3 }),
+          blocker({ code: "BATCH_NOT_FOUND", message: "1 lot not found in your organisation", count: 1 }),
+        ]}
+        lots={[lot()]}
+        canWrite
+        onAssignPlots={vi.fn()}
+        onEditLot={vi.fn()}
+      />
+    );
+    const actions = screen.getAllByRole("button", { name: /Review sync records/i });
+    expect(actions).toHaveLength(2);
+    expect(screen.getAllByText(/held for review on the Syncs tab/i)).toHaveLength(2);
+    expect(screen.queryByRole("button", { name: /Check integrations/i })).toBeNull();
+  });
+});
