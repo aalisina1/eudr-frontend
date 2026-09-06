@@ -117,3 +117,56 @@ describe("/plots — validation_status URL param (dashboard filtered doorway)", 
     expect(select.value).toBe("");
   });
 });
+
+/**
+ * eudr-frontend#133: clicking a plot card only highlighted it on the map.
+ * There was no path from the list to `/plots/[id]` at all — the detail page
+ * was reachable only through a DDS. Decision: the card still selects (the
+ * map is the point of the list, and navigating on click would make it
+ * useless), and every card carries a distinct, keyboard-reachable Open link.
+ */
+describe("/plots — reaching plot detail (#133)", () => {
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    searchParams = new URLSearchParams();
+    vi.restoreAllMocks();
+  });
+
+  function seed(plots: LandPlot[]) {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(mockPaginatedResponse(plots)), { status: 200 })
+    );
+  }
+
+  it("every card has an Open link to its detail page", async () => {
+    seed([plot({ id: "p-1", reference: "PLOT-000001" }), plot({ id: "p-2", reference: "PLOT-000002" })]);
+    renderWithProviders(<PlotsPage />);
+    const links = await screen.findAllByRole("link", { name: /Open plot PLOT-00000[12]/ });
+    expect(links).toHaveLength(2);
+    expect(links[0]).toHaveAttribute("href", "/plots/p-1");
+    expect(links[1]).toHaveAttribute("href", "/plots/p-2");
+  });
+
+  it("the card itself is keyboard-selectable and selection does not navigate", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    seed([plot({ id: "p-1", reference: "PLOT-000001" })]);
+    renderWithProviders(<PlotsPage />);
+    const card = await screen.findByRole("button", { name: /PLOT-000001/ });
+    expect(card).toHaveAttribute("aria-pressed", "false");
+    card.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(card).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("filters to one supplier from ?supplier_id=, so other screens can deep-link here with context", async () => {
+    searchParams = new URLSearchParams("supplier_id=sup-A");
+    seed([
+      plot({ id: "p-a", reference: "PLOT-00000A", supplier_id: "sup-A" }),
+      plot({ id: "p-b", reference: "PLOT-00000B", supplier_id: "sup-B" }),
+    ]);
+    renderWithProviders(<PlotsPage />);
+    await screen.findByText(/PLOT-00000A/);
+    expect(screen.queryByText(/PLOT-00000B/)).toBeNull();
+    expect(screen.getByText(/1 of 2 plots/)).toBeInTheDocument();
+  });
+});

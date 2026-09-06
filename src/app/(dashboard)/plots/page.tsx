@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { MapPin, Search, Plus } from "lucide-react";
+import { MapPin, Search, Plus, ArrowRight } from "lucide-react";
 import { PlotForm } from "@/components/forms/plot-form";
 import { authFetch } from "@/lib/api/client";
 import { plotIdentity, plotMatchesQuery } from "@/lib/plot-identity";
@@ -62,6 +63,11 @@ function PlotsPageInner() {
   // `filteredPlots` below; no new fetch param needed). An absent or
   // unrecognized value degrades to "" (all statuses), never a crash.
   const statusParam = searchParams.get("validation_status") ?? "";
+  // #133 / #84: other screens deep-link here with context — the PO provenance
+  // card and the supplier data-gaps CTA both arrive as `?supplier_id=`.
+  // Applied client-side like the status filter, since every plot is loaded
+  // for the map anyway.
+  const supplierParam = searchParams.get("supplier_id") ?? "";
   const [selectedPlotId, setSelectedPlotId] = useState<string | null>(null);
   const [plotFormOpen, setPlotFormOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -88,11 +94,14 @@ function PlotsPageInner() {
     if (statusFilter) {
       plots = plots.filter((p) => p.validation_status === statusFilter);
     }
+    if (supplierParam) {
+      plots = plots.filter((p) => p.supplier_id === supplierParam);
+    }
     if (debouncedSearch) {
       plots = plots.filter((p) => plotMatchesQuery(p, debouncedSearch));
     }
     return plots;
-  }, [data?.results, statusFilter, debouncedSearch]);
+  }, [data?.results, statusFilter, supplierParam, debouncedSearch]);
 
   return (
     <div className="space-y-6">
@@ -159,28 +168,50 @@ function PlotsPageInner() {
               ? Array.from({ length: 4 }).map((_, i) => (
                   <Skeleton key={i} className="h-22 w-full rounded-xl" />
                 ))
-              : filteredPlots.map((plot) => (
-                  <div
-                    key={plot.id}
-                    onClick={() => setSelectedPlotId(plot.id)}
-                    className={`rounded-xl border bg-card p-4 hover:shadow-card transition-all duration-200 cursor-pointer group ${selectedPlotId === plot.id ? "border-primary/50 shadow-card" : "border-border/50"}`}
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <p className="font-medium text-sm leading-tight group-hover:text-primary transition-colors">
-                        {plotIdentity(plot).primary}
-                      </p>
-                      <span className={`inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap ${STATUS_TEXT[plot.validation_status]}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[plot.validation_status]}`} />
-                        {STATUS_LABEL[plot.validation_status]}
-                      </span>
+              : filteredPlots.map((plot) => {
+                  const identity = plotIdentity(plot);
+                  const selected = selectedPlotId === plot.id;
+                  return (
+                    // #133. Clicking a card selects it on the map, as before —
+                    // the map is the point of this list, and navigating on
+                    // click would make it useless. Detail is a distinct Open
+                    // link so the two never fight, and both are reachable by
+                    // keyboard: the card is a real button, the link a real anchor.
+                    <div
+                      key={plot.id}
+                      data-slot="plot-card"
+                      className={`relative rounded-xl border bg-card transition-all duration-200 group ${selected ? "border-primary/50 shadow-card" : "border-border/50 hover:shadow-card"}`}
+                    >
+                      <button
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => setSelectedPlotId(plot.id)}
+                        className="w-full rounded-xl p-4 pr-11 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <p className="font-medium text-sm leading-tight group-hover:text-primary transition-colors">
+                            {identity.primary}
+                          </p>
+                          <span className={`inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap ${STATUS_TEXT[plot.validation_status]}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[plot.validation_status]}`} />
+                            {STATUS_LABEL[plot.validation_status]}
+                          </span>
+                        </div>
+                        {identity.secondary && (
+                          <p className="text-xs text-muted-foreground font-mono mt-0.5">{identity.secondary}</p>
+                        )}
+                      </button>
+                      <Link
+                        href={`/plots/${plot.id}`}
+                        aria-label={`Open plot ${identity.primary}`}
+                        title="Open plot"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/40 outline-none"
+                      >
+                        <ArrowRight className="size-4" />
+                      </Link>
                     </div>
-                    {plotIdentity(plot).secondary && (
-                      <p className="text-xs text-muted-foreground font-mono mt-0.5">
-                        {plotIdentity(plot).secondary}
-                      </p>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
 
             {!isLoading && filteredPlots.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
