@@ -23,13 +23,13 @@ export function AgendaRow({ c, canWrite }: { c: ConsignmentRow; canWrite: boolea
         countdownDays={daysUntil(c.countdown_to)}
         countdownLabel={c.countdown_to ? formatEta(c.countdown_to) : null}
       />
-      <Link href={`/shipments/${c.id}`} className="font-mono text-[13px] font-medium hover:underline">
+      <Link href={`/shipments/${c.id}`} className="font-mono text-sm font-medium hover:underline">
         {c.reference}
       </Link>
-      <span className="text-[12.5px] text-muted-foreground">
+      <span className="text-sm text-muted-foreground">
         {c.countdown_to ? `lands ${formatEta(c.countdown_to)}` : "no landing date"}
       </span>
-      <span className="text-[12.5px]">
+      <span className="text-sm">
         <span className="font-mono">{c.covered_count}/{c.total_count}</span>{" "}
         <span className="text-muted-foreground">· {coveragePct(c.covered_count, c.total_count)}%</span>
       </span>
@@ -37,7 +37,7 @@ export function AgendaRow({ c, canWrite }: { c: ConsignmentRow; canWrite: boolea
       {gap && canWrite && (
         <Link
           href={`/due-diligence?consignment=${encodeURIComponent(c.id)}`}
-          className="inline-flex items-center gap-1 rounded-lg bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-primary/90"
+          className="inline-flex items-center gap-1 rounded-lg bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
         >
           <Zap className="size-3" /> PREP NOW
         </Link>

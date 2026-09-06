@@ -33,7 +33,7 @@ const STATUS_STYLE: Record<ValidationStatus, { bg: string; text: string; dot: st
   REQUIRES_REVIEW: { bg: "bg-warning/10", text: "text-warning-foreground", dot: "bg-warning", label: "Requires Review", icon: AlertTriangle },
 };
 
-const TH = "text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
+const TH = "text-xs font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
 
 export default function PlotDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -95,7 +95,7 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
               <p className="text-sm text-muted-foreground">{plot.area_hectares} hectares</p>
             </div>
           </div>
-          <Badge variant="secondary" className={`${status.bg} ${status.text} border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5`}>
+          <Badge variant="secondary" className={`${status.bg} ${status.text} border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5`}>
             <StatusIcon className="size-3" />
             {status.label}
           </Badge>
@@ -153,11 +153,11 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
               <TableBody>
                 {plot.validation_results.map((vr) => (
                   <TableRow key={vr.id} className="border-border/30">
-                    <TableCell className="text-[13px] font-medium">{vr.validator.replace(/_/g, " ")}</TableCell>
+                    <TableCell className="text-sm font-medium">{vr.validator.replace(/_/g, " ")}</TableCell>
                     <TableCell>
                       <Badge
                         variant="secondary"
-                        className={`border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5 ${
+                        className={`border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5 ${
                           vr.deforestation_detected
                             ? "bg-destructive/10 text-destructive"
                             : "bg-success/10 text-success-foreground"
@@ -167,16 +167,16 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
                         {vr.deforestation_detected ? "Detected" : "Clear"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-[13px]">
+                    <TableCell className="text-sm">
                       {vr.confidence_score !== null ? `${(vr.confidence_score * 100).toFixed(0)}%` : "—"}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-[13px]">
+                    <TableCell className="text-muted-foreground text-sm">
                       {vr.alert_date ? formatDate(vr.alert_date) : "—"}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-[13px]">
+                    <TableCell className="text-muted-foreground text-sm">
                       {formatDate(vr.validated_at)}
                     </TableCell>
-                    <TableCell className="text-[13px] max-w-[200px] truncate">{vr.notes || "—"}</TableCell>
+                    <TableCell className="text-sm max-w-[200px] truncate">{vr.notes || "—"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

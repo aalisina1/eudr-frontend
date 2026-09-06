@@ -110,7 +110,7 @@ export function OperatorIdentityForm({
             {errors.eori_number && (
               <p className="text-xs text-destructive">{errors.eori_number.message}</p>
             )}
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               EU Economic Operators Registration and Identification number.
             </p>
           </div>
@@ -120,7 +120,7 @@ export function OperatorIdentityForm({
             <select
               id="default_activity_type"
               {...register("default_activity_type")}
-              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             >
               <option value="">{ACTIVITY_TYPE_UNSET_LABEL}</option>
               {ACTIVITY_TYPE_OPTIONS.map(([value, label]) => (
@@ -129,7 +129,7 @@ export function OperatorIdentityForm({
                 </option>
               ))}
             </select>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Prefills the commercial activity on each new statement. TRACES
               requires one, and it can still be changed per statement.
             </p>

@@ -215,7 +215,7 @@ export function SourceForm({ open, onOpenChange, source }: SourceFormProps) {
           {/* SQL Server Fields */}
           {sourceType === "SQL_SERVER" && (
             <div className="space-y-4 rounded-xl border border-border/50 p-4">
-              <p className="text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground">
+              <p className="text-xs font-medium tracking-[0.12em] uppercase text-muted-foreground">
                 SQL Server Connection
               </p>
               <div className="grid grid-cols-2 gap-3">
@@ -281,7 +281,7 @@ export function SourceForm({ open, onOpenChange, source }: SourceFormProps) {
           {/* REST API Fields */}
           {sourceType === "REST_API" && (
             <div className="space-y-4 rounded-xl border border-border/50 p-4">
-              <p className="text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground">
+              <p className="text-xs font-medium tracking-[0.12em] uppercase text-muted-foreground">
                 REST API Connection
               </p>
               <div className="space-y-3">
@@ -309,7 +309,7 @@ export function SourceForm({ open, onOpenChange, source }: SourceFormProps) {
           {/* SFTP Fields */}
           {sourceType === "SFTP" && (
             <div className="space-y-4 rounded-xl border border-border/50 p-4">
-              <p className="text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground">
+              <p className="text-xs font-medium tracking-[0.12em] uppercase text-muted-foreground">
                 SFTP Connection
               </p>
               <div className="grid grid-cols-2 gap-3">

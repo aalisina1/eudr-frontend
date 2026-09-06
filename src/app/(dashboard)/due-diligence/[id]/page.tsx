@@ -24,7 +24,7 @@ import { CoveredLotsCard } from "@/components/due-diligence/covered-lots-card";
 import { useLatestTracesSubmission } from "@/hooks/use-latest-traces-submission";
 import { formatDate } from "@/lib/format";
 
-const TH = "text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
+const TH = "text-xs font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
 
 const ACTIVITY_LABEL: Record<ActivityType, string> = {
   DOMESTIC: "Domestic production",
@@ -48,7 +48,7 @@ function activityLabel(activityType: DueDiligenceStatement["activity_type"]): st
 function MetaRow({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
   return (
     <>
-      <span className="self-center font-mono text-[10.5px] tracking-[0.08em] uppercase text-muted-foreground">
+      <span className="self-center font-mono text-xs tracking-[0.08em] uppercase text-muted-foreground">
         {label}
       </span>
       <span className={mono ? "font-mono text-sm" : "text-sm"}>{value}</span>
@@ -171,17 +171,17 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
       {/* Eyebrow + display header + status badge row */}
       <header className="flex items-start justify-between gap-6 flex-wrap">
         <div>
-          <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-muted-foreground mb-2.5">
+          <p className="font-mono text-xs tracking-[0.1em] uppercase text-muted-foreground mb-2.5">
             Due diligence statement
           </p>
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-display text-4xl leading-[1.04] italic font-light">{stmt.reference_number}</h1>
-            <Badge variant="secondary" className={`${ss.bg} ${ss.text} border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5`}>
+            <Badge variant="secondary" className={`${ss.bg} ${ss.text} border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5`}>
               <StatusIcon className="size-3" />
               {ss.label}
             </Badge>
           </div>
-          <p className="mt-2.5 text-[15px] text-muted-foreground capitalize">
+          <p className="mt-2.5 text-base text-muted-foreground capitalize">
             {stmt.statement_type.toLowerCase()} statement · {activityLabel(stmt.activity_type)}
           </p>
         </div>
@@ -326,12 +326,12 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
                   <TableBody>
                     {stmt.risk_assessments.map((ra) => (
                       <TableRow key={ra.id} className="border-border/30">
-                        <TableCell className="text-[13px]">{ra.country_risk}</TableCell>
-                        <TableCell className="text-[13px]">{ra.deforestation_risk_score}</TableCell>
-                        <TableCell className="text-[13px]">{ra.legality_risk_score}</TableCell>
-                        <TableCell className="text-[13px]">{ra.traceability_completeness}%</TableCell>
-                        <TableCell className="text-[13px]">{ra.overall_conclusion || "—"}</TableCell>
-                        <TableCell className="text-muted-foreground text-[13px]">
+                        <TableCell className="text-sm">{ra.country_risk}</TableCell>
+                        <TableCell className="text-sm">{ra.deforestation_risk_score}</TableCell>
+                        <TableCell className="text-sm">{ra.legality_risk_score}</TableCell>
+                        <TableCell className="text-sm">{ra.traceability_completeness}%</TableCell>
+                        <TableCell className="text-sm">{ra.overall_conclusion || "—"}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
                           {formatDate(ra.assessed_at)}
                         </TableCell>
                       </TableRow>

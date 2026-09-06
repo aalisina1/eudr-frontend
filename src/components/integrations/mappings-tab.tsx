@@ -239,13 +239,13 @@ export function MappingsTab() {
                   <div className="flex items-center gap-2 mt-0.5">
                     <Badge
                       variant="secondary"
-                      className="border-0 rounded text-[9px] px-1.5 py-0 bg-muted text-muted-foreground"
+                      className="border-0 rounded text-xs px-1.5 py-0 bg-muted text-muted-foreground"
                     >
                       {m.target_object_type.replace(/_/g, " ")}
                     </Badge>
                     <Badge
                       variant="secondary"
-                      className={`border-0 rounded text-[9px] px-1.5 py-0 ${
+                      className={`border-0 rounded text-xs px-1.5 py-0 ${
                         m.source_type === "TRANSFORMATION"
                           ? "bg-blue-100 text-blue-700"
                           : "bg-muted text-muted-foreground"
@@ -254,12 +254,12 @@ export function MappingsTab() {
                       {m.source_type === "TRANSFORMATION" ? "SQL" : "Source Object"}
                     </Badge>
                     {m.source_name && (
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="text-xs text-muted-foreground">
                         from {m.source_name}
                       </span>
                     )}
                     {m.transformation_name && (
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="text-xs text-muted-foreground">
                         via {m.transformation_name}
                       </span>
                     )}
@@ -1094,7 +1094,7 @@ function FieldMappingEditor({
         </h3>
         <Badge
           variant="secondary"
-          className="border-0 rounded text-[9px] px-1.5 py-0 bg-muted text-muted-foreground"
+          className="border-0 rounded text-xs px-1.5 py-0 bg-muted text-muted-foreground"
         >
           {mapping?.target_object_type.replace(/_/g, " ")}
         </Badge>
@@ -1139,7 +1139,7 @@ function FieldMappingEditor({
                   <span className="font-mono flex-1">{f.target_field}</span>
                   <Badge
                     variant="secondary"
-                    className="border-0 rounded text-[9px] px-1.5 py-0"
+                    className="border-0 rounded text-xs px-1.5 py-0"
                   >
                     {f.transformation_type}
                   </Badge>
@@ -1176,7 +1176,7 @@ function FieldMappingEditor({
             </Button>
           </div>
           <div className="divide-y">
-            <div className="grid grid-cols-[1fr_1fr_auto_1fr_auto] gap-2 px-4 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+            <div className="grid grid-cols-[1fr_1fr_auto_1fr_auto] gap-2 px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
               <span>Source Column</span>
               <span>Target Field</span>
               <span>Transform</span>

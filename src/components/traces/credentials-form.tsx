@@ -141,7 +141,7 @@ export function CredentialsForm({
             <select
               id="environment"
               {...register("environment")}
-              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             >
               <option value="ACCEPTANCE">Acceptance (testing)</option>
               <option value="PRODUCTION">Production</option>
@@ -180,7 +180,7 @@ export function CredentialsForm({
             {errors.password && (
               <p className="text-xs text-destructive">{errors.password.message}</p>
             )}
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               The web-service Authentication Key from TRACES, not your TRACES
               account password. Write-only: never displayed after saving.
             </p>
@@ -206,7 +206,7 @@ export function CredentialsForm({
             <select
               id="operator_role"
               {...register("operator_role")}
-              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             >
               <option value="">Use deployment default</option>
               <option value="OPERATOR">Operator</option>
@@ -219,7 +219,7 @@ export function CredentialsForm({
                 {errors.operator_role.message}
               </p>
             )}
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Must match how this web-service user is registered in TRACES.
               Claiming a role the account does not hold is rejected with
               &ldquo;user activity not allowed&rdquo;.
@@ -239,7 +239,7 @@ export function CredentialsForm({
                 {errors.operator_ws_identifier.message}
               </p>
             )}
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Your operator&rsquo;s Web Service Identifier, shown on your
               operator registration in TRACES. It tells TRACES which operator a
               submission is filed for. Without it a filing carries no

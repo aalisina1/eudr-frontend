@@ -19,8 +19,8 @@ const RAG_CHIPS: { key: keyof ConsignmentSummary; label: string; dot: string }[]
 
 function RagStrip({ summary }: { summary: ConsignmentSummary }) {
   return (
-    <div className="flex flex-wrap items-center gap-4 border-t border-border pt-3 text-[13px] text-muted-foreground">
-      <span className="font-mono text-[10.5px] tracking-[0.08em] text-muted-foreground uppercase">
+    <div className="flex flex-wrap items-center gap-4 border-t border-border pt-3 text-sm text-muted-foreground">
+      <span className="font-mono text-xs tracking-[0.08em] text-muted-foreground uppercase">
         All shipments
       </span>
       {RAG_CHIPS.map((c) => (
@@ -39,11 +39,11 @@ function EnforcementCountdown() {
   const days = daysUntilCalendar(EUDR_ENFORCEMENT_DATE);
   return (
     <div className="border-l border-border pl-4 text-right">
-      <div className="font-mono text-[10.5px] tracking-[0.08em] text-muted-foreground uppercase">
+      <div className="font-mono text-xs tracking-[0.08em] text-muted-foreground uppercase">
         EUDR enforcement
       </div>
-      <div className="text-[15px] font-semibold tabular-nums">{EUDR_ENFORCEMENT_DATE_LABEL}</div>
-      <div className="text-[12.5px] text-muted-foreground tabular-nums">{days} days out</div>
+      <div className="text-base font-semibold tabular-nums">{EUDR_ENFORCEMENT_DATE_LABEL}</div>
+      <div className="text-sm text-muted-foreground tabular-nums">{days} days out</div>
     </div>
   );
 }
@@ -78,10 +78,10 @@ function ExemplarBanner({
     <div className="flex flex-wrap items-center gap-4">
       <span className="text-3xl font-bold tabular-nums text-destructive">{n}</span>
       <div className="min-w-[220px] flex-1">
-        <p className="text-[14px] font-medium text-foreground">
+        <p className="text-sm font-medium text-foreground">
           {n} shipment{n === 1 ? "" : "s"} land{n === 1 ? "s" : ""} soon with no DDS filed
         </p>
-        <p className="text-[13px] text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           {soonestOnly && "soonest: "}
           <span className="font-mono font-medium text-foreground">{exemplar.reference}</span>
           {!soonestOnly && (
@@ -96,7 +96,7 @@ function ExemplarBanner({
       {showCta && (
         <Link
           href={ctaHref}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-destructive px-4 py-2 text-[13.5px] font-semibold text-white no-underline"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-destructive px-4 py-2 text-sm font-semibold text-white no-underline"
         >
           {ctaLabel}
         </Link>
@@ -143,7 +143,7 @@ export function PriorityAlertBanner({ showCta = true }: { showCta?: boolean }) {
         ) : (
           <>
             {n === 0 && (
-              <div className="flex items-center gap-2.5 rounded-lg border border-primary/30 bg-primary/5 px-3.5 py-2.5 text-[13.5px] text-foreground">
+              <div className="flex items-center gap-2.5 rounded-lg border border-primary/30 bg-primary/5 px-3.5 py-2.5 text-sm text-foreground">
                 <CheckCircle2 className="size-4 shrink-0 text-primary" />
                 Clear. No shipments landing soon without a DDS on file.
               </div>
@@ -157,7 +157,7 @@ export function PriorityAlertBanner({ showCta = true }: { showCta?: boolean }) {
             {n >= 1 && !exemplar && (
               <div className="flex items-center gap-4">
                 <span className="text-3xl font-bold tabular-nums text-destructive">{n}</span>
-                <p className="text-[14px] font-medium text-foreground">
+                <p className="text-sm font-medium text-foreground">
                   {n} shipment{n === 1 ? "" : "s"} land{n === 1 ? "s" : ""} soon with no DDS filed
                 </p>
               </div>

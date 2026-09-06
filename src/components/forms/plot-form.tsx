@@ -148,7 +148,7 @@ export function PlotForm({ open, onOpenChange }: PlotFormProps) {
             <select
               id="geometry_source"
               {...register("geometry_source")}
-              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             >
               <option value="GPS_DEVICE">GPS Device</option>
               <option value="SATELLITE_IMAGERY">Satellite Imagery</option>
@@ -161,7 +161,7 @@ export function PlotForm({ open, onOpenChange }: PlotFormProps) {
           <div className="space-y-1.5">
             <Label htmlFor="collection_date">Collection Date</Label>
             <Input id="collection_date" type="date" {...register("collection_date")} />
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               When the geolocation was collected, not today&rsquo;s date, unless
               it was surveyed today.
             </p>

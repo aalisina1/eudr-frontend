@@ -22,7 +22,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-display text-4xl leading-[1.04] italic font-light">Settings</h1>
-        <p className="mt-2.5 text-[15px] text-muted-foreground">
+        <p className="mt-2.5 text-base text-muted-foreground">
           Your account, TRACES credentials, and operator identity.
         </p>
       </div>
@@ -30,7 +30,7 @@ export default function SettingsPage() {
       {/* Profile Card */}
       <Card className="border-border/50 shadow-card">
         <CardContent className="p-6">
-          <h2 className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground mb-4">
+          <h2 className="text-xs font-medium tracking-[0.15em] uppercase text-muted-foreground mb-4">
             Profile
           </h2>
 
@@ -96,7 +96,7 @@ export default function SettingsPage() {
       {/* App Info */}
       <Card className="border-border/50 shadow-card">
         <CardContent className="p-6">
-          <h2 className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground mb-4">
+          <h2 className="text-xs font-medium tracking-[0.15em] uppercase text-muted-foreground mb-4">
             Application
           </h2>
           <div className="grid gap-2 text-sm">

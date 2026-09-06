@@ -29,7 +29,7 @@ export function WorkCard({ title, description, count, emptyText, isLoading, chil
         <CardTitle className="flex items-center gap-2.5">
           {title}
           {count > 0 && (
-            <span className="font-mono text-[11.5px] font-medium text-muted-foreground">{count}</span>
+            <span className="font-mono text-xs font-medium text-muted-foreground">{count}</span>
           )}
         </CardTitle>
         <CardDescription>{description}</CardDescription>
@@ -54,7 +54,7 @@ export function WorkCard({ title, description, count, emptyText, isLoading, chil
  * mark reads as "good news" (design prompt), not "nothing to show". */
 function EmptyLine({ text }: { text: string }) {
   return (
-    <div className="flex items-center gap-2.5 px-0.5 py-1 text-[13.5px] text-muted-foreground">
+    <div className="flex items-center gap-2.5 px-0.5 py-1 text-sm text-muted-foreground">
       <CheckCircle2 className="size-[15px] shrink-0 text-primary" />
       {text}
     </div>
@@ -90,7 +90,7 @@ export function WorkRow({
 
 export function RefLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <Link href={href} className="whitespace-nowrap font-mono text-[13px] font-medium text-foreground no-underline hover:underline">
+    <Link href={href} className="whitespace-nowrap font-mono text-sm font-medium text-foreground no-underline hover:underline">
       {children}
     </Link>
   );

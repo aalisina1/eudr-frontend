@@ -79,7 +79,7 @@ export function CoverageLegend({ className }: { className?: string }) {
       {LEGEND_ITEMS.map((item) => (
         <span key={item.label} className="inline-flex items-center gap-1.5">
           <span className={cn("size-2.5 shrink-0 rounded-[3px]", item.className)} style={item.style} />
-          <span className="font-mono text-[10.5px] tracking-wider text-muted-foreground uppercase">
+          <span className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
             {item.label}
           </span>
         </span>

@@ -123,7 +123,7 @@ export function CredentialsCard() {
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
+            <h2 className="text-xs font-medium tracking-[0.15em] uppercase text-muted-foreground">
               TRACES connection
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">

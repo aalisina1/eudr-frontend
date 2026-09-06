@@ -30,13 +30,13 @@ const columns: ColumnDef<Supplier>[] = [
     key: "name",
     header: "Name",
     sortable: true,
-    render: (s) => <span className="font-medium text-[13px]">{s.name}</span>,
+    render: (s) => <span className="font-medium text-sm">{s.name}</span>,
   },
   {
     key: "country_of_origin",
     header: "Country",
     sortable: true,
-    render: (s) => <span className="text-[13px]">{s.country_of_origin}</span>,
+    render: (s) => <span className="text-sm">{s.country_of_origin}</span>,
   },
   {
     key: "external_id",
@@ -54,7 +54,7 @@ const columns: ColumnDef<Supplier>[] = [
       return (
         <Badge
           variant="secondary"
-          className={`${kyc.bg} ${kyc.text} border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5`}
+          className={`${kyc.bg} ${kyc.text} border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5`}
         >
           <span className={`w-1.5 h-1.5 rounded-full ${kyc.dot}`} />
           {kyc.label}
@@ -71,7 +71,7 @@ const columns: ColumnDef<Supplier>[] = [
       return (
         <Badge
           variant="secondary"
-          className={`${risk.bg} ${risk.text} border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5`}
+          className={`${risk.bg} ${risk.text} border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5`}
         >
           <span className={`w-1.5 h-1.5 rounded-full ${risk.dot}`} />
           {risk.label}
@@ -84,7 +84,7 @@ const columns: ColumnDef<Supplier>[] = [
     header: "Created",
     sortable: true,
     render: (s) => (
-      <span className="text-muted-foreground text-[13px]">
+      <span className="text-muted-foreground text-sm">
         {formatDate(s.created_at)}
       </span>
     ),
@@ -171,7 +171,7 @@ function SuppliersPageInner() {
         aria-label="Risk rating"
         value={riskRating}
         onChange={(e) => setRiskRating(e.target.value)}
-        className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+        className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
       >
         {RISK_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
@@ -183,7 +183,7 @@ function SuppliersPageInner() {
         aria-label="Certification expiry"
         value={certsExpiring}
         onChange={(e) => setCertsExpiring(e.target.value)}
-        className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+        className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
       >
         {CERTS_EXPIRING_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>

@@ -134,7 +134,7 @@ function DueDiligencePageInner() {
       aria-label="Status"
       value={status}
       onChange={(e) => setStatus(e.target.value)}
-      className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+      className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
     >
       {STATUS_OPTIONS.map((o) => (
         <option key={o.value} value={o.value}>
@@ -199,7 +199,7 @@ function DueDiligencePageInner() {
             <div className="w-7 h-7 rounded-lg bg-warning/10 flex items-center justify-center shrink-0">
               <FileText className="size-3.5 text-warning" />
             </div>
-            <span className="font-medium text-[13px] font-mono">{stmt.reference_number}</span>
+            <span className="font-medium text-sm font-mono">{stmt.reference_number}</span>
           </div>
         ),
       },
@@ -207,7 +207,7 @@ function DueDiligencePageInner() {
         key: "statement_type",
         header: "Type",
         render: (stmt) => (
-          <span className="text-[13px] capitalize">{stmt.statement_type?.toLowerCase() || "—"}</span>
+          <span className="text-sm capitalize">{stmt.statement_type?.toLowerCase() || "—"}</span>
         ),
       },
       {
@@ -217,7 +217,7 @@ function DueDiligencePageInner() {
           stmt.risk_conclusion ? (
             <Badge
               variant="secondary"
-              className={`border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5 ${
+              className={`border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5 ${
                 stmt.risk_conclusion === "NEGLIGIBLE"
                   ? "bg-success/10 text-success-foreground"
                   : "bg-destructive/10 text-destructive"
@@ -246,7 +246,7 @@ function DueDiligencePageInner() {
           const ss = derivedKey ? TRACES_DISPLAY_STYLE[derivedKey] : (DDS_STATUS_STYLE[stmt.status] ?? DDS_STATUS_STYLE.DRAFT);
           const StatusIcon = ss.icon;
           return (
-            <Badge variant="secondary" className={`${ss.bg} ${ss.text} border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5`}>
+            <Badge variant="secondary" className={`${ss.bg} ${ss.text} border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5`}>
               <StatusIcon className={`size-3 ${ss.spin ? "animate-spin" : ""}`} />
               {ss.label}
             </Badge>
@@ -258,7 +258,7 @@ function DueDiligencePageInner() {
         header: "Submitted",
         sortable: true,
         render: (stmt) => (
-          <span className="text-muted-foreground text-[13px]">
+          <span className="text-muted-foreground text-sm">
             {stmt.submitted_at ? formatDate(stmt.submitted_at) : "—"}
           </span>
         ),
@@ -268,7 +268,7 @@ function DueDiligencePageInner() {
         header: "Created",
         sortable: true,
         render: (stmt) => (
-          <span className="text-muted-foreground text-[13px]">
+          <span className="text-muted-foreground text-sm">
             {formatDate(stmt.created_at)}
           </span>
         ),
@@ -289,7 +289,7 @@ function DueDiligencePageInner() {
       <header className="flex items-end justify-between gap-6 flex-wrap">
         <div>
           <h1 className="text-display text-4xl leading-[1.04] italic font-light">Submissions</h1>
-          <p className="mt-2.5 text-[15px] text-muted-foreground">Statements submitted to the EU TRACES registry.</p>
+          <p className="mt-2.5 text-base text-muted-foreground">Statements submitted to the EU TRACES registry.</p>
         </div>
         {/* A statement is composed from a purchase order and its lots — that
             is the only path that can produce one TRACES will accept, since

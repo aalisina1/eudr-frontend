@@ -148,7 +148,7 @@ export function TransformationsTab() {
                     )}
                     <Badge
                       variant="secondary"
-                      className={`border-0 rounded text-[9px] px-1.5 py-0 ${
+                      className={`border-0 rounded text-xs px-1.5 py-0 ${
                         t.is_validated
                           ? "bg-emerald-100 text-emerald-700"
                           : "bg-amber-100 text-amber-700"
@@ -157,7 +157,7 @@ export function TransformationsTab() {
                       {t.is_validated ? "Validated" : "Draft"}
                     </Badge>
                     {(t.output_columns?.length ?? 0) > 0 && (
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="text-xs text-muted-foreground">
                         {t.output_columns.length} columns
                       </span>
                     )}
@@ -403,7 +403,7 @@ function TransformationEditor({
                 <Badge
                   key={s.id}
                   variant="secondary"
-                  className={`border-0 rounded-lg text-[10px] px-2 py-1 cursor-pointer transition-colors ${
+                  className={`border-0 rounded-lg text-xs px-2 py-1 cursor-pointer transition-colors ${
                     selectedSourceIds.includes(s.id)
                       ? "bg-primary/10 text-primary"
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -429,7 +429,7 @@ function TransformationEditor({
         <Card className="border-border/50 overflow-hidden">
           <CardContent className="p-0">
             <div className="px-3 py-2.5 border-b bg-muted/30">
-              <h4 className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+              <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                 <Columns3 className="size-3" />
                 Available Tables
               </h4>
@@ -474,7 +474,7 @@ function TransformationEditor({
                               <button
                                 key={col.name}
                                 onClick={() => insertText(col.name)}
-                                className="w-full text-left px-2 py-1 text-[10px] hover:bg-muted/50 flex items-center gap-2 font-mono rounded transition-colors"
+                                className="w-full text-left px-2 py-1 text-xs hover:bg-muted/50 flex items-center gap-2 font-mono rounded transition-colors"
                                 title={`Type: ${col.type}${col.nullable ? " (nullable)" : ""}`}
                               >
                                 <span className="truncate">{col.name}</span>
@@ -499,17 +499,17 @@ function TransformationEditor({
           <Card className="border-border/50 overflow-hidden">
             <CardContent className="p-0">
               <div className="px-3 py-2 border-b bg-muted/30 flex items-center justify-between">
-                <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   SQL Query
                 </span>
                 <div className="flex items-center gap-1.5">
                   {!name.trim() && (
-                    <span className="text-[10px] text-muted-foreground">Enter a name to save</span>
+                    <span className="text-xs text-muted-foreground">Enter a name to save</span>
                   )}
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-6 text-[10px] gap-1"
+                    className="h-6 text-xs gap-1"
                     onClick={() => saveMutation.mutate()}
                     disabled={saveMutation.isPending || !name.trim() || !queryText.trim()}
                   >
@@ -522,7 +522,7 @@ function TransformationEditor({
                   </Button>
                   <Button
                     size="sm"
-                    className="h-6 text-[10px] gap-1"
+                    className="h-6 text-xs gap-1"
                     onClick={() => runMutation.mutate()}
                     disabled={runMutation.isPending || !queryText.trim()}
                   >
@@ -559,7 +559,7 @@ function TransformationEditor({
             <Card className="border-border/50 overflow-hidden">
               <CardContent className="p-0">
                 <div className="px-3 py-2 border-b bg-muted/30 flex items-center justify-between">
-                  <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Results ({previewRows.length} rows)
                   </span>
                   <div className="flex gap-1">
@@ -567,7 +567,7 @@ function TransformationEditor({
                       <Badge
                         key={col.name}
                         variant="secondary"
-                        className="border-0 rounded text-[9px] px-1.5 py-0 font-mono"
+                        className="border-0 rounded text-xs px-1.5 py-0 font-mono"
                       >
                         {col.name}
                         <span className="ml-1 text-muted-foreground font-normal">

@@ -14,7 +14,7 @@ function QuietStat({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-xl leading-none font-semibold tabular-nums">{value}</span>
-      <span className="font-mono text-[10.5px] tracking-[0.08em] whitespace-nowrap text-muted-foreground uppercase">
+      <span className="font-mono text-xs tracking-[0.08em] whitespace-nowrap text-muted-foreground uppercase">
         {label}
       </span>
     </div>

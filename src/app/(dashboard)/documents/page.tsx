@@ -39,7 +39,7 @@ const columns: ColumnDef<Document>[] = [
         <div className="w-7 h-7 rounded-lg bg-info/10 flex items-center justify-center shrink-0">
           <FolderOpen className="size-3.5 text-info-foreground" />
         </div>
-        <span className="font-medium text-[13px]">{doc.title}</span>
+        <span className="font-medium text-sm">{doc.title}</span>
       </div>
     ),
   },
@@ -48,7 +48,7 @@ const columns: ColumnDef<Document>[] = [
     header: "Type",
     sortable: true,
     render: (doc) => (
-      <span className="text-[13px]">{TYPE_LABEL[doc.document_type] ?? doc.document_type}</span>
+      <span className="text-sm">{TYPE_LABEL[doc.document_type] ?? doc.document_type}</span>
     ),
   },
   {
@@ -63,7 +63,7 @@ const columns: ColumnDef<Document>[] = [
     header: "Size",
     sortable: true,
     render: (doc) => (
-      <span className="text-muted-foreground text-[13px]">{formatBytes(doc.file_size_bytes)}</span>
+      <span className="text-muted-foreground text-sm">{formatBytes(doc.file_size_bytes)}</span>
     ),
   },
   {
@@ -72,7 +72,7 @@ const columns: ColumnDef<Document>[] = [
     render: (doc) => (
       <Badge
         variant="secondary"
-        className={`border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5 ${
+        className={`border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5 ${
           doc.is_archived
             ? "bg-muted text-muted-foreground"
             : "bg-success/10 text-success-foreground"
@@ -88,7 +88,7 @@ const columns: ColumnDef<Document>[] = [
     header: "Uploaded",
     sortable: true,
     render: (doc) => (
-      <span className="text-muted-foreground text-[13px]">
+      <span className="text-muted-foreground text-sm">
         {formatDate(doc.uploaded_at)}
       </span>
     ),

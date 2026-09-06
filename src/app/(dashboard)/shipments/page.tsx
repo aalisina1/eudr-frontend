@@ -80,7 +80,7 @@ function ShipmentsPageInner() {
   const columns: ColumnDef<ConsignmentRow>[] = [
     {
       key: "reference", header: "Reference", sortable: true,
-      render: (c) => <span className="font-mono text-[13px] font-medium">{c.reference}</span>,
+      render: (c) => <span className="font-mono text-sm font-medium">{c.reference}</span>,
     },
     {
       key: "rag", header: "Status",
@@ -96,7 +96,7 @@ function ShipmentsPageInner() {
     {
       key: "coverage", header: "Coverage",
       render: (c) => (
-        <span className="text-[13px]">
+        <span className="text-sm">
           <span className="font-mono">{c.covered_count}/{c.total_count}</span>{" "}
           <span className="text-muted-foreground">· {coveragePct(c.covered_count, c.total_count)}%</span>
         </span>
@@ -104,26 +104,26 @@ function ShipmentsPageInner() {
       exportValue: (c) => `${c.covered_count}/${c.total_count}`,
     },
     // total_count IS the lot count — the shipped row has no lot_count field
-    { key: "total_count", header: "Lots", render: (c) => <span className="font-mono text-[13px]">{c.total_count}</span> },
+    { key: "total_count", header: "Lots", render: (c) => <span className="font-mono text-sm">{c.total_count}</span> },
     {
       key: "latest_event_type", header: "Latest milestone",
       render: (c) =>
         c.latest_event_type ? (
-          <span className="text-[12.5px]" title={c.latest_event_type}>
+          <span className="text-sm" title={c.latest_event_type}>
             {humanizeEventType(c.latest_event_type)}
             {c.latest_event_at ? ` · ${formatEta(c.latest_event_at)}` : ""}
           </span>
         ) : (
-          <span className="text-[12.5px] text-muted-foreground">—</span>
+          <span className="text-sm text-muted-foreground">—</span>
         ),
     },
     {
       key: "po_count", header: "POs touched",
       render: (c) =>
         c.po_count != null ? (
-          <span className="font-mono text-[13px]">{c.po_count}</span>
+          <span className="font-mono text-sm">{c.po_count}</span>
         ) : (
-          <span className="text-[12.5px] text-muted-foreground">—</span>
+          <span className="text-sm text-muted-foreground">—</span>
         ),
     },
     {
@@ -135,9 +135,9 @@ function ShipmentsPageInner() {
       key: "latest_location", header: "Held at",
       render: (c) =>
         c.latest_location ? (
-          <span className="text-[13px]">{c.latest_location.name}</span>
+          <span className="text-sm">{c.latest_location.name}</span>
         ) : (
-          <span className="text-[12.5px] text-muted-foreground">—</span>
+          <span className="text-sm text-muted-foreground">—</span>
         ),
       exportValue: (c) => c.latest_location?.name ?? "",
     },
@@ -154,12 +154,12 @@ function ShipmentsPageInner() {
         aria-label="RAG status"
         value={rag}
         onChange={(e) => setRag(e.target.value)}
-        className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+        className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
       >
         {RAG_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
-      <Input type="date" aria-label="Lands after" value={after} onChange={(e) => setAfter(e.target.value)} className="h-9 w-[150px] rounded-xl bg-secondary/50 text-[13px]" />
-      <Input type="date" aria-label="Lands before" value={before} onChange={(e) => setBefore(e.target.value)} className="h-9 w-[150px] rounded-xl bg-secondary/50 text-[13px]" />
+      <Input type="date" aria-label="Lands after" value={after} onChange={(e) => setAfter(e.target.value)} className="h-9 w-[150px] rounded-xl bg-secondary/50 text-sm" />
+      <Input type="date" aria-label="Lands before" value={before} onChange={(e) => setBefore(e.target.value)} className="h-9 w-[150px] rounded-xl bg-secondary/50 text-sm" />
       {canWrite && (
         <Button size="sm" onClick={() => setFormOpen(true)} className="h-9 gap-1.5 rounded-xl">
           <Plus className="size-3.5" /> New consignment
@@ -173,7 +173,7 @@ function ShipmentsPageInner() {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-display text-4xl leading-[1.04] italic font-light">Shipments</h1>
-          <p className="mt-2.5 text-[15px] text-muted-foreground">
+          <p className="mt-2.5 text-base text-muted-foreground">
             Which arriving consignments still lack a ready DDS, and when they land.
           </p>
         </div>
@@ -185,7 +185,7 @@ function ShipmentsPageInner() {
             aria-selected={view === "list"}
             onClick={() => setView("list")}
             className={cn(
-              "rounded-lg px-3 py-1 text-[13px] transition-colors",
+              "rounded-lg px-3 py-1 text-sm transition-colors",
               view === "list" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -197,7 +197,7 @@ function ShipmentsPageInner() {
             aria-selected={view === "calendar"}
             onClick={() => setView("calendar")}
             className={cn(
-              "rounded-lg px-3 py-1 text-[13px] transition-colors",
+              "rounded-lg px-3 py-1 text-sm transition-colors",
               view === "calendar" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -213,7 +213,7 @@ function ShipmentsPageInner() {
               aria-label="RAG status"
               value={rag}
               onChange={(e) => setRag(e.target.value)}
-              className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             >
               {RAG_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
@@ -222,7 +222,7 @@ function ShipmentsPageInner() {
               placeholder="Search reference or tracking #…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-9 w-[240px] rounded-xl bg-secondary/50 text-[13px]"
+              className="h-9 w-[240px] rounded-xl bg-secondary/50 text-sm"
             />
             {canWrite && (
               <Button size="sm" onClick={() => setFormOpen(true)} className="h-9 gap-1.5 rounded-xl">

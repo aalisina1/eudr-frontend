@@ -83,7 +83,7 @@ function GapRow({
   return (
     <div className="flex items-center gap-2.5 rounded-lg border border-border/60 px-3 py-2.5">
       <AlertTriangle className="size-4 shrink-0 text-destructive" />
-      <span className="flex-1 text-[13.5px]">{blocker.message}</span>
+      <span className="flex-1 text-sm">{blocker.message}</span>
       {action && onClick && (
         <Button
           size="sm"
@@ -131,7 +131,7 @@ export function ReadinessChecklistCard({ blockers, lots, canWrite, onAssignPlots
         ) : (
           <div className="flex items-center gap-2.5 rounded-lg border border-primary/40 bg-primary/8 px-3.5 py-3">
             <CheckCircle2 className="size-4 shrink-0 text-primary" />
-            <span className="text-[13.5px] font-medium">All data complete. This PO is ready to file.</span>
+            <span className="text-sm font-medium">All data complete. This PO is ready to file.</span>
           </div>
         )}
       </CardContent>

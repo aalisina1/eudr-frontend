@@ -127,14 +127,14 @@ function PlotsPageInner() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by reference, code, country or region..."
-                className="pl-9 h-9 bg-secondary/50 border-border/60 focus:bg-card rounded-xl text-[13px]"
+                className="pl-9 h-9 bg-secondary/50 border-border/60 focus:bg-card rounded-xl text-sm"
               />
             </div>
             <select
               aria-label="Validation status"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 transition-colors appearance-none cursor-pointer"
+              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 transition-colors appearance-none cursor-pointer"
             >
               {STATUS_FILTER_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -166,10 +166,10 @@ function PlotsPageInner() {
                     className={`rounded-xl border bg-card p-4 hover:shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-all duration-200 cursor-pointer group ${selectedPlotId === plot.id ? "border-primary/50 shadow-[0_4px_20px_rgba(0,0,0,0.05)]" : "border-border/50"}`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <p className="font-medium text-[13px] leading-tight group-hover:text-primary transition-colors">
+                      <p className="font-medium text-sm leading-tight group-hover:text-primary transition-colors">
                         {plotIdentity(plot).primary}
                       </p>
-                      <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium whitespace-nowrap ${STATUS_TEXT[plot.validation_status]}`}>
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap ${STATUS_TEXT[plot.validation_status]}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[plot.validation_status]}`} />
                         {STATUS_LABEL[plot.validation_status]}
                       </span>

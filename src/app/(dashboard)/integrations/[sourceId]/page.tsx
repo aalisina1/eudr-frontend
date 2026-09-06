@@ -307,7 +307,7 @@ export default function SourceDetailPage() {
               <div className="flex items-center gap-2 mt-1">
                 <Badge
                   variant="secondary"
-                  className="border-0 rounded-lg text-[10px] px-2 py-0.5 bg-muted text-muted-foreground"
+                  className="border-0 rounded-lg text-xs px-2 py-0.5 bg-muted text-muted-foreground"
                 >
                   {source.source_type.replace("_", " ")}
                 </Badge>
@@ -444,7 +444,7 @@ function ConnectionStatusBadge({ status }: { status: string }) {
   };
   const m = meta[status] ?? meta.UNTESTED;
   return (
-    <Badge variant="secondary" className={`border-0 rounded-lg text-[10px] px-2 py-0.5 gap-1.5 ${m.bg} ${m.text}`}>
+    <Badge variant="secondary" className={`border-0 rounded-lg text-xs px-2 py-0.5 gap-1.5 ${m.bg} ${m.text}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${m.dot}`} />
       {m.label}
     </Badge>
@@ -475,7 +475,7 @@ function ConfigureStep({
       <Card className="border-border/50">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground">
+            <h3 className="text-xs font-medium tracking-[0.12em] uppercase text-muted-foreground">
               Connection configuration
             </h3>
             <Button variant="outline" size="sm" onClick={onEdit} className="gap-1.5">
@@ -606,7 +606,7 @@ function DiscoverStep({
                       <td className="px-4 py-2.5">
                         <Badge
                           variant="secondary"
-                          className="border-0 rounded-lg text-[10px] px-2 py-0.5 bg-muted text-muted-foreground gap-1"
+                          className="border-0 rounded-lg text-xs px-2 py-0.5 bg-muted text-muted-foreground gap-1"
                         >
                           {s.object_type === "TABLE" ? (
                             <Rows3 className="size-3" />
@@ -714,13 +714,13 @@ function SelectStep({
                 </div>
                 <Badge
                   variant="secondary"
-                  className="border-0 rounded text-[9px] px-1.5 py-0 bg-muted text-muted-foreground"
+                  className="border-0 rounded text-xs px-1.5 py-0 bg-muted text-muted-foreground"
                 >
                   {s.object_type}
                 </Badge>
               </div>
               <p className="font-mono text-xs truncate">{s.object_name}</p>
-              <div className="flex items-center gap-3 mt-1.5 text-[10px] text-muted-foreground">
+              <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
                 <span>{s.schema?.columns?.length ?? 0} columns</span>
                 {s.row_count != null && (
                   <span>{formatNumber(s.row_count)} rows</span>
@@ -864,7 +864,7 @@ function RawStep({
                       <td className="px-4 py-2">
                         <Badge
                           variant="secondary"
-                          className="border-0 rounded text-[10px] px-1.5 py-0 bg-muted text-muted-foreground"
+                          className="border-0 rounded text-xs px-1.5 py-0 bg-muted text-muted-foreground"
                         >
                           {r.processing_status}
                         </Badge>
@@ -893,7 +893,7 @@ function JobStatusBadge({ status }: { status: string }) {
   return (
     <Badge
       variant="secondary"
-      className={`border-0 rounded-lg text-[10px] px-2 py-0.5 ${colors[status] ?? "bg-muted text-muted-foreground"}`}
+      className={`border-0 rounded-lg text-xs px-2 py-0.5 ${colors[status] ?? "bg-muted text-muted-foreground"}`}
     >
       {status}
     </Badge>

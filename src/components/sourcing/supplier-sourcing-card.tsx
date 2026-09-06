@@ -189,13 +189,13 @@ export function SupplierSourcingCard({ pos, isLoading, error, className }: Suppl
                     <TableCell>
                       <button
                         type="button"
-                        className="font-mono text-[13px] font-medium text-foreground underline-offset-2 hover:underline"
+                        className="font-mono text-sm font-medium text-foreground underline-offset-2 hover:underline"
                         onClick={() => router.push(`/supply-chains/${po.id}`)}
                       >
                         {po.reference_number}
                       </button>
                     </TableCell>
-                    <TableCell className="text-right font-mono text-[13px]">
+                    <TableCell className="text-right font-mono text-sm">
                       {formatQty(po.funnel.ordered_quantity)} {unitLabel}
                     </TableCell>
                     <TableCell>
@@ -207,7 +207,7 @@ export function SupplierSourcingCard({ pos, isLoading, error, className }: Suppl
                           filed={Number(po.funnel.filed_quantity)}
                           unit={` ${unitLabel}`}
                         />
-                        <span className="font-mono text-[11px] text-muted-foreground">
+                        <span className="font-mono text-xs text-muted-foreground">
                           {formatQty(po.funnel.filed_quantity)} / {formatQty(po.funnel.ordered_quantity)} {unitLabel} filed
                         </span>
                       </div>
@@ -219,7 +219,7 @@ export function SupplierSourcingCard({ pos, isLoading, error, className }: Suppl
                       <div className="flex flex-col items-start gap-1">
                         <StageBadge stage={po.stage} blocked={po.blocked} />
                         {po.blocked && failedBlocker && (
-                          <span className="text-[11px] text-destructive">{failedBlocker.message}</span>
+                          <span className="text-xs text-destructive">{failedBlocker.message}</span>
                         )}
                       </div>
                     </TableCell>
@@ -247,7 +247,7 @@ export function SupplierSourcingCard({ pos, isLoading, error, className }: Suppl
          * mock's copy is illustrative) — kept honest/generic rather than
          * inventing one; a real timestamp is a fast-follow once that
          * linkage exists. */}
-        <span className="text-[12.5px] text-muted-foreground">
+        <span className="text-sm text-muted-foreground">
           Traceability data for this supplier arrives via your connected integrations.
         </span>
         <span className="flex-1" />

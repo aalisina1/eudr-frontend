@@ -44,7 +44,7 @@ export function Topbar() {
       <div className="flex items-center gap-3">
         <SidebarTrigger className="-ml-2 text-muted-foreground hover:text-foreground transition-colors" />
         <Separator orientation="vertical" className="h-4 bg-border/60" />
-        <div className="flex items-center gap-2.5 text-[13px]">
+        <div className="flex items-center gap-2.5 text-sm">
           <GrovetraceMark variant="small" className="size-3.5 text-primary" />
           <span className="text-muted-foreground">{PRODUCT_NAME}</span>
           <ChevronRight className="size-3.5 text-border" />

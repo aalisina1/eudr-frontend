@@ -39,7 +39,7 @@ function formatBytes(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const TH = "text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
+const TH = "text-xs font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
 
 export default function DocumentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -136,14 +136,14 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
           </div>
           <div className="flex gap-2">
             {doc.is_confidential && (
-              <Badge variant="secondary" className="bg-warning/10 text-warning-foreground border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5">
+              <Badge variant="secondary" className="bg-warning/10 text-warning-foreground border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5">
                 <Lock className="size-3" />
                 Confidential
               </Badge>
             )}
             <Badge
               variant="secondary"
-              className={`border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5 ${
+              className={`border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5 ${
                 doc.is_archived
                   ? "bg-muted text-muted-foreground"
                   : "bg-success/10 text-success-foreground"
@@ -247,13 +247,13 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
               <TableBody>
                 {doc.versions.map((v) => (
                   <TableRow key={v.id} className="border-border/30">
-                    <TableCell className="text-[13px] font-mono font-medium">v{v.version_number}</TableCell>
-                    <TableCell className="text-[13px]">{formatBytes(v.file_size_bytes)}</TableCell>
-                    <TableCell className="text-[13px] font-mono text-muted-foreground max-w-[120px] truncate">
+                    <TableCell className="text-sm font-mono font-medium">v{v.version_number}</TableCell>
+                    <TableCell className="text-sm">{formatBytes(v.file_size_bytes)}</TableCell>
+                    <TableCell className="text-sm font-mono text-muted-foreground max-w-[120px] truncate">
                       {v.checksum_sha256 ? v.checksum_sha256.slice(0, 12) + "…" : "—"}
                     </TableCell>
-                    <TableCell className="text-[13px]">{v.change_notes || "—"}</TableCell>
-                    <TableCell className="text-muted-foreground text-[13px]">
+                    <TableCell className="text-sm">{v.change_notes || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
                       {formatDate(v.uploaded_at)}
                     </TableCell>
                   </TableRow>
