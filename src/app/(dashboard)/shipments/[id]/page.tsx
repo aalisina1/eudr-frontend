@@ -198,7 +198,7 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
               ) : (
                 c.events.map((e, i) => (
                   <div key={e.id ?? `${e.event_type}-${i}`} className="flex items-baseline justify-between gap-3 border-b border-border/40 pb-2 last:border-0">
-                    <span className="text-[13px] font-medium" title={e.event_type}>{humanizeEventType(e.event_type)}</span>
+                    <span className="text-sm font-medium" title={e.event_type}>{humanizeEventType(e.event_type)}</span>
                     <span className="text-xs text-muted-foreground">{formatEta(e.occurred_at)}</span>
                   </div>
                 ))

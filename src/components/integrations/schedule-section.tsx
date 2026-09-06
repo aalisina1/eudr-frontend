@@ -170,7 +170,7 @@ export function ScheduleSection({ sourceId }: { sourceId: string }) {
           <CalendarClock className="size-4 text-emerald-600" />
           <h3 className="text-sm font-medium">Ingestion schedule</h3>
           <span
-            className={`ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+            className={`ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
               enabled
                 ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
                 : "bg-muted text-muted-foreground"

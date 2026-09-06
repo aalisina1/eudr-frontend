@@ -453,10 +453,10 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
                           />
                         </TableCell>
                         <TableCell>
-                          <span className="font-mono text-[13px] font-medium">{lot.reference_number}</span>
+                          <span className="font-mono text-sm font-medium">{lot.reference_number}</span>
                         </TableCell>
                         <TableCell>
-                          <span className="text-[12.5px] text-muted-foreground">
+                          <span className="text-sm text-muted-foreground">
                             {lot.shipment_reference || shipmentRefByBatchId.get(lot.id) || "—"}
                           </span>
                         </TableCell>
@@ -464,7 +464,7 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
                           {formatNumber(Math.round(Number(lot.quantity)))} {unitLabel}
                         </TableCell>
                         <TableCell>
-                          <span className="text-[12.5px] text-muted-foreground">
+                          <span className="text-sm text-muted-foreground">
                             {lot.plot_count} plot{lot.plot_count === 1 ? "" : "s"}
                           </span>
                         </TableCell>
@@ -588,7 +588,7 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
                 onChange={(e) =>
                   setChosenActivityType(e.target.value as ActivityType | "")
                 }
-                className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+                className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
               >
                 <option value="">Choose an activity…</option>
                 {ACTIVITY_TYPE_OPTIONS.map(([value, label]) => (
@@ -604,7 +604,7 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
                   that will fail for them the same way. Setting the default is
                   also ADMIN-only, so the officer filing this statement is told
                   who can do it rather than to go and do it. */}
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {orgDefault
                   ? "Prefilled from your organisation's usual activity. Change it if this statement differs."
                   : orgUnreadable

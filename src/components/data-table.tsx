@@ -226,7 +226,7 @@ export function DataTable<T>({
     return <ArrowUpDown className="size-3 opacity-30" />;
   };
 
-  const TH = "text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
+  const TH = "text-xs font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
 
   return (
     <div className="space-y-4">
@@ -240,7 +240,7 @@ export function DataTable<T>({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="pl-9 h-9 bg-secondary/50 border-border/60 focus:bg-card rounded-xl text-[13px]"
+                className="pl-9 h-9 bg-secondary/50 border-border/60 focus:bg-card rounded-xl text-sm"
               />
             </div>
           )}
@@ -249,7 +249,7 @@ export function DataTable<T>({
               key={filter.key}
               value={activeFilters[filter.key] ?? ""}
               onChange={(e) => handleFilterChange(filter.key, e.target.value)}
-              className="h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 transition-colors appearance-none cursor-pointer"
+              className="h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 transition-colors appearance-none cursor-pointer"
             >
               <option value="">{filter.label}</option>
               {filter.options.map((opt) => (
@@ -366,7 +366,7 @@ export function DataTable<T>({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between text-[13px] text-muted-foreground">
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>
             Showing {((page - 1) * pageSize) + 1}–{Math.min(page * pageSize, data?.count ?? 0)} of {data?.count ?? 0}
           </span>
@@ -397,7 +397,7 @@ export function DataTable<T>({
                   variant={page === pageNum ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setPage(pageNum)}
-                  className="h-8 w-8 p-0 text-[13px]"
+                  className="h-8 w-8 p-0 text-sm"
                 >
                   {pageNum}
                 </Button>

@@ -54,7 +54,7 @@ function PlotsCell({ lot }: { lot: LotReadiness }) {
   }
   return (
     <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-      <span className="text-[12.5px] text-muted-foreground">{label}</span>
+      <span className="text-sm text-muted-foreground">{label}</span>
       {badge}
     </span>
   );
@@ -71,7 +71,7 @@ function DdsCell({ lot }: { lot: LotReadiness }) {
       </Link>
     );
   }
-  return <span className="text-[12.5px] text-muted-foreground">Not filed</span>;
+  return <span className="text-sm text-muted-foreground">Not filed</span>;
 }
 
 function LotRow({ lot }: { lot: LotReadiness }) {
@@ -80,13 +80,13 @@ function LotRow({ lot }: { lot: LotReadiness }) {
   return (
     <TableRow>
       <TableCell>
-        <span className="font-mono text-[13px] font-medium">{lot.reference_number}</span>
+        <span className="font-mono text-sm font-medium">{lot.reference_number}</span>
       </TableCell>
       <TableCell className="text-right font-mono">
         {formatNumber(Math.round(Number(lot.quantity)))} {unitLabel}
       </TableCell>
       <TableCell>
-        {harvest ? <span className="text-[13px]">{harvest}</span> : <Badge variant="destructive">Missing</Badge>}
+        {harvest ? <span className="text-sm">{harvest}</span> : <Badge variant="destructive">Missing</Badge>}
       </TableCell>
       <TableCell>
         <PlotsCell lot={lot} />
@@ -182,7 +182,7 @@ function GroupHeaderRow({
     <TableRow className="bg-foreground/4 hover:bg-foreground/4">
       <TableCell colSpan={COLUMN_COUNT} className="py-1.5">
         <span className="inline-flex w-full items-center gap-3">
-          <span className="text-[12.5px] font-semibold">{group.label}</span>
+          <span className="text-sm font-semibold">{group.label}</span>
           {group.deadline && <DeadlineChip etaLabel={formatEta(group.deadline)} days={days} />}
           {isUnassigned && canAssignUnassigned && onAssignUnassigned && (
             <Button

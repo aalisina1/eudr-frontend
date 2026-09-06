@@ -32,10 +32,10 @@ function RiskRow({ row }: { row: RiskRowData }) {
       className="flex items-center gap-3 border-b border-border px-4 py-3 no-underline last:border-b-0 hover:bg-muted/40"
     >
       <div className="flex-1">
-        <p className="text-[13.5px] text-foreground">{row.label}</p>
-        <p className="text-[12px] text-muted-foreground">{row.subLabel}</p>
+        <p className="text-sm text-foreground">{row.label}</p>
+        <p className="text-xs text-muted-foreground">{row.subLabel}</p>
       </div>
-      <span className={cn("text-[15px] font-semibold tabular-nums", toneClass)}>{row.value}</span>
+      <span className={cn("text-base font-semibold tabular-nums", toneClass)}>{row.value}</span>
     </Link>
   );
 }

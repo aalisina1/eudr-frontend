@@ -186,7 +186,7 @@ export function AssignToConsignmentSheet({ open, onOpenChange, lotIds, onSaved }
                     aria-pressed={selectedId === c.id}
                     onClick={() => setSelectedId(c.id)}
                     className={cn(
-                      "flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-[13px] transition-colors",
+                      "flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition-colors",
                       selectedId === c.id ? "border-primary bg-primary/5" : "border-border/60"
                     )}
                   >

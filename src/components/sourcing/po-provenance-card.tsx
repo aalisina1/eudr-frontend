@@ -27,19 +27,19 @@ export function PoProvenanceCard({ supplierId, supplierName, countryOfOrigin, pl
       <CardContent className="flex flex-wrap items-stretch gap-5">
         <div className="relative h-[130px] w-full max-w-[300px] shrink-0 overflow-hidden rounded-xl">
           <Skeleton className="h-full w-full" />
-          <span className="absolute inset-0 flex items-center justify-center gap-1.5 font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+          <span className="absolute inset-0 flex items-center justify-center gap-1.5 font-mono text-xs tracking-wider text-muted-foreground uppercase">
             <MapPin className="size-3.5" /> Map renders at runtime
           </span>
         </div>
         <div className="flex min-w-[220px] flex-col justify-center gap-2">
           <Link
             href={`/suppliers/${supplierId}`}
-            className="inline-flex items-center gap-1.5 text-[14.5px] font-semibold text-foreground hover:underline"
+            className="inline-flex items-center gap-1.5 text-base font-semibold text-foreground hover:underline"
           >
             {supplierName ?? "Supplier"} <ArrowRight className="size-3.5 text-primary" />
           </Link>
-          {countryOfOrigin && <span className="text-[13px] text-muted-foreground">{countryOfOrigin}</span>}
-          <span className="text-[13px] text-muted-foreground">
+          {countryOfOrigin && <span className="text-sm text-muted-foreground">{countryOfOrigin}</span>}
+          <span className="text-sm text-muted-foreground">
             <span className="font-mono text-foreground">{plotCount}</span> plots across{" "}
             <span className="font-mono text-foreground">{lotCount}</span> lot{lotCount === 1 ? "" : "s"}
           </span>

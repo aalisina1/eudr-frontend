@@ -62,12 +62,12 @@ function PlotRow({ plot }: { plot: CoveredPlot }) {
       className="flex items-center gap-2 rounded-lg px-2 py-1.5 -mx-2 hover:bg-secondary/60 transition-colors"
     >
       <MapPin className="size-3 shrink-0 text-muted-foreground" />
-      <span className="font-mono text-[12px] shrink-0">{plot.reference || "—"}</span>
-      <span className="text-[12px] text-muted-foreground truncate">
+      <span className="font-mono text-xs shrink-0">{plot.reference || "—"}</span>
+      <span className="text-xs text-muted-foreground truncate">
         {[plot.region, plot.country].filter(Boolean).join(", ")}
       </span>
       {plot.area_hectares && (
-        <span className="text-[12px] text-muted-foreground shrink-0 tabular-nums">
+        <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
           {Number(plot.area_hectares).toLocaleString(undefined, {
             maximumFractionDigits: 2,
           })}{" "}
@@ -78,7 +78,7 @@ function PlotRow({ plot }: { plot: CoveredPlot }) {
         {validation && (
           <Badge
             variant="secondary"
-            className={`${validation.className} border-0 rounded-md text-[10.5px] px-1.5 font-medium`}
+            className={`${validation.className} border-0 rounded-md text-xs px-1.5 font-medium`}
           >
             {validation.label}
           </Badge>
@@ -86,7 +86,7 @@ function PlotRow({ plot }: { plot: CoveredPlot }) {
         {resolution && (
           <Badge
             variant="secondary"
-            className="bg-muted text-muted-foreground border-0 rounded-md text-[10.5px] px-1.5 font-medium"
+            className="bg-muted text-muted-foreground border-0 rounded-md text-xs px-1.5 font-medium"
           >
             {resolution}
           </Badge>
@@ -100,13 +100,13 @@ function LotBlock({ lot }: { lot: CoveredLot }) {
   if (!lot.resolved) {
     return (
       <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3">
-        <p className="text-[13px] font-medium text-destructive">
+        <p className="text-sm font-medium text-destructive">
           This lot could not be resolved
         </p>
-        <p className="mt-0.5 font-mono text-[11.5px] text-muted-foreground break-all">
+        <p className="mt-0.5 font-mono text-xs text-muted-foreground break-all">
           {lot.id}
         </p>
-        <p className="mt-1 text-[12px] text-muted-foreground">
+        <p className="mt-1 text-xs text-muted-foreground">
           The statement claims to cover it, but no batch with this id belongs to
           your organisation. It is listed rather than hidden, because a
           statement showing fewer lots than it declares would be worse.
@@ -122,26 +122,26 @@ function LotBlock({ lot }: { lot: CoveredLot }) {
   return (
     <div className="rounded-xl border border-border/40 bg-secondary/25 px-4 py-3.5">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <span className="flex items-center gap-1.5 font-mono text-[13px] font-medium">
+        <span className="flex items-center gap-1.5 font-mono text-sm font-medium">
           <Package className="size-3.5 text-muted-foreground" />
           {lot.reference_number || "Unreferenced lot"}
         </span>
         {lot.is_purchase_order && (
           <Badge
             variant="secondary"
-            className="bg-muted text-muted-foreground border-0 rounded-md text-[10.5px] px-1.5"
+            className="bg-muted text-muted-foreground border-0 rounded-md text-xs px-1.5"
           >
             Purchase order
           </Badge>
         )}
-        <span className="text-[13px] text-muted-foreground tabular-nums">
+        <span className="text-sm text-muted-foreground tabular-nums">
           {lot.quantity ? formatNumber(Number(lot.quantity)) : "—"} {unit}
         </span>
-        <span className="text-[13px] text-muted-foreground">{lot.country_of_harvest}</span>
+        <span className="text-sm text-muted-foreground">{lot.country_of_harvest}</span>
         {period ? (
-          <span className="text-[13px] text-muted-foreground">{period}</span>
+          <span className="text-sm text-muted-foreground">{period}</span>
         ) : (
-          <Badge variant="destructive" className="rounded-md text-[10.5px] px-1.5">
+          <Badge variant="destructive" className="rounded-md text-xs px-1.5">
             No harvest period
           </Badge>
         )}
@@ -160,7 +160,7 @@ function LotBlock({ lot }: { lot: CoveredLot }) {
             <Link
               key={po.id}
               href={`/supply-chains/${po.id}`}
-              className="rounded-md bg-primary/8 px-1.5 py-0.5 font-mono text-[11px] text-primary hover:bg-primary/15 transition-colors"
+              className="rounded-md bg-primary/8 px-1.5 py-0.5 font-mono text-xs text-primary hover:bg-primary/15 transition-colors"
             >
               {po.reference_number || po.id.slice(0, 8)}
             </Link>
@@ -170,7 +170,7 @@ function LotBlock({ lot }: { lot: CoveredLot }) {
 
       <div className="mt-3 border-t border-border/40 pt-2">
         {lot.plot_count > 0 && (
-          <p className="mb-1 text-[10.5px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="mb-1 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
             {lot.plot_count} plot{lot.plot_count === 1 ? "" : "s"} declared
           </p>
         )}
@@ -185,13 +185,13 @@ function LotBlock({ lot }: { lot: CoveredLot }) {
             the case a nested check skipped, leaving the card saying "no plots"
             while its own header counted several. */}
         {unresolvedPlots > 0 && (
-          <p className="mt-1 text-[12px] text-destructive">
+          <p className="mt-1 text-xs text-destructive">
             {unresolvedPlots} declared plot{unresolvedPlots === 1 ? "" : "s"}{" "}
             could not be resolved.
           </p>
         )}
         {lot.plot_count === 0 && (
-          <p className="text-[12.5px] text-destructive">
+          <p className="text-sm text-destructive">
             No plots. A statement must declare the land its goods came from.
           </p>
         )}
@@ -216,7 +216,7 @@ function Blockers({
 }) {
   return (
     <div className="mb-4 rounded-xl border border-destructive/15 bg-destructive/8 px-4 py-3">
-      <p className="flex items-center gap-1.5 text-[13px] font-medium text-destructive">
+      <p className="flex items-center gap-1.5 text-sm font-medium text-destructive">
         <AlertTriangle className="size-3.5" />
         {alreadyFiled
           ? `${blockers.length} thing${blockers.length === 1 ? "" : "s"} would block re-filing this statement today`
@@ -224,8 +224,8 @@ function Blockers({
       </p>
       <ul className="mt-2 space-y-1.5">
         {blockers.map((blocker, i) => (
-          <li key={`${blocker.field}-${i}`} className="text-[12.5px] text-destructive">
-            <span className="font-mono text-[11.5px] font-medium">{blocker.field}</span>
+          <li key={`${blocker.field}-${i}`} className="text-sm text-destructive">
+            <span className="font-mono text-xs font-medium">{blocker.field}</span>
             <span className="ml-1.5">{blocker.message}</span>
           </li>
         ))}
@@ -274,7 +274,7 @@ export function CoveredLotsCard({
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base font-medium">What this statement covers</h2>
         {!notLoaded && (
-          <p className="text-[12.5px] text-muted-foreground tabular-nums">
+          <p className="text-sm text-muted-foreground tabular-nums">
             {rows.length} lot{rows.length === 1 ? "" : "s"} · {plotTotal} plot
             {plotTotal === 1 ? "" : "s"}
             {poTotal > 0 && (
@@ -292,15 +292,15 @@ export function CoveredLotsCard({
       )}
 
       {notLoaded ? (
-        <p className="text-[12.5px] text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           The statement&rsquo;s contents are not available here.
         </p>
       ) : rows.length === 0 ? (
         <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-6 text-center">
-          <p className="text-[13px] font-medium text-destructive">
+          <p className="text-sm font-medium text-destructive">
             This statement covers no lots
           </p>
-          <p className="mt-1 text-[12.5px] text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             A due diligence statement declares specific goods. TRACES requires at
             least one commodity, so this one cannot be filed as it stands.
           </p>

@@ -12,7 +12,7 @@ function AwaitingRow({ po }: { po: BatchReadiness }) {
     <WorkRow>
       <RefLink href={`/supply-chains/${po.id}`}>{po.reference_number}</RefLink>
       <StageBadge stage={po.stage} />
-      <span className="text-[12.5px] text-muted-foreground">{note}</span>
+      <span className="text-sm text-muted-foreground">{note}</span>
     </WorkRow>
   );
 }

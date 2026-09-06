@@ -133,7 +133,7 @@ export function DocumentForm({ open, onOpenChange, document }: DocumentFormProps
             <select
               id="document_type"
               {...register("document_type")}
-              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
+              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
             >
               <option value="SUPPLIER_DECLARATION">Supplier Declaration</option>
               <option value="LAND_TITLE">Land Title</option>
@@ -193,7 +193,7 @@ export function DocumentForm({ open, onOpenChange, document }: DocumentFormProps
               {...register("is_confidential")}
               className="rounded border-border/60"
             />
-            <Label htmlFor="is_confidential" className="text-[13px]">
+            <Label htmlFor="is_confidential" className="text-sm">
               Confidential (not shared with partners)
             </Label>
           </div>

@@ -44,7 +44,7 @@ const RISK_COLORS: Record<
   HIGH: { bg: "bg-destructive/10", text: "text-destructive", dot: "bg-destructive", label: "High", suffixed: "High Risk" },
 };
 
-const TH = "text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
+const TH = "text-xs font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
 
 export default function SupplierDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -154,11 +154,11 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
             <p className="text-sm text-muted-foreground">{supplier.country_of_origin}</p>
           </div>
           <div className="flex gap-2">
-            <Badge variant="secondary" className={`${kyc.bg} ${kyc.text} border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5`}>
+            <Badge variant="secondary" className={`${kyc.bg} ${kyc.text} border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5`}>
               <span className={`w-1.5 h-1.5 rounded-full ${kyc.dot}`} />
               {kyc.label}
             </Badge>
-            <Badge variant="secondary" className={`${risk.bg} ${risk.text} border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5`}>
+            <Badge variant="secondary" className={`${risk.bg} ${risk.text} border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5`}>
               <span className={`w-1.5 h-1.5 rounded-full ${risk.dot}`} />
               {risk.suffixed}
             </Badge>
@@ -216,15 +216,15 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
               <TableBody>
                 {supplier.certifications.map((cert) => (
                   <TableRow key={cert.id} className="border-border/30">
-                    <TableCell className="text-[13px] font-medium">{cert.certification_type}</TableCell>
-                    <TableCell className="text-[13px] font-mono">{cert.certificate_number}</TableCell>
-                    <TableCell className="text-[13px]">{cert.issuing_body}</TableCell>
-                    <TableCell className="text-muted-foreground text-[13px]">{formatDate(cert.valid_from)}</TableCell>
-                    <TableCell className="text-muted-foreground text-[13px]">{formatDate(cert.valid_until)}</TableCell>
+                    <TableCell className="text-sm font-medium">{cert.certification_type}</TableCell>
+                    <TableCell className="text-sm font-mono">{cert.certificate_number}</TableCell>
+                    <TableCell className="text-sm">{cert.issuing_body}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{formatDate(cert.valid_from)}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{formatDate(cert.valid_until)}</TableCell>
                     <TableCell>
                       <Badge
                         variant="secondary"
-                        className={`border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5 ${
+                        className={`border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5 ${
                           cert.is_valid
                             ? "bg-success/10 text-success-foreground"
                             : "bg-destructive/10 text-destructive"

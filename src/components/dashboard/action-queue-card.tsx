@@ -34,7 +34,7 @@ function QueueRow({ item, showCta }: { item: QueueItem; showCta: boolean }) {
     <WorkRow tone={item.tone}>
       <RefLink href={item.href}>{item.ref}</RefLink>
       {item.meta}
-      <span className="text-[12.5px] text-muted-foreground">{item.reason}</span>
+      <span className="text-sm text-muted-foreground">{item.reason}</span>
       <span className="flex-1" />
       {showCta && (
         <Link

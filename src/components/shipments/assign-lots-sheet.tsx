@@ -115,7 +115,7 @@ export function AssignLotsSheet({ open, onOpenChange, consignmentId, currentLots
                   aria-pressed={addIds.has(b.id)}
                   onClick={() => toggle(addIds, setAddIds, b.id)}
                   className={cn(
-                    "flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-[13px] transition-colors",
+                    "flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition-colors",
                     addIds.has(b.id) ? "border-primary bg-primary/5" : "border-border/60"
                   )}
                 >
@@ -140,7 +140,7 @@ export function AssignLotsSheet({ open, onOpenChange, consignmentId, currentLots
                     type="button"
                     onClick={() => toggle(removeIds, setRemoveIds, l.id)}
                     className={cn(
-                      "rounded-full border px-2.5 py-0.5 font-mono text-[11.5px] transition-colors",
+                      "rounded-full border px-2.5 py-0.5 font-mono text-xs transition-colors",
                       removeIds.has(l.id)
                         ? "border-destructive/40 bg-destructive/10 text-destructive line-through"
                         : "border-border text-muted-foreground"

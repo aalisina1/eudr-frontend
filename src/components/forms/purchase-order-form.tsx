@@ -23,7 +23,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import type { PaginatedResponse, Product, Supplier } from "@/lib/api/types";
 
 const SELECT_CLASSNAME =
-  "w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 transition-colors";
+  "w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 transition-colors";
 
 const purchaseOrderSchema = z.object({
   reference_number: z.string().min(1, "Enter a PO reference"),
@@ -209,7 +209,7 @@ export function PurchaseOrderForm({ open, onOpenChange }: PurchaseOrderFormProps
             {errors.transaction_date && <p className="text-xs text-destructive">{errors.transaction_date.message}</p>}
           </div>
 
-          <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+          <p className="text-sm leading-relaxed text-muted-foreground">
             No plots are picked here. Land plots are captured per lot once the order is allocated.
           </p>
 

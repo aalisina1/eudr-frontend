@@ -214,13 +214,13 @@ function SyncConfigCard({
           <p className="text-sm font-medium">{config.name}</p>
           <div className="flex items-center gap-2 mt-0.5">
             {config.mapping_name && (
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 Mapping: {config.mapping_name}
               </span>
             )}
             <Badge
               variant="secondary"
-              className={`border-0 rounded text-[9px] px-1.5 py-0 ${
+              className={`border-0 rounded text-xs px-1.5 py-0 ${
                 config.is_enabled
                   ? "bg-emerald-100 text-emerald-700"
                   : "bg-muted text-muted-foreground"
@@ -231,7 +231,7 @@ function SyncConfigCard({
             {config.schedule_cron && (
               <Badge
                 variant="secondary"
-                className="border-0 rounded text-[9px] px-1.5 py-0 bg-muted text-muted-foreground gap-1"
+                className="border-0 rounded text-xs px-1.5 py-0 bg-muted text-muted-foreground gap-1"
               >
                 <Clock className="size-2.5" />
                 {config.schedule_cron}
@@ -240,7 +240,7 @@ function SyncConfigCard({
             {config.requires_review && (
               <Badge
                 variant="secondary"
-                className="border-0 rounded text-[9px] px-1.5 py-0 bg-amber-100 text-amber-700"
+                className="border-0 rounded text-xs px-1.5 py-0 bg-amber-100 text-amber-700"
               >
                 Review Required
               </Badge>
@@ -517,7 +517,7 @@ function SyncJobsView({
                       <td className="px-4 py-2.5">
                         <Badge
                           variant="secondary"
-                          className={`border-0 rounded-lg text-[10px] px-2 py-0.5 ${
+                          className={`border-0 rounded-lg text-xs px-2 py-0.5 ${
                             SYNC_JOB_STATUS_STYLES[job.status] ?? "bg-muted text-muted-foreground"
                           }`}
                         >
@@ -527,7 +527,7 @@ function SyncJobsView({
                       <td className="px-4 py-2.5">
                         <Badge
                           variant="secondary"
-                          className="border-0 rounded text-[9px] px-1.5 py-0 bg-muted text-muted-foreground"
+                          className="border-0 rounded text-xs px-1.5 py-0 bg-muted text-muted-foreground"
                         >
                           {job.triggered_by}
                         </Badge>
@@ -852,7 +852,7 @@ function RecordRow({
         <td className="px-4 py-2.5">
           <Badge
             variant="secondary"
-            className="border-0 rounded text-[10px] px-2 py-0.5 bg-muted text-muted-foreground"
+            className="border-0 rounded text-xs px-2 py-0.5 bg-muted text-muted-foreground"
           >
             {rec.target_object_type.replace(/_/g, " ")}
           </Badge>
@@ -860,7 +860,7 @@ function RecordRow({
         <td className="px-4 py-2.5">
           <Badge
             variant="secondary"
-            className={`border-0 rounded text-[10px] px-2 py-0.5 ${
+            className={`border-0 rounded text-xs px-2 py-0.5 ${
               SYNC_RECORD_STATUS_STYLES[rec.status] ??
               "bg-muted text-muted-foreground"
             }`}
@@ -887,18 +887,18 @@ function RecordRow({
           <td colSpan={5} className="px-4 py-3 bg-muted/30">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground block mb-1.5">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground block mb-1.5">
                   Source Data
                 </span>
-                <pre className="text-[11px] font-mono bg-background rounded-lg p-2.5 overflow-x-auto max-h-[200px] overflow-y-auto border">
+                <pre className="text-xs font-mono bg-background rounded-lg p-2.5 overflow-x-auto max-h-[200px] overflow-y-auto border">
                   {JSON.stringify(expandedRecord.source_data, null, 2)}
                 </pre>
               </div>
               <div>
-                <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground block mb-1.5">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground block mb-1.5">
                   Transformed Data
                 </span>
-                <pre className="text-[11px] font-mono bg-background rounded-lg p-2.5 overflow-x-auto max-h-[200px] overflow-y-auto border">
+                <pre className="text-xs font-mono bg-background rounded-lg p-2.5 overflow-x-auto max-h-[200px] overflow-y-auto border">
                   {JSON.stringify(expandedRecord.transformed_data, null, 2)}
                 </pre>
                 {expandedRecord.error_message && (

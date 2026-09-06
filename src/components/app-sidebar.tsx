@@ -86,11 +86,11 @@ export function AppSidebar() {
             <GrovetraceMark variant="small" className="w-[19px] h-[19px] text-sidebar" />
           </div>
           <div className="flex flex-col gap-0.5">
-            <span className="font-semibold text-[15px] tracking-tight text-sidebar-foreground leading-none">
+            <span className="font-semibold text-base tracking-tight text-sidebar-foreground leading-none">
               {PRODUCT_NAME}
             </span>
             {PRODUCT_DESCRIPTOR && (
-              <span className="text-[10px] tracking-[0.12em] uppercase text-sidebar-foreground/35 leading-none">
+              <span className="text-xs tracking-[0.12em] uppercase text-sidebar-foreground/35 leading-none">
                 {PRODUCT_DESCRIPTOR}
               </span>
             )}
@@ -100,7 +100,7 @@ export function AppSidebar() {
 
       <SidebarContent className="px-2">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/30 text-[10px] uppercase tracking-[0.15em] font-medium px-3 mb-1">
+          <SidebarGroupLabel className="text-sidebar-foreground/30 text-xs uppercase tracking-[0.15em] font-medium px-3 mb-1">
             Overview
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -116,7 +116,7 @@ export function AppSidebar() {
                     >
                       {isActive && <ActiveAccentBar />}
                       <Icon className={cn("size-[15px]", isActive && "text-sidebar-primary")} />
-                      <span className="text-[13px]">{label}</span>
+                      <span className="text-sm">{label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -128,7 +128,7 @@ export function AppSidebar() {
         <SidebarSeparator className="mx-3 my-1 opacity-50" />
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/30 text-[10px] uppercase tracking-[0.15em] font-medium px-3 mb-1">
+          <SidebarGroupLabel className="text-sidebar-foreground/30 text-xs uppercase tracking-[0.15em] font-medium px-3 mb-1">
             Compliance
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -144,7 +144,7 @@ export function AppSidebar() {
                     >
                       {isActive && <ActiveAccentBar />}
                       <Icon className={cn("size-[15px]", isActive && "text-sidebar-primary")} />
-                      <span className="text-[13px]">{label}</span>
+                      <span className="text-sm">{label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -165,7 +165,7 @@ export function AppSidebar() {
             >
               {pathname === "/settings" && <ActiveAccentBar />}
               <Settings className={cn("size-[15px]", pathname === "/settings" && "text-sidebar-primary")} />
-              <span className="text-[13px]">Settings</span>
+              <span className="text-sm">Settings</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
@@ -174,7 +174,7 @@ export function AppSidebar() {
               className="rounded-md h-9 text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
             >
               {dark ? <Sun className="size-[15px]" /> : <Moon className="size-[15px]" />}
-              <span className="text-[13px]">{dark ? "Light mode" : "Dark mode"}</span>
+              <span className="text-sm">{dark ? "Light mode" : "Dark mode"}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
@@ -183,7 +183,7 @@ export function AppSidebar() {
               className="rounded-md h-9 text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
             >
               <LogOut className="size-[15px]" />
-              <span className="text-[13px]">Sign out</span>
+              <span className="text-sm">Sign out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

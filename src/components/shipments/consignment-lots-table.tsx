@@ -32,7 +32,7 @@ function DdsCell({ lot }: { lot: ConsignmentLot }) {
       </Link>
     );
   }
-  return <span className="text-[12.5px] text-muted-foreground">Not covered</span>;
+  return <span className="text-sm text-muted-foreground">Not covered</span>;
 }
 
 /** Resolve action for an uncovered lot (shipments.md journey step 5, same
@@ -58,7 +58,7 @@ function ResolveCell({
       type="button"
       variant="link"
       size="sm"
-      className="h-auto p-0 text-[12.5px] font-medium"
+      className="h-auto p-0 text-sm font-medium"
       onClick={() => onCompletePlots(lot)}
     >
       Complete plots
@@ -107,7 +107,7 @@ export function ConsignmentLotsTable({ lots, canWrite, onCompletePlots }: Consig
                 return (
                   <TableRow key={lot.id}>
                     <TableCell>
-                      <span className="font-mono text-[13px] font-medium">{lot.reference_number}</span>
+                      <span className="font-mono text-sm font-medium">{lot.reference_number}</span>
                     </TableCell>
                     <TableCell className="text-right font-mono">
                       {formatNumber(Math.round(Number(lot.quantity)))} {unitLabel}

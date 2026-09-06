@@ -23,7 +23,7 @@ function FunnelRow({ label, value, max, unitLabel, hatched, danger, fillClassNam
   const pct = max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
   return (
     <div className="grid grid-cols-[88px_1fr_auto] items-center gap-3.5">
-      <span className="text-[12.5px] text-muted-foreground">{label}</span>
+      <span className="text-sm text-muted-foreground">{label}</span>
       <div className="h-3.5 overflow-hidden rounded-full bg-foreground/6">
         <div
           className={cn("h-full rounded-full", !hatched && fillClassName)}
@@ -32,7 +32,7 @@ function FunnelRow({ label, value, max, unitLabel, hatched, danger, fillClassNam
       </div>
       <span
         className={cn(
-          "font-mono text-[12.5px] whitespace-nowrap",
+          "font-mono text-sm whitespace-nowrap",
           danger ? "font-medium text-destructive" : "text-foreground"
         )}
       >

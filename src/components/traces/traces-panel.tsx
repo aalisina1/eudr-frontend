@@ -317,8 +317,8 @@ function TimelineRow({ step, last }: { step: TimelineStep; last: boolean }) {
         {!last && <span className="my-1 w-0.5 flex-1 bg-border rounded-full" style={{ minHeight: 16 }} />}
       </div>
       <div className={last ? "pb-0" : "pb-4"}>
-        <p className="text-[13.5px] font-semibold leading-tight">{step.title}</p>
-        <p className="mt-0.5 font-mono text-[11.5px] text-muted-foreground">{step.meta}</p>
+        <p className="text-sm font-semibold leading-tight">{step.title}</p>
+        <p className="mt-0.5 font-mono text-xs text-muted-foreground">{step.meta}</p>
       </div>
     </div>
   );
@@ -568,12 +568,12 @@ export function TracesPanel({
   return (
     <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
+        <h2 className="text-xs font-medium tracking-[0.15em] uppercase text-muted-foreground">
           TRACES submission
         </h2>
         <Badge
           variant="secondary"
-          className={`${style.bg} ${style.text} border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5`}
+          className={`${style.bg} ${style.text} border-0 rounded-lg font-medium text-xs gap-1.5 px-2.5`}
         >
           {pending ? (
             <Loader2 className="size-3 animate-spin" />
@@ -746,7 +746,7 @@ export function TracesPanel({
       )}
 
       <div className="mt-5 pt-4 border-t border-border/50">
-        <h3 className="text-[10px] font-medium tracking-[0.14em] uppercase text-muted-foreground mb-3">
+        <h3 className="text-xs font-medium tracking-[0.14em] uppercase text-muted-foreground mb-3">
           TRACES timeline
         </h3>
         <div>

@@ -68,7 +68,7 @@ export default function LoginPage() {
                 {PRODUCT_NAME}
               </span>
               {PRODUCT_DESCRIPTOR && (
-                <span className="text-white/40 text-[11px] tracking-widest uppercase">
+                <span className="text-white/40 text-xs tracking-widest uppercase">
                   {PRODUCT_DESCRIPTOR}
                 </span>
               )}
@@ -91,7 +91,7 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 p-12 pb-10">
-          <div className="flex items-center gap-2.5 text-[13px] text-white/30">
+          <div className="flex items-center gap-2.5 text-sm text-white/30">
             <span className="w-1 h-1 rounded-full bg-[#34D399]/40" />
             <span>Statements file directly to TRACES</span>
           </div>
@@ -159,7 +159,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="text-[11px] text-center text-muted-foreground/60 mt-10">
+          <p className="text-xs text-center text-muted-foreground/60 mt-10">
             {PRODUCT_NAME}
           </p>
         </div>

@@ -30,8 +30,8 @@ function SupplierCell({ sellerId, suppliersById }: { sellerId: string; suppliers
   }
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-[13px] font-medium">{supplier.name}</span>
-      <span className="text-[11.5px] text-muted-foreground">{supplier.country_of_origin}</span>
+      <span className="text-sm font-medium">{supplier.name}</span>
+      <span className="text-xs text-muted-foreground">{supplier.country_of_origin}</span>
     </div>
   );
 }
@@ -41,14 +41,14 @@ function CommodityCell({ productId, productsById }: { productId: string; product
   if (!product) {
     return <span className="font-mono text-xs text-muted-foreground">{productId.slice(-8)}</span>;
   }
-  return <span className="text-[13px] text-muted-foreground">{product.commodity_name || product.description}</span>;
+  return <span className="text-sm text-muted-foreground">{product.commodity_name || product.description}</span>;
 }
 
 function PoRefCell({ po }: { po: BatchReadiness }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="font-mono text-[13px] font-medium">{po.reference_number}</span>
-      <span className="text-[11.5px] text-muted-foreground">
+      <span className="font-mono text-sm font-medium">{po.reference_number}</span>
+      <span className="text-xs text-muted-foreground">
         {po.lot_count === 0 ? "No lots yet" : `${po.lot_count} lot${po.lot_count === 1 ? "" : "s"}`}
       </span>
     </div>
@@ -66,7 +66,7 @@ function CoverageCell({ funnel }: { funnel: BatchReadiness["funnel"] }) {
         filed={Number(funnel.filed_quantity)}
         unit={` ${unitLabel}`}
       />
-      <span className="font-mono text-[11.5px] text-muted-foreground">
+      <span className="font-mono text-xs text-muted-foreground">
         {formatQty(funnel.filed_quantity)} / {formatQty(funnel.ordered_quantity)} {unitLabel} filed
       </span>
     </div>
@@ -78,7 +78,7 @@ function StageCell({ po }: { po: BatchReadiness }) {
   return (
     <div className="flex flex-col items-start gap-1">
       <StageBadge stage={po.stage} blocked={po.blocked} />
-      {po.blocked && failedBlocker && <span className="text-[11.5px] text-destructive">{failedBlocker.message}</span>}
+      {po.blocked && failedBlocker && <span className="text-xs text-destructive">{failedBlocker.message}</span>}
     </div>
   );
 }
@@ -231,7 +231,7 @@ export default function SourcingPage() {
             aria-label="Filter by stage"
             value={stageFilter}
             onChange={(e) => setStageFilter(e.target.value)}
-            className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
+            className="h-9 cursor-pointer appearance-none rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none transition-colors focus:border-ring focus:ring-2 focus:ring-ring/30"
           >
             {STAGE_FILTER_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>

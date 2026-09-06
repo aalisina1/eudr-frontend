@@ -176,7 +176,7 @@ export function SupplierDataGapsCard({ pos, className }: SupplierDataGapsCardPro
               className="flex items-center gap-2.5 rounded-lg border border-destructive/20 bg-card px-2.5 py-2"
             >
               <AlertTriangle className="size-3.5 shrink-0 text-destructive" />
-              <span className="flex-1 text-[13px]">{gap.message}</span>
+              <span className="flex-1 text-sm">{gap.message}</span>
               <Button
                 size="sm"
                 variant="ghost"

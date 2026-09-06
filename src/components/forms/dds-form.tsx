@@ -149,7 +149,7 @@ export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
               id="statement_type"
               {...register("statement_type")}
               disabled={!canEdit}
-              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:opacity-50"
+              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:opacity-50"
             >
               <option value="OPERATOR">Operator</option>
               <option value="REFERENCE">Reference</option>
@@ -170,7 +170,7 @@ export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
               id="activity_type"
               {...register("activity_type")}
               disabled={!canEdit}
-              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:opacity-50"
+              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:opacity-50"
             >
               <option value="">Choose an activity…</option>
               {ACTIVITY_TYPE_OPTIONS.map(([value, label]) => (
@@ -179,7 +179,7 @@ export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
                 </option>
               ))}
             </select>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               What this statement declares. TRACES requires one before it can be
               filed.
             </p>
@@ -196,7 +196,7 @@ export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
               id="risk_conclusion"
               {...register("risk_conclusion")}
               disabled={!canEdit}
-              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-[13px] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:opacity-50"
+              className="w-full h-9 rounded-xl border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 disabled:opacity-50"
             >
               <option value="">Not yet assessed</option>
               <option value="NEGLIGIBLE">Negligible</option>
