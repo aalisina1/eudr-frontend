@@ -69,20 +69,6 @@ The frontend half of the TRACES round-trip. Ships the three v0.2.0 FE surfaces. 
 - **Submissions-hub list** (#22, PR #37) — the shipped DDS list reframed to surface TRACES status; list badge derives from the latest submission's regulator state. Carries the **Due Diligence → Submissions** nav rename (Submissions half). Referenced-statements card deliberately OUT (v0.5.0 / ADR-0015).
 - Known follow-ups filed from this work (v0.2.0 demo-readiness / v0.2.1 cleanup): #36 (COMPLIANCE_OFFICER Submit disabled — credentials pre-check hits an admin-only endpoint; v0.2.0), #41 (single source of truth for in-flight states), #33 (types.ts `Batch` drift), #39 (e2e locator collision).
 
-### Product identity (v0.3.1, merged 2026-09-06)
-The app read as a generic EUDR tool. Spec: vault `10-Specs/product-voice-and-identity.md`; enforcement decision ADR-0027.
-
-- **Brand chrome** (#115, PR #123) — `src/lib/brand.ts` is the single definition of the product name (four competing descriptors existed because nothing defined it once); the real Grovetrace mark replaces three stock lucide glyphs; the stock Next.js favicon is gone.
-- **Login + shared strings** (#116, #117, PR #123) — the hero opens on a customs deadline rather than an ESG tagline; `DataTable` and `getErrorMessage` defaults state the specific fact instead of "Something went wrong".
-- **Copy sweep + CI gate** (#118, #119, PR #124) — 52 em dashes out of copy, en-GB throughout, 39 `toLocale*` calls behind `src/lib/format.ts` pinned to en-GB (and date-only values in UTC, fixing a latent previous-day bug). **`eslint-rules/grovetrace-voice.mjs` gates all of it** in `npm run lint`, with `RuleTester` proving each check reds. Left open: #120 (comment em dashes), #121 (route/label mismatch).
-
-### Testing
-- 18 Vitest suites: API client, auth, types, utils, DataTable, AppSidebar, cron helpers, integrations (syncs/schedule/source-card), and page-level smoke tests for the major routes.
-
-### CI + Docker
-- `.github/workflows/ci.yml` runs lint + build (build includes type-check).
-- Multi-stage Dockerfile, standalone Next.js output, node:22-alpine runner.
-
 ### Sourcing readiness surface (v0.2.1, merged 2026-07-16 · milestone closed 2026-09-06)
 The compliance-officer reframe's Phase 2 and 3, all five screens over the backend readiness endpoint.
 - **Sourcing list** (#28) — readiness stages, tonnes coverage bars, deadline sort.
@@ -101,14 +87,21 @@ The compliance-officer reframe's Phase 2 and 3, all five screens over the backen
 - **23 Playwright journeys** covering `shipments.md`'s 13 acceptance criteria across four roles, plus the map.
 - Retro: `eudr-vault/50-Retros/v0.3.0-shipment-readiness.md`.
 
-### Product identity + the voice gate (v0.3.1, merged 2026-09-06)
-- **Grovetrace identity** (#123) — the app had been shipping a stock Next.js favicon, three stock lucide glyphs standing in for the mark, and four competing product descriptors.
-- **Copy sweep + the gate** (#124) — en-GB throughout, no em dashes, locale-pinned dates. The durable half is `eslint-rules/grovetrace-voice.mjs`, which fails `npm run lint` on an em dash in copy, an en-US spelling, a bare `toLocale*`, or the product name written outside `src/lib/brand.ts`. Prose guidance had already failed twice here; CI does not forget. ADR-0027.
+### Product identity (v0.3.1, merged 2026-09-06)
+The app read as a generic EUDR tool. Spec: vault `10-Specs/product-voice-and-identity.md`; enforcement decision ADR-0027.
 
-### CI (2026-09-05)
+- **Brand chrome** (#115, PR #123) — `src/lib/brand.ts` is the single definition of the product name (four competing descriptors existed because nothing defined it once); the real Grovetrace mark replaces three stock lucide glyphs; the stock Next.js favicon is gone.
+- **Login + shared strings** (#116, #117, PR #123) — the hero opens on a customs deadline rather than an ESG tagline; `DataTable` and `getErrorMessage` defaults state the specific fact instead of "Something went wrong".
+- **Copy sweep + CI gate** (#118, #119, PR #124) — 52 em dashes out of copy, en-GB throughout, 39 `toLocale*` calls behind `src/lib/format.ts` pinned to en-GB (and date-only values in UTC, fixing a latent previous-day bug). **`eslint-rules/grovetrace-voice.mjs` gates all of it** in `npm run lint`, with `RuleTester` proving each check reds. Left open: #120 (comment em dashes), #121 (route/label mismatch).
+
+### Testing
+- 18 Vitest suites: API client, auth, types, utils, DataTable, AppSidebar, cron helpers, integrations (syncs/schedule/source-card), and page-level smoke tests for the major routes.
+
+### CI + Docker
+- `.github/workflows/ci.yml` runs lint + build (build includes type-check).
+- Multi-stage Dockerfile, standalone Next.js output, node:22-alpine runner.
 - `issue-link` fails any PR with no closing keyword and no `no-issue` label.
 - The Playwright journeys run against a real backend on every PR, in this repo and on backend PRs. Both e2e jobs fail on zero passes **or any skip**, so a suite that quietly stops testing cannot go green.
-
 
 ## Planned
 
