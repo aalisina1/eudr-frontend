@@ -182,10 +182,10 @@ describe("RiskConcentrationCard", () => {
     // originally did) passes for all three.
     expect(row).toHaveTextContent("1");
     // Filtered doorway (dashboard-redesign-phase1 filtering addendum, Task 8
-    // amendment): the click-through opens `/due-diligence` pre-filtered to
+    // amendment): the click-through opens `/submissions` pre-filtered to
     // SUBMITTED (soonest-`valid_until` ordering was evaluated and found
     // infeasible frontend-only — see Task 7.3 — so this is filter-only).
-    expect(row).toHaveAttribute("href", "/due-diligence?status=SUBMITTED");
+    expect(row).toHaveAttribute("href", "/submissions?status=SUBMITTED");
   });
 
   it("shows a muted dash for a failed metric without blanking the other rows", async () => {

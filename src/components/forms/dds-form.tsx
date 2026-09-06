@@ -67,7 +67,7 @@ export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
         },
   });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["due-diligence"] });
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["submissions"] });
 
   const saveMutation = useMutation({
     mutationFn: async (values: DDSFormValues) => {

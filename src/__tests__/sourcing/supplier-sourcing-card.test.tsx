@@ -138,10 +138,10 @@ describe("SupplierSourcingCard", () => {
     render(<SupplierSourcingCard pos={[po({ id: "po-xyz", reference_number: "PO-XYZ" })]} />);
 
     await user.click(screen.getByText("PO-XYZ"));
-    expect(push).toHaveBeenCalledWith("/supply-chains/po-xyz");
+    expect(push).toHaveBeenCalledWith("/sourcing/po-xyz");
 
     await user.click(screen.getByRole("button", { name: "View" }));
-    expect(push).toHaveBeenCalledWith("/supply-chains/po-xyz");
+    expect(push).toHaveBeenCalledWith("/sourcing/po-xyz");
   });
 
   it("renders the sync-provenance footer with a View integration action", async () => {

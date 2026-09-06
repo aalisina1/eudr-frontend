@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import { renderWithProviders, mockPaginatedResponse, createMockFetch } from "../helpers";
-import DueDiligencePage from "@/app/(dashboard)/due-diligence/page";
+import DueDiligencePage from "@/app/(dashboard)/submissions/page";
 
 // File-level mock (house pattern — see file-dds-composer-routing.test.tsx):
 // the global next/navigation mock in setup.ts always returns an EMPTY
@@ -11,7 +11,7 @@ let searchParams = new URLSearchParams();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn(), prefetch: vi.fn() }),
-  usePathname: () => "/due-diligence",
+  usePathname: () => "/submissions",
   useParams: () => ({}),
   useSearchParams: () => searchParams,
   redirect: vi.fn(),
@@ -66,7 +66,7 @@ describe("DueDiligencePage", () => {
     expect(screen.queryByText("New Statement")).toBeNull();
     expect(
       screen.getByRole("link", { name: /file from a purchase order/i }),
-    ).toHaveAttribute("href", "/supply-chains");
+    ).toHaveAttribute("href", "/sourcing");
   });
 
   it("renders DDS data after loading", async () => {
@@ -293,7 +293,7 @@ describe("DueDiligencePage — TRACES-derived status badge (#22, ADR-0017)", () 
 
 // ---------------------------------------------------------------------------
 // Dashboard Tier 4d filtered doorway (dashboard-redesign-phase1 filtering
-// addendum, Task 7.3): `/due-diligence?status=SUBMITTED` must land
+// addendum, Task 7.3): `/submissions?status=SUBMITTED` must land
 // pre-filtered. Soonest-`valid_until` ordering is NOT attempted here — see
 // the plan's Global Constraints for why (backend `ordering_fields` doesn't
 // include `valid_until`; frontend-only Phase 1 can't work around that).

@@ -218,7 +218,7 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
   const backHref =
     anchorKind === "consignment"
       ? `/shipments/${encodeURIComponent(anchorId)}`
-      : `/supply-chains/${encodeURIComponent(anchorId)}`;
+      : `/sourcing/${encodeURIComponent(anchorId)}`;
 
   const {
     data: po,
@@ -226,7 +226,7 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
     error,
   } = useQuery<POReadinessDetail>({
     // PO path reuses ["po-readiness", id] — the same key the PO-detail page
-    // queries (src/app/(dashboard)/supply-chains/[id]/page.tsx) — so landing
+    // queries (src/app/(dashboard)/sourcing/[id]/page.tsx) — so landing
     // here from PO detail is an instant cache hit. Consignment path has no
     // such sibling query yet, so it gets its own key.
     queryKey: anchorKind === "po" ? ["po-readiness", anchorId] : ["dds-composer-source", "consignment", anchorId],
@@ -314,14 +314,14 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
       return { dds, advanced: reviewRes.ok };
     },
     onSuccess: ({ dds, advanced }) => {
-      queryClient.invalidateQueries({ queryKey: ["due-diligence"] });
+      queryClient.invalidateQueries({ queryKey: ["submissions"] });
       setConfirmOpen(false);
       toast.success(
         advanced
           ? "Statement created and submitted for review"
           : "Draft statement saved",
       );
-      router.push(`/due-diligence/${encodeURIComponent(dds.id)}`);
+      router.push(`/submissions/${encodeURIComponent(dds.id)}`);
     },
     onError: (err) => toast.error(getErrorMessage(err)),
   });
@@ -345,7 +345,7 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.push("/due-diligence")}
+          onClick={() => router.push("/submissions")}
           className="-ml-2 gap-1.5 text-muted-foreground"
         >
           <ArrowLeft className="size-4" /> Submissions

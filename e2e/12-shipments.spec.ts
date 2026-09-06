@@ -295,7 +295,7 @@ test.describe("COMPLIANCE_OFFICER — RED detail, blocker deep-link, Compose DDS
     await expect(composeBtn).toBeEnabled();
     await composeBtn.click();
 
-    await expect(page).toHaveURL(new RegExp(`/due-diligence\\?consignment=${id}`));
+    await expect(page).toHaveURL(new RegExp(`/submissions\\?consignment=${id}`));
     await expect(page.getByRole("heading", { name: "New due diligence statement" })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(`Pre-filled from ${REF.amberRotterdam}`)).toBeVisible();
   });
@@ -406,7 +406,7 @@ test.describe("COMPLIANCE_OFFICER — manual Assign to consignment from PO unass
       return route.fallback();
     });
 
-    await page.goto(`/supply-chains/${PO_WITH_UNASSIGNED.id}`);
+    await page.goto(`/sourcing/${PO_WITH_UNASSIGNED.id}`);
     await expect(page.getByRole("heading", { name: PO_WITH_UNASSIGNED.reference_number })).toBeVisible();
     await expect(page.getByText("No shipment assigned")).toBeVisible();
 
@@ -680,7 +680,7 @@ test.describe("VIEWER — mutation controls absent (mix live + stubbed)", () => 
   test("PO detail's unassigned-lots bucket: 'Assign to consignment' CTA is absent", async ({ page }) => {
     await login(page, CREDENTIALS.viewer);
     await stubUnassignedPoDetail(page);
-    await page.goto(`/supply-chains/${PO_WITH_UNASSIGNED.id}`);
+    await page.goto(`/sourcing/${PO_WITH_UNASSIGNED.id}`);
 
     await expect(page.getByRole("heading", { name: PO_WITH_UNASSIGNED.reference_number })).toBeVisible();
     await expect(page.getByText("No shipment assigned")).toBeVisible();

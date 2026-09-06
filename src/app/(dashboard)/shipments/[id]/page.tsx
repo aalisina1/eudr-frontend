@@ -161,7 +161,7 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
             <Button
               size="sm"
               disabled={c.lots.length === 0}
-              onClick={() => router.push(`/due-diligence?consignment=${encodeURIComponent(c.id)}`)}
+              onClick={() => router.push(`/submissions?consignment=${encodeURIComponent(c.id)}`)}
               className="gap-1.5"
             >
               <FileText className="size-4" /> Compose DDS

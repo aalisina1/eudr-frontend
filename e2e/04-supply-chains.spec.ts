@@ -1,7 +1,7 @@
 /**
  * E2E journeys: Sourcing list (readiness pipeline, tonnes coverage, deadline
  * placeholder — eudr-frontend #28, sourcing-readiness.design-prompt.md
- * Prompt A). Route stays `/supply-chains`; only the nav label and page
+ * Prompt A). Route stays `/sourcing`; only the nav label and page
  * content are reframed as "Sourcing".
  *
  * The readiness endpoint (`GET /api/v1/supply-chain/batches/readiness/`,
@@ -58,17 +58,17 @@ function routeReadiness(page: import("@playwright/test").Page, results: unknown[
 }
 
 test.describe("Sourcing list (readiness pipeline, #28)", () => {
-  test('sidebar "Sourcing" item navigates to /supply-chains', async ({ page }) => {
+  test('sidebar "Sourcing" item navigates to /sourcing', async ({ page }) => {
     await routeReadiness(page, []);
     await page.goto("/dashboard");
     await page.getByRole("link", { name: "Sourcing" }).click();
-    await expect(page).toHaveURL(/\/supply-chains/);
+    await expect(page).toHaveURL(/\/sourcing/);
     await expect(page.getByRole("heading", { name: "Sourcing" })).toBeVisible();
   });
 
   test("list responds and renders stage badges + coverage", async ({ page }) => {
     await routeReadiness(page, [READY_PO, BLOCKED_PO]);
-    await page.goto("/supply-chains");
+    await page.goto("/sourcing");
 
     const rows = await expectListResponded(page);
     await expect(rows).toHaveCount(2);
@@ -89,7 +89,7 @@ test.describe("Sourcing list (readiness pipeline, #28)", () => {
 
   test("empty state shows New purchase order + Connect a data source actions", async ({ page }) => {
     await routeReadiness(page, []);
-    await page.goto("/supply-chains");
+    await page.goto("/sourcing");
 
     await expect(page.getByText("No purchase orders yet")).toBeVisible();
     await expect(page.getByRole("button", { name: "New purchase order" }).first()).toBeVisible();
@@ -98,7 +98,7 @@ test.describe("Sourcing list (readiness pipeline, #28)", () => {
 
   test('Stage filter "Blocked" option requests blocked=true (derived, not a stage value)', async ({ page }) => {
     await routeReadiness(page, [READY_PO]);
-    await page.goto("/supply-chains");
+    await page.goto("/sourcing");
     await expectListResponded(page);
 
     const nextRequest = page.waitForRequest(
@@ -112,15 +112,15 @@ test.describe("Sourcing list (readiness pipeline, #28)", () => {
 
   test("row click opens the PO detail route", async ({ page }) => {
     await routeReadiness(page, [READY_PO]);
-    await page.goto("/supply-chains");
+    await page.goto("/sourcing");
     const rows = await expectListResponded(page);
     await rows.first().click();
-    await expect(page).toHaveURL(/\/supply-chains\/[^/]+$/);
+    await expect(page).toHaveURL(/\/sourcing\/[^/]+$/);
   });
 
   test("New purchase order sheet opens with the no-plots helper line", async ({ page }) => {
     await routeReadiness(page, []);
-    await page.goto("/supply-chains");
+    await page.goto("/sourcing");
 
     await page.getByRole("button", { name: "New purchase order" }).first().click();
     await expect(page.getByRole("dialog")).toBeVisible();
@@ -132,7 +132,7 @@ test.describe("Sourcing list (readiness pipeline, #28)", () => {
  * E2E journeys: PO Detail (eudr-frontend #29, sourcing-readiness.design-
  * prompt.md Prompt B) — the coverage funnel, "what's blocking readiness"
  * checklist, gated File DDS CTA, and the lots table. Same route as before
- * (`/supply-chains/[id]`), restructured content.
+ * (`/sourcing/[id]`), restructured content.
  *
  * The readiness DETAIL endpoint (`GET /api/v1/supply-chain/batches/{id}/
  * readiness/`, eudr-app #60/#61) is stubbed the same way as the list above —
@@ -246,7 +246,7 @@ test.describe("PO Detail — Ready to file state (#29)", () => {
   test("shows the coverage funnel, all-clear checklist, and an enabled File DDS CTA", async ({ page }) => {
     await routeReadinessDetail(page, READY_DETAIL);
     await stubLookups(page);
-    await page.goto(`/supply-chains/${READY_DETAIL.id}`);
+    await page.goto(`/sourcing/${READY_DETAIL.id}`);
 
     await expect(page.getByRole("heading", { name: "PO-2026-E2E9" })).toBeVisible();
     await expect(page.locator('[data-slot="badge"]', { hasText: "Ready to file" })).toBeVisible();
@@ -277,17 +277,17 @@ test.describe("PO Detail — Ready to file state (#29)", () => {
     const fileDdsBtn = page.getByRole("button", { name: "File DDS" });
     await expect(fileDdsBtn).toBeEnabled();
     await fileDdsBtn.click();
-    await expect(page).toHaveURL(new RegExp(`/due-diligence\\?po=${READY_DETAIL.id}`));
+    await expect(page).toHaveURL(new RegExp(`/submissions\\?po=${READY_DETAIL.id}`));
   });
 
   test("back link returns to the Sourcing list", async ({ page }) => {
     await routeReadinessDetail(page, READY_DETAIL);
     await stubLookups(page);
-    await page.goto(`/supply-chains/${READY_DETAIL.id}`);
+    await page.goto(`/sourcing/${READY_DETAIL.id}`);
     await expect(page.getByRole("heading", { name: "PO-2026-E2E9" })).toBeVisible();
 
     await page.getByRole("button", { name: "All purchase orders" }).click();
-    await expect(page).toHaveURL(/\/supply-chains$/);
+    await expect(page).toHaveURL(/\/sourcing$/);
   });
 });
 
@@ -295,7 +295,7 @@ test.describe("PO Detail — Gaps (earlier stage, blocked) state (#29)", () => {
   test("itemises blockers, disables File DDS with a tooltip naming what's missing", async ({ page }) => {
     await routeReadinessDetail(page, GAPS_DETAIL);
     await stubLookups(page);
-    await page.goto(`/supply-chains/${GAPS_DETAIL.id}`);
+    await page.goto(`/sourcing/${GAPS_DETAIL.id}`);
 
     await expect(page.getByRole("heading", { name: "PO-2026-E2E8" })).toBeVisible();
     await expect(page.locator('[data-slot="badge"]', { hasText: "Blocked" })).toBeVisible();
@@ -322,7 +322,7 @@ test.describe("PO Detail — Gaps (earlier stage, blocked) state (#29)", () => {
   test("File DDS tooltip opens on keyboard Tab focus (not just mouse hover), and Enter does not navigate", async ({ page }) => {
     await routeReadinessDetail(page, GAPS_DETAIL);
     await stubLookups(page);
-    await page.goto(`/supply-chains/${GAPS_DETAIL.id}`);
+    await page.goto(`/sourcing/${GAPS_DETAIL.id}`);
     await expect(page.getByRole("heading", { name: "PO-2026-E2E8" })).toBeVisible();
 
     const fileDdsBtn = page.getByRole("button", { name: "File DDS" });
@@ -346,7 +346,7 @@ test.describe("PO Detail — Gaps (earlier stage, blocked) state (#29)", () => {
 
     // Enter must not activate the blocked CTA while it's focused.
     await page.keyboard.press("Enter");
-    await expect(page).toHaveURL(new RegExp(`/supply-chains/${GAPS_DETAIL.id}$`));
+    await expect(page).toHaveURL(new RegExp(`/sourcing/${GAPS_DETAIL.id}$`));
   });
 
   /**
@@ -363,7 +363,7 @@ test.describe("PO Detail — Gaps (earlier stage, blocked) state (#29)", () => {
   test("'Review plots' opens the Assign plots sheet for the blocking lot, in place (#80)", async ({ page }) => {
     await routeReadinessDetail(page, GAPS_DETAIL);
     await stubLookups(page);
-    await page.goto(`/supply-chains/${GAPS_DETAIL.id}`);
+    await page.goto(`/sourcing/${GAPS_DETAIL.id}`);
     await expect(page.getByRole("heading", { name: "PO-2026-E2E8" })).toBeVisible();
 
     await page.getByRole("button", { name: /Review plots/ }).click();
@@ -373,7 +373,7 @@ test.describe("PO Detail — Gaps (earlier stage, blocked) state (#29)", () => {
       page.getByText(/Pick the land plots that cover this lot/),
     ).toBeVisible();
     // Still on the PO — the whole point of the change.
-    await expect(page).toHaveURL(new RegExp(`/supply-chains/${GAPS_DETAIL.id}$`));
+    await expect(page).toHaveURL(new RegExp(`/sourcing/${GAPS_DETAIL.id}$`));
   });
 });
 
@@ -432,7 +432,7 @@ test.describe("PO Detail — a blocker is fixable in place (#132)", () => {
     });
     await stubLookups(page);
 
-    await page.goto(`/supply-chains/${GAPS_DETAIL.id}`);
+    await page.goto(`/sourcing/${GAPS_DETAIL.id}`);
     await expect(page.getByRole("heading", { name: "PO-2026-E2E8" })).toBeVisible();
     await expect(page.getByText("2 lots missing harvest period")).toBeVisible();
 
@@ -456,7 +456,7 @@ test.describe("PO Detail — a blocker is fixable in place (#132)", () => {
     await expect(sheet).toBeHidden();
     await expect(page.getByText("2 lots missing harvest period")).toBeHidden();
     await expect(page.getByText(/ready to file/i)).toBeVisible();
-    await expect(page).toHaveURL(new RegExp(`/supply-chains/${GAPS_DETAIL.id}$`));
+    await expect(page).toHaveURL(new RegExp(`/sourcing/${GAPS_DETAIL.id}$`));
   });
 
   test("VIEWER sees the blocker but no Fix and no per-row Edit", async ({ page }) => {
@@ -465,7 +465,7 @@ test.describe("PO Detail — a blocker is fixable in place (#132)", () => {
     await page.route("**/api/v1/accounts/me/", async (route) => {
       await route.fulfill({ json: { id: "u-viewer", email: "viewer@canopy.test", role: "VIEWER", organization_id: "o", organization_name: "Org" } });
     });
-    await page.goto(`/supply-chains/${GAPS_DETAIL.id}`);
+    await page.goto(`/sourcing/${GAPS_DETAIL.id}`);
     await expect(page.getByText("2 lots missing harvest period")).toBeVisible();
     await expect(page.getByRole("button", { name: /^Fix$/ })).toHaveCount(0);
     await expect(page.getByRole("button", { name: /^Edit$/ })).toHaveCount(0);

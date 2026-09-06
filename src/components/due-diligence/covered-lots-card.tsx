@@ -153,13 +153,13 @@ function LotBlock({ lot }: { lot: CoveredLot }) {
       {lot.purchase_orders.length > 0 && (
         <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
           <ShoppingCart className="size-3 text-muted-foreground" />
-          {/* PO detail lives under /supply-chains (the "Sourcing" nav item) —
+          {/* PO detail lives under /sourcing (the "Sourcing" nav item) —
               a PO *is* a Batch (ADR-0013), so the id routes there, not to
               /shipments, which is consignments. */}
           {lot.purchase_orders.map((po) => (
             <Link
               key={po.id}
-              href={`/supply-chains/${po.id}`}
+              href={`/sourcing/${po.id}`}
               className="rounded-md bg-primary/8 px-1.5 py-0.5 font-mono text-xs text-primary hover:bg-primary/15 transition-colors"
             >
               {po.reference_number || po.id.slice(0, 8)}

@@ -54,7 +54,7 @@ describe("CoveredLotsCard", () => {
     expect(screen.getByText(/12.5 ha/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "PO-2026-0219" })).toHaveAttribute(
       "href",
-      "/supply-chains/po-1",
+      "/sourcing/po-1",
     );
     expect(screen.getByRole("link", { name: /PLOT-000412/ })).toHaveAttribute(
       "href",

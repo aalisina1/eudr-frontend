@@ -64,7 +64,7 @@ function DdsCell({ lot }: { lot: LotReadiness }) {
   if (lot.filed && lot.filing_dds_id) {
     return (
       <Link
-        href={`/due-diligence/${lot.filing_dds_id}`}
+        href={`/submissions/${lot.filing_dds_id}`}
         className="font-mono text-xs font-medium whitespace-nowrap text-primary hover:underline"
       >
         {lot.filing_dds_reference || lot.filing_dds_id}

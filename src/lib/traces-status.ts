@@ -12,7 +12,7 @@ import type { TracesSubmission, TracesSubmissionStatus } from "@/lib/api/types";
  * flips to `SUBMITTED` once and stays there forever once the transport
  * succeeds (`apps/traces_integration/submit.py` `perform_submit`), even if
  * TRACES later rejects the statement. This module is what makes the
- * Submissions list badge (`due-diligence/page.tsx`, #22) tell that story.
+ * Submissions list badge (`submissions/page.tsx`, #22) tell that story.
  *
  * `deriveTracesDisplay` is now the single derivation, consumed by both the
  * Submissions list badge and the DDS-detail panel. It was duplicated in

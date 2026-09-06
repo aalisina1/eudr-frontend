@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../helpers";
-import PoDetailPage from "@/app/(dashboard)/supply-chains/[id]/page";
+import PoDetailPage from "@/app/(dashboard)/sourcing/[id]/page";
 import type { POReadinessDetail, Product, Supplier, User } from "@/lib/api/types";
 
 const originalFetch = globalThis.fetch;

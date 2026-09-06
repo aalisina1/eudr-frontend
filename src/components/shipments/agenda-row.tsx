@@ -36,7 +36,7 @@ export function AgendaRow({ c, canWrite }: { c: ConsignmentRow; canWrite: boolea
       <TrackingBadge state={deriveTrackingState(c)} className="ml-auto" />
       {gap && canWrite && (
         <Link
-          href={`/due-diligence?consignment=${encodeURIComponent(c.id)}`}
+          href={`/submissions?consignment=${encodeURIComponent(c.id)}`}
           className="inline-flex items-center gap-1 rounded-lg bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
         >
           <Zap className="size-3" /> PREP NOW

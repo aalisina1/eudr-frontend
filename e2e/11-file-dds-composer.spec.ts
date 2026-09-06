@@ -121,7 +121,7 @@ test.describe("File DDS composer — prefill + declaration summary + payload met
       if (route.request().method() !== "GET") return route.fallback();
       await route.fulfill({ json: READY_DETAIL });
     });
-    await page.goto(`/due-diligence?po=${PO_ID}`);
+    await page.goto(`/submissions?po=${PO_ID}`);
 
     await expect(page.getByRole("heading", { name: "New due diligence statement" })).toBeVisible();
     await expect(page.getByText("Pre-filled from PO-2026-E2E-FD")).toBeVisible();
@@ -144,7 +144,7 @@ test.describe("File DDS composer — prefill + declaration summary + payload met
 
   test("unchecking a lot recomputes the checked-lot count and net mass", async ({ page }) => {
     await stubComposerDependencies(page);
-    await page.goto(`/due-diligence?po=${PO_ID}`);
+    await page.goto(`/submissions?po=${PO_ID}`);
     await expect(page.getByText("LOT-GH-26-9001")).toBeVisible();
     await expect(page.getByText("50 t")).toBeVisible();
 
@@ -158,7 +158,7 @@ test.describe("File DDS composer — prefill + declaration summary + payload met
 test.describe("File DDS composer — over-limit payload meter + split-by-shipment (#26)", () => {
   test("shows the destructive frame with the split suggestion, and Split by shipment narrows the selection", async ({ page }) => {
     await stubComposerDependencies(page, OVER_LIMIT_ESTIMATE);
-    await page.goto(`/due-diligence?po=${PO_ID}`);
+    await page.goto(`/submissions?po=${PO_ID}`);
 
     // Copy updated by #118 (em dashes removed from user-visible strings); this
     // asserts the replacement wording, not the retired one.
@@ -217,7 +217,7 @@ test.describe("File DDS composer — 72h lock dialog + submit hand-off (#26)", (
       await route.fulfill({ json: { count: 0, next: null, previous: null, results: [] } });
     });
 
-    await page.goto(`/due-diligence?po=${PO_ID}`);
+    await page.goto(`/submissions?po=${PO_ID}`);
     await expect(page.getByText("LOT-GH-26-9001")).toBeVisible();
 
     await page.getByRole("button", { name: /Submit to TRACES/ }).click();
@@ -230,7 +230,7 @@ test.describe("File DDS composer — 72h lock dialog + submit hand-off (#26)", (
 
     await page.getByRole("button", { name: "Submit statement" }).click();
 
-    await expect(page).toHaveURL(new RegExp(`/due-diligence/${NEW_DDS_ID}$`));
+    await expect(page).toHaveURL(new RegExp(`/submissions/${NEW_DDS_ID}$`));
     expect((createBody as { batch_ids: string[] })?.batch_ids?.sort()).toEqual([LOT_1, LOT_2].sort());
   });
 });

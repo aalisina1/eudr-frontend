@@ -262,7 +262,7 @@ function ShipmentsPageInner() {
                 <Button size="sm" onClick={() => setFormOpen(true)} className="gap-1.5">
                   <Plus className="size-3.5" /> New consignment
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => router.push("/supply-chains")}>
+                <Button variant="ghost" size="sm" onClick={() => router.push("/sourcing")}>
                   Assign lots to a consignment
                 </Button>
               </div>

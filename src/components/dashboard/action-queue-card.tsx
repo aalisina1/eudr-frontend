@@ -95,11 +95,11 @@ export function ActionQueueCard({ showCta = true }: { showCta?: boolean }) {
   const rejectedItems: QueueItem[] = rejected.map((r) => ({
     key: `dds-${r.dds_id}`,
     ref: refByDdsId.get(r.dds_id) ?? r.dds_id,
-    href: `/due-diligence/${r.dds_id}`,
+    href: `/submissions/${r.dds_id}`,
     tone: "critical",
     meta: <Badge variant="destructive">TRACES rejected</Badge>,
     reason: r.reason,
-    actionHref: `/due-diligence/${r.dds_id}`,
+    actionHref: `/submissions/${r.dds_id}`,
     actionLabel: "Remediate",
     actionVariant: "ghost",
   }));
@@ -107,11 +107,11 @@ export function ActionQueueCard({ showCta = true }: { showCta?: boolean }) {
   const blockedItems: QueueItem[] = blocked.map((po) => ({
     key: `po-blocked-${po.id}`,
     ref: po.reference_number,
-    href: `/supply-chains/${po.id}`,
+    href: `/sourcing/${po.id}`,
     tone: "critical",
     meta: <Badge variant="destructive">Blocked</Badge>,
     reason: po.blockers.find((b) => b.code === "PLOTS_FAILED_VALIDATION")?.message ?? "Blocked",
-    actionHref: `/supply-chains/${po.id}`,
+    actionHref: `/sourcing/${po.id}`,
     actionLabel: "Review",
     actionVariant: "ghost",
   }));
@@ -122,7 +122,7 @@ export function ActionQueueCard({ showCta = true }: { showCta?: boolean }) {
     return {
       key: `po-filing-${po.id}`,
       ref: po.reference_number,
-      href: `/supply-chains/${po.id}`,
+      href: `/sourcing/${po.id}`,
       tone: "ready",
       meta: po.next_deadline ? (
         <DeadlineChip etaLabel={formatEtaLabel(po.next_deadline)} days={daysUntil(po.next_deadline)} />
@@ -130,7 +130,7 @@ export function ActionQueueCard({ showCta = true }: { showCta?: boolean }) {
         <DeadlineChip />
       ),
       reason: `${supplier?.name ?? po.seller_id.slice(-8)} · ${formatWholeNumber(po.funnel.uncovered_quantity)} ${unitLabel} uncovered`,
-      actionHref: `/supply-chains/${po.id}`,
+      actionHref: `/sourcing/${po.id}`,
       actionLabel: "File DDS",
       actionVariant: "solid",
     };

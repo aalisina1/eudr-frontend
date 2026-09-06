@@ -80,7 +80,7 @@ const MAX_CERT_TYPES_SHOWN = 2;
  *
  * Every click-through opens the destination list PRE-FILTERED:
  * `/suppliers?risk_rating=HIGH`, `/plots?validation_status=FAILED`,
- * `/due-diligence?status=SUBMITTED` (dashboard-redesign-phase1 filtering
+ * `/submissions?status=SUBMITTED` (dashboard-redesign-phase1 filtering
  * addendum, Tasks 7.1–7.3) — each destination page reads its query param
  * into page-level state seeded on first render, the same way `/shipments`
  * already deep-links `?rag=RED`, so the filter is applied before the user
@@ -165,7 +165,7 @@ export function RiskConcentrationCard() {
       subLabel: "Audit-trail freshness",
       value: ddsExpiringCount == null ? "—" : formatWholeNumber(ddsExpiringCount),
       tone: !ddsExpiringCount ? "neutral" : "bad",
-      href: "/due-diligence?status=SUBMITTED",
+      href: "/submissions?status=SUBMITTED",
     },
   ];
 

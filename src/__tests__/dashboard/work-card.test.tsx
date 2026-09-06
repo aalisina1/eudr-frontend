@@ -49,11 +49,11 @@ describe("WorkRow / RefLink", () => {
   it("renders a mono reference link pointing at the given href", () => {
     render(
       <WorkRow>
-        <RefLink href="/supply-chains/po-1">PO-2026-0141</RefLink>
+        <RefLink href="/sourcing/po-1">PO-2026-0141</RefLink>
       </WorkRow>
     );
     const link = screen.getByRole("link", { name: "PO-2026-0141" });
-    expect(link).toHaveAttribute("href", "/supply-chains/po-1");
+    expect(link).toHaveAttribute("href", "/sourcing/po-1");
   });
 });
 

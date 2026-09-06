@@ -166,9 +166,9 @@ describe("ActionQueueCard", () => {
     renderWithProviders(<ActionQueueCard />);
 
     await waitFor(() => expect(screen.getByRole("link", { name: /Remediate/i })).toBeInTheDocument());
-    expect(screen.getByRole("link", { name: /Remediate/i })).toHaveAttribute("href", "/due-diligence/dds-1");
-    expect(screen.getByRole("link", { name: /Review/i })).toHaveAttribute("href", "/supply-chains/po-b");
-    expect(screen.getByRole("link", { name: /File DDS/i })).toHaveAttribute("href", "/supply-chains/po-f");
+    expect(screen.getByRole("link", { name: /Remediate/i })).toHaveAttribute("href", "/submissions/dds-1");
+    expect(screen.getByRole("link", { name: /Review/i })).toHaveAttribute("href", "/sourcing/po-b");
+    expect(screen.getByRole("link", { name: /File DDS/i })).toHaveAttribute("href", "/sourcing/po-f");
   });
 
   it("shows the single quiet line when all three groups are empty", async () => {

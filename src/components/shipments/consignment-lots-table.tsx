@@ -25,7 +25,7 @@ function DdsCell({ lot }: { lot: ConsignmentLot }) {
   if (lot.covered && lot.covering_dds_id) {
     return (
       <Link
-        href={`/due-diligence/${lot.covering_dds_id}`}
+        href={`/submissions/${lot.covering_dds_id}`}
         className="font-mono text-xs font-medium whitespace-nowrap text-primary hover:underline"
       >
         {lot.covering_dds_reference || lot.covering_dds_id}

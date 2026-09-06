@@ -25,7 +25,7 @@ import { Suspense, act } from "react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { waitFor } from "@testing-library/react";
 import { renderWithProviders } from "../helpers";
-import PoDetailPage from "@/app/(dashboard)/supply-chains/[id]/page";
+import PoDetailPage from "@/app/(dashboard)/sourcing/[id]/page";
 import type { POReadinessDetail, Product, Supplier } from "@/lib/api/types";
 
 const originalFetch = globalThis.fetch;
