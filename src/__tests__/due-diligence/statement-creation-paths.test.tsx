@@ -22,12 +22,12 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../helpers";
-import DueDiligencePage from "@/app/(dashboard)/due-diligence/page";
+import DueDiligencePage from "@/app/(dashboard)/submissions/page";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push, replace: vi.fn() }),
-  usePathname: () => "/due-diligence",
+  usePathname: () => "/submissions",
   useParams: () => ({}),
   useSearchParams: () => new URLSearchParams(),
 }));
@@ -64,7 +64,7 @@ describe("Submissions — no lotless create path", () => {
 
     expect(
       await screen.findByRole("link", { name: /purchase order/i }),
-    ).toHaveAttribute("href", "/supply-chains");
+    ).toHaveAttribute("href", "/sourcing");
   });
 
   it("still lists statements", async () => {

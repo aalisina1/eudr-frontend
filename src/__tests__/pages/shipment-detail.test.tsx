@@ -110,7 +110,7 @@ describe("/shipments/[id] detail", () => {
     await renderPage();
     const btn = await screen.findByRole("button", { name: /Compose DDS/i });
     await act(async () => { await userEvent.click(btn); });
-    expect(push).toHaveBeenCalledWith("/due-diligence?consignment=c1");
+    expect(push).toHaveBeenCalledWith("/submissions?consignment=c1");
   });
 
   it("hides all mutation controls for VIEWER", async () => {

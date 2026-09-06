@@ -48,9 +48,9 @@ const navMain = [
 ];
 
 const navCompliance = [
-  { href: "/supply-chains", label: "Sourcing", icon: Link2 },
+  { href: "/sourcing", label: "Sourcing", icon: Link2 },
   { href: "/shipments", label: "Shipments", icon: Ship },
-  { href: "/due-diligence", label: "Submissions", icon: FileText },
+  { href: "/submissions", label: "Submissions", icon: FileText },
   { href: "/documents", label: "Documents", icon: FolderOpen },
   { href: "/integrations", label: "Integrations", icon: Cable },
 ];

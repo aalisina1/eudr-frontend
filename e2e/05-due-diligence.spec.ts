@@ -3,16 +3,16 @@ import { expectListResponded } from "./helpers";
 
 test.describe("Due Diligence Statements (E1/E2)", () => {
   test("list responds (rows or empty state)", async ({ page }) => {
-    await page.goto("/due-diligence");
+    await page.goto("/submissions");
     await expectListResponded(page);
   });
 
   test("row opens DDS detail", async ({ page }) => {
-    await page.goto("/due-diligence");
+    await page.goto("/submissions");
     const rows = await expectListResponded(page);
     test.skip((await rows.count()) === 0, "no seeded DDS");
     await rows.first().click();
-    await expect(page).toHaveURL(/\/due-diligence\/[^/]+$/);
+    await expect(page).toHaveURL(/\/submissions\/[^/]+$/);
   });
 
   /**
@@ -28,7 +28,7 @@ test.describe("Due Diligence Statements (E1/E2)", () => {
    * "fix" this by reinstating a create dialog — that is the defect.
    */
   test("the lotless create path stays retired; filing starts from a purchase order (#104/#109)", async ({ page }) => {
-    await page.goto("/due-diligence");
+    await page.goto("/submissions");
     await expectListResponded(page);
 
     // The retired affordance: no control here opens a statement form.
@@ -39,15 +39,15 @@ test.describe("Due Diligence Statements (E1/E2)", () => {
     const fileFromPo = page.getByRole("link", { name: /File from a purchase order/i });
     await expect(fileFromPo).toBeVisible({ timeout: 10_000 });
     await fileFromPo.click();
-    await expect(page).toHaveURL(/\/supply-chains$/);
+    await expect(page).toHaveURL(/\/sourcing$/);
   });
 
   test("DDS detail renders the statement and reflects its lifecycle state", async ({ page }) => {
-    await page.goto("/due-diligence");
+    await page.goto("/submissions");
     const rows = await expectListResponded(page);
     test.skip((await rows.count()) === 0, "no seeded DDS");
     await rows.first().click();
-    await expect(page).toHaveURL(/\/due-diligence\/[^/]+$/);
+    await expect(page).toHaveURL(/\/submissions\/[^/]+$/);
     // Detail content responded.
     await expect(page.getByText(/risk assessments|risk conclusion/i).first()).toBeVisible({
       timeout: 15_000,

@@ -10,7 +10,7 @@ function AwaitingRow({ po }: { po: BatchReadiness }) {
   const note = po.blockers[0]?.message ?? "Waiting on data";
   return (
     <WorkRow>
-      <RefLink href={`/supply-chains/${po.id}`}>{po.reference_number}</RefLink>
+      <RefLink href={`/sourcing/${po.id}`}>{po.reference_number}</RefLink>
       <StageBadge stage={po.stage} />
       <span className="text-sm text-muted-foreground">{note}</span>
     </WorkRow>

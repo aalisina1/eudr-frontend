@@ -19,7 +19,7 @@ describe("AgendaRow", () => {
     expect(screen.getByRole("link", { name: "BL-1" })).toHaveAttribute("href", "/shipments/c1");
     expect(screen.getByText(/1\/3/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /PREP NOW/i }))
-      .toHaveAttribute("href", "/due-diligence?consignment=c1");
+      .toHaveAttribute("href", "/submissions?consignment=c1");
   });
 
   it("hides PREP NOW for a VIEWER (not canWrite)", () => {

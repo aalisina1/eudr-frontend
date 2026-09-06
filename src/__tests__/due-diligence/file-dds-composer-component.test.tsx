@@ -303,7 +303,7 @@ describe("FileDdsComposer", () => {
     await screen.findByRole("alertdialog");
     await user.click(screen.getByRole("button", { name: "Submit statement" }));
 
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/due-diligence/new-dds-1"));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/submissions/new-dds-1"));
 
     const createCall = fetchSpy.mock.calls.find(
       (c) => String(c[0]).endsWith("/due-diligence/statements/") && (c[1] as RequestInit)?.method === "POST",
@@ -325,7 +325,7 @@ describe("FileDdsComposer", () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Save draft" }));
 
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/due-diligence/draft-dds-1"));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/submissions/draft-dds-1"));
     const reviewCall = fetchSpy.mock.calls.find((c) => String(c[0]).includes("/submit-for-review/"));
     expect(reviewCall).toBeUndefined();
   });

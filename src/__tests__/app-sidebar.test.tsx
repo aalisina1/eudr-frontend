@@ -81,18 +81,18 @@ describe("AppSidebar", () => {
     expect(screen.getByText("Integrations")).toBeInTheDocument();
   });
 
-  it("nav item for /supply-chains route is labelled Sourcing, not Supply Chains (#28 rename)", () => {
+  it("nav item for /sourcing route is labelled Sourcing, not Supply Chains (#28 rename)", () => {
     renderWithProviders(<AppSidebar />);
-    const link = screen.getAllByRole("link").find((l) => l.getAttribute("href") === "/supply-chains");
+    const link = screen.getAllByRole("link").find((l) => l.getAttribute("href") === "/sourcing");
     expect(link).toBeTruthy();
     expect(link?.textContent).toContain("Sourcing");
     expect(screen.queryByText("Supply Chains")).toBeNull();
   });
 
-  it("nav item for /due-diligence route is labelled Submissions (not Due Diligence)", () => {
+  it("nav item for /submissions route is labelled Submissions (not Due Diligence)", () => {
     renderWithProviders(<AppSidebar />);
-    // The link to /due-diligence must exist and its visible text must be "Submissions"
-    const ddLink = screen.getAllByRole("link").find((l) => l.getAttribute("href") === "/due-diligence");
+    // The link to /submissions must exist and its visible text must be "Submissions"
+    const ddLink = screen.getAllByRole("link").find((l) => l.getAttribute("href") === "/submissions");
     expect(ddLink).toBeTruthy();
     expect(ddLink?.textContent).toContain("Submissions");
     expect(screen.queryByText("Due Diligence")).toBeNull();

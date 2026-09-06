@@ -76,7 +76,7 @@ export function isWithinQuarter(dateStr: string | null | undefined, now: Date = 
 // ── Number formatting ──
 
 /** Whole-number, thousands-separated — mirrors `formatQty` in the Sourcing
- * list (`app/(dashboard)/supply-chains/page.tsx`), generalised to accept a
+ * list (`app/(dashboard)/sourcing/page.tsx`), generalised to accept a
  * plain number too (the summary endpoint's counts aren't `DecimalField`s). */
 export function formatWholeNumber(value: string | number): string {
   return formatNumber(Math.round(Number(value)));

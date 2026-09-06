@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders, mockPaginatedResponse } from "../helpers";
-import SourcingPage from "@/app/(dashboard)/supply-chains/page";
+import SourcingPage from "@/app/(dashboard)/sourcing/page";
 import type { BatchReadiness, Product, Supplier } from "@/lib/api/types";
 
 const originalFetch = globalThis.fetch;

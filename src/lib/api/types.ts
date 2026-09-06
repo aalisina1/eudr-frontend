@@ -270,7 +270,7 @@ export interface CoverageFunnel {
  * "today" is a presentation concern.
  *
  * [FOLLOW-UP eudr-frontend#29/#44] The Sourcing list's own `DeadlineChip`
- * usage (`app/(dashboard)/supply-chains/page.tsx`) still renders the muted
+ * usage (`app/(dashboard)/sourcing/page.tsx`) still renders the muted
  * placeholder unconditionally — wiring it to this now-shipped field is
  * that page's own follow-up, out of this ticket's (#30, dashboard-only)
  * surface. */

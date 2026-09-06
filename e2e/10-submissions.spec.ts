@@ -94,15 +94,15 @@ function gh001Row(page: import("@playwright/test").Page) {
 // ---------------------------------------------------------------------------
 
 test.describe("Submissions hub (TRACES T1)", () => {
-  test('sidebar "Submissions" item navigates to /due-diligence', async ({ page }) => {
+  test('sidebar "Submissions" item navigates to /submissions', async ({ page }) => {
     await page.goto("/dashboard");
-    // The sidebar item label is "Submissions" (href="/due-diligence")
+    // The sidebar item label is "Submissions" (href="/submissions")
     await page.getByRole("link", { name: "Submissions" }).click();
-    await expect(page).toHaveURL(/\/due-diligence/);
+    await expect(page).toHaveURL(/\/submissions/);
   });
 
   test("list responds (rows or empty state) with a status badge", async ({ page }) => {
-    await page.goto("/due-diligence");
+    await page.goto("/submissions");
     const rows = await expectListResponded(page);
 
     // Either there are real data rows (seeded 3 DDS) or an empty state.
@@ -120,15 +120,15 @@ test.describe("Submissions hub (TRACES T1)", () => {
     // Phase 1 — no TRACES stubs yet: discover a real seeded DDS's id and
     // reference number via the real backend, by clicking through to its
     // detail URL (the list itself never exposes the raw UUID).
-    await page.goto("/due-diligence");
+    await page.goto("/submissions");
     const rows = await expectListResponded(page);
     test.skip((await rows.count()) === 0, "no seeded DDS — skipping badge derivation test");
 
     const targetRow = rows.first();
     const referenceText = (await targetRow.locator("td").first().innerText()).trim();
     await targetRow.click();
-    await expect(page).toHaveURL(/\/due-diligence\/[^/]+$/);
-    const ddsId = page.url().split("/due-diligence/")[1]?.split(/[?#]/)[0];
+    await expect(page).toHaveURL(/\/submissions\/[^/]+$/);
+    const ddsId = page.url().split("/submissions/")[1]?.split(/[?#]/)[0];
     expect(ddsId).toBeTruthy();
 
     // Phase 2 — re-navigate with the bulk submissions endpoint
@@ -172,7 +172,7 @@ test.describe("Submissions hub (TRACES T1)", () => {
       await route.fulfill({ json: { results: [{ id: SUB_ID, dds_id: ddsId, status: "SUBMITTED" }] } });
     });
 
-    await page.goto("/due-diligence");
+    await page.goto("/submissions");
     await expectListResponded(page);
     const row = page.locator("tr.cursor-pointer", { hasText: referenceText });
     await expect(row.locator('[data-slot="badge"]', { hasText: "Rejected" })).toBeVisible({ timeout: 10_000 });
@@ -191,13 +191,13 @@ test.describe("TRACES panel — AVAILABLE state (TRACES T2)", () => {
     });
     await routeSubmissions(page, { listResults: [[{ id: SUB_ID }]] });
 
-    await page.goto("/due-diligence");
+    await page.goto("/submissions");
     await expectListResponded(page);
     const row = gh001Row(page);
     test.skip((await row.count()) === 0, "seeded DDS-2025-GH-001 not found — skipping panel test");
 
     await row.click();
-    await expect(page).toHaveURL(/\/due-diligence\/[^/]+$/);
+    await expect(page).toHaveURL(/\/submissions\/[^/]+$/);
 
     // Wait for the TRACES panel section to mount.
     await expect(
@@ -234,13 +234,13 @@ test.describe("TRACES panel — submit flow (TRACES T3)", () => {
       await route.fulfill({ json: CREDS_PRESENT });
     });
 
-    await page.goto("/due-diligence");
+    await page.goto("/submissions");
     await expectListResponded(page);
     const row = gh001Row(page);
     test.skip((await row.count()) === 0, "seeded DDS-2025-GH-001 not found — skipping submit-flow test");
 
     await row.click();
-    await expect(page).toHaveURL(/\/due-diligence\/[^/]+$/);
+    await expect(page).toHaveURL(/\/submissions\/[^/]+$/);
 
     // Wait for the panel to render (no submission state).
     await expect(

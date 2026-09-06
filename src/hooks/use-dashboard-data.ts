@@ -237,7 +237,7 @@ export function useRedConsignmentRows() {
  * `GET /api/v1/traces/submissions/` list endpoint
  * (`TracesSubmissionListSerializer`) — never `traces_status`/
  * `error_message` (those are detail-only). Mirrors the identical
- * `LatestSubmissionStub` in `app/(dashboard)/due-diligence/page.tsx` (#22) —
+ * `LatestSubmissionStub` in `app/(dashboard)/submissions/page.tsx` (#22) —
  * kept as a separate, dashboard-scoped type rather than a shared import per
  * this ticket's dashboard-only surface (that page is out of scope here). */
 interface LatestSubmissionStub {

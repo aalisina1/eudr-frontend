@@ -21,7 +21,7 @@ describe("ConsignmentLotsTable", () => {
       />
     );
     const link = screen.getByRole("link", { name: /DDS-9/ });
-    expect(link).toHaveAttribute("href", "/due-diligence/dds-9");
+    expect(link).toHaveAttribute("href", "/submissions/dds-9");
   });
 
   it("shows Not covered + a Complete plots action (no dead /plots link) for an uncovered ALLOCATED lot when canWrite", () => {
@@ -63,7 +63,7 @@ describe("ConsignmentLotsTable", () => {
       />
     );
     const link = screen.getByRole("link", { name: /dds-42/ });
-    expect(link).toHaveAttribute("href", "/due-diligence/dds-42");
+    expect(link).toHaveAttribute("href", "/submissions/dds-42");
   });
 
   it("shows Not covered but no resolve action for an uncovered PLOTS_COMPLETE lot", () => {

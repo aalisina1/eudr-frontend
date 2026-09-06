@@ -3,7 +3,7 @@
  * sourcing-readiness.design-prompt.md Prompt C + Round-2 item 1). Kept
  * framework/fetch-free (mirrors `src/lib/dashboard-worklist.ts`'s pattern) so
  * the sum/range/meter/split arithmetic is unit-testable in isolation; the
- * composer component (`src/components/due-diligence/file-dds-composer.tsx`)
+ * composer component (`src/components/submissions/file-dds-composer.tsx`)
  * is the only caller.
  */
 import type { LotReadiness, PayloadEstimateBatchRow } from "@/lib/api/types";

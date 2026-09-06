@@ -1,9 +1,9 @@
 /**
  * Confirms the Submissions route's own `?po=` branch (eudr-frontend #26) —
- * the full-page File DDS composer takes over the `/due-diligence` route
+ * the full-page File DDS composer takes over the `/submissions` route
  * instead of the Submissions list when a `po` query param is present,
- * matching PO Detail's "File DDS" CTA (`router.push('/due-diligence?po=' +
- * po.id)`, `src/app/(dashboard)/supply-chains/[id]/page.tsx`).
+ * matching PO Detail's "File DDS" CTA (`router.push('/submissions?po=' +
+ * po.id)`, `src/app/(dashboard)/sourcing/[id]/page.tsx`).
  *
  * The composer's own behavior (prefill, meter, submit) is covered by
  * `file-dds-composer-component.test.tsx`; this file only exercises the
@@ -12,13 +12,13 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../helpers";
-import DueDiligencePage from "@/app/(dashboard)/due-diligence/page";
+import DueDiligencePage from "@/app/(dashboard)/submissions/page";
 
 let searchParams = new URLSearchParams();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn(), prefetch: vi.fn() }),
-  usePathname: () => "/due-diligence",
+  usePathname: () => "/submissions",
   useParams: () => ({}),
   useSearchParams: () => searchParams,
   redirect: vi.fn(),

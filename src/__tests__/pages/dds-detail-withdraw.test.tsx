@@ -13,7 +13,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { Suspense } from "react";
 import { screen, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "../helpers";
-import DDSDetailPage from "@/app/(dashboard)/due-diligence/[id]/page";
+import DDSDetailPage from "@/app/(dashboard)/submissions/[id]/page";
 import type { DueDiligenceStatement, TracesSubmission } from "@/lib/api/types";
 
 vi.mock("@/lib/api/client", () => ({ authFetch: vi.fn() }));

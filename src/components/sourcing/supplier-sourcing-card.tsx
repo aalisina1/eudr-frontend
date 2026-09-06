@@ -190,7 +190,7 @@ export function SupplierSourcingCard({ pos, isLoading, error, className }: Suppl
                       <button
                         type="button"
                         className="font-mono text-sm font-medium text-foreground underline-offset-2 hover:underline"
-                        onClick={() => router.push(`/supply-chains/${po.id}`)}
+                        onClick={() => router.push(`/sourcing/${po.id}`)}
                       >
                         {po.reference_number}
                       </button>
@@ -228,7 +228,7 @@ export function SupplierSourcingCard({ pos, isLoading, error, className }: Suppl
                         size="sm"
                         variant="ghost"
                         className="text-primary"
-                        onClick={() => router.push(`/supply-chains/${po.id}`)}
+                        onClick={() => router.push(`/sourcing/${po.id}`)}
                       >
                         View
                       </Button>
