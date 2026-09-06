@@ -97,3 +97,110 @@ describe("ReadinessChecklistCard", () => {
     expect(btn).toBeInTheDocument();
   });
 });
+
+/**
+ * eudr-frontend#132: four of nine blocker codes pointed a "Fix" button at
+ * `#lots`, a read-only table. Each fixable code must land on a control that
+ * can change the field it names. `MISSING_GEOLOCATION` is an assign-plots
+ * action (the machinery already existed); the harvest and unit blockers open
+ * the new edit-lot sheet on the lot that actually has the defect.
+ */
+describe("ReadinessChecklistCard — fix paths (#132)", () => {
+  const base = { canWrite: true, poUnit: "KG" as const };
+
+  it("MISSING_HARVEST_PERIOD opens edit-lot on the first lot with no harvest period", async () => {
+    const onEditLot = vi.fn();
+    render(
+      <ReadinessChecklistCard
+        {...base}
+        blockers={[blocker({ code: "MISSING_HARVEST_PERIOD", message: "1 lot missing harvest period" })]}
+        lots={[
+          lot({ id: "lot-ok", harvest_period_start: "2026-03-01", harvest_period_end: "2026-04-01" }),
+          lot({ id: "lot-missing" }),
+        ]}
+        onAssignPlots={vi.fn()}
+        onEditLot={onEditLot}
+      />
+    );
+    const btn = screen.getByRole("button", { name: /Fix/i });
+    expect(btn).not.toHaveAttribute("href");
+    await userEvent.click(btn);
+    expect(onEditLot).toHaveBeenCalledWith("lot-missing");
+  });
+
+  it("MISSING_GEOLOCATION opens assign-plots on the first lot with no plots", async () => {
+    const onAssignPlots = vi.fn();
+    render(
+      <ReadinessChecklistCard
+        {...base}
+        blockers={[blocker({ code: "MISSING_GEOLOCATION", message: "1 lot has no plots" })]}
+        lots={[lot({ id: "lot-has-plots", plot_count: 3 }), lot({ id: "lot-no-plots", plot_count: 0 })]}
+        onAssignPlots={onAssignPlots}
+        onEditLot={vi.fn()}
+      />
+    );
+    await userEvent.click(screen.getByRole("button", { name: /Add plots/i }));
+    expect(onAssignPlots).toHaveBeenCalledWith("lot-no-plots");
+  });
+
+  it("UNIT_MISMATCH opens edit-lot on the first lot whose unit differs from the PO's", async () => {
+    const onEditLot = vi.fn();
+    render(
+      <ReadinessChecklistCard
+        {...base}
+        blockers={[blocker({ code: "UNIT_MISMATCH", message: "Lot unit differs from order" })]}
+        lots={[lot({ id: "lot-kg", unit: "KG" }), lot({ id: "lot-tonnes", unit: "TONNES" })]}
+        onAssignPlots={vi.fn()}
+        onEditLot={onEditLot}
+      />
+    );
+    await userEvent.click(screen.getByRole("button", { name: /Fix unit/i }));
+    expect(onEditLot).toHaveBeenCalledWith("lot-tonnes");
+  });
+
+  it("OVER_ALLOCATED has no single target lot, so it still scrolls to the (now editable) table", () => {
+    render(
+      <ReadinessChecklistCard
+        {...base}
+        blockers={[blocker({ code: "OVER_ALLOCATED", message: "Lots exceed ordered quantity" })]}
+        lots={[lot()]}
+        onAssignPlots={vi.fn()}
+        onEditLot={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("button", { name: /View lots/i })).toBeInTheDocument();
+  });
+
+  it("renders no fix button when no lot actually has the defect", () => {
+    // A button that goes nowhere is the defect being fixed. If every lot has
+    // a harvest period, the blocker is stale and the row is informational.
+    render(
+      <ReadinessChecklistCard
+        {...base}
+        blockers={[blocker({ code: "MISSING_HARVEST_PERIOD" })]}
+        lots={[lot({ harvest_period_start: "2026-03-01", harvest_period_end: "2026-04-01" })]}
+        onAssignPlots={vi.fn()}
+        onEditLot={vi.fn()}
+      />
+    );
+    expect(screen.queryByRole("button", { name: /Fix/i })).toBeNull();
+  });
+
+  it("hides the edit-lot actions for VIEWER, absent from the DOM not disabled", () => {
+    render(
+      <ReadinessChecklistCard
+        {...base}
+        canWrite={false}
+        blockers={[
+          blocker({ code: "MISSING_HARVEST_PERIOD" }),
+          blocker({ code: "UNIT_MISMATCH" }),
+          blocker({ code: "MISSING_GEOLOCATION" }),
+        ]}
+        lots={[lot({ id: "l", unit: "TONNES", plot_count: 0 })]}
+        onAssignPlots={vi.fn()}
+        onEditLot={vi.fn()}
+      />
+    );
+    expect(screen.queryAllByRole("button")).toHaveLength(0);
+  });
+});
