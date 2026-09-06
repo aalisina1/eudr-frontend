@@ -61,16 +61,16 @@ const STATUS_META: Record<
   // claim about a regulated filing, and it would be made most often for
   // exactly the statements that are filed.
   unknown: { label: "Status unknown", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
-  submitting: { label: "Submitting…", bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", pending: true },
-  submitted: { label: "Submitted", bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", pending: true },
-  withdrawing: { label: "Withdrawing", bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", pending: true },
-  available: { label: "Available", bg: "bg-[#34D399]/10", text: "text-[#1B7A5A]", dot: "bg-[#34D399]" },
+  submitting: { label: "Submitting…", bg: "bg-warning/10", text: "text-warning-foreground", dot: "bg-warning", pending: true },
+  submitted: { label: "Submitted", bg: "bg-warning/10", text: "text-warning-foreground", dot: "bg-warning", pending: true },
+  withdrawing: { label: "Withdrawing", bg: "bg-warning/10", text: "text-warning-foreground", dot: "bg-warning", pending: true },
+  available: { label: "Available", bg: "bg-success/10", text: "text-success-foreground", dot: "bg-success" },
   rejected: { label: "Rejected", bg: "bg-destructive/10", text: "text-destructive", dot: "bg-destructive" },
   failed: { label: "Failed", bg: "bg-destructive/10", text: "text-destructive", dot: "bg-destructive" },
   withdrawn: { label: "Withdrawn", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
   grouped: { label: "Grouped", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
   archived: { label: "Archived", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
-  suspended: { label: "Suspended", bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]" },
+  suspended: { label: "Suspended", bg: "bg-warning/10", text: "text-warning-foreground", dot: "bg-warning" },
   updated: { label: "Updated", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
   obsolete: { label: "Obsolete", bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground" },
 };
@@ -302,7 +302,7 @@ function TimelineRow({ step, last }: { step: TimelineStep; last: boolean }) {
       : step.state === "done"
         ? "bg-primary/10 text-primary"
         : step.state === "current"
-          ? "bg-[#E8C468]/15 text-[#9A7D2E]"
+          ? "bg-warning/15 text-warning-foreground"
           : "border border-dashed border-border text-muted-foreground";
   return (
     <div className={`flex gap-3 ${dim ? "opacity-55" : ""}`}>

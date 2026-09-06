@@ -256,7 +256,7 @@ export function DDSForm({ open, onOpenChange, statement }: DDSFormProps) {
                       size="sm"
                       disabled={isPending}
                       onClick={() => actionMutation.mutate("approve")}
-                      className="bg-[#34D399] hover:bg-[#2CB889] text-white"
+                      className="bg-success hover:bg-success/90 text-white"
                     >
                       Approve
                     </Button>

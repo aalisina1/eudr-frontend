@@ -36,8 +36,8 @@ const columns: ColumnDef<Document>[] = [
     sortable: true,
     render: (doc) => (
       <div className="flex items-center gap-2.5">
-        <div className="w-7 h-7 rounded-lg bg-[#6366F1]/10 flex items-center justify-center shrink-0">
-          <FolderOpen className="size-3.5 text-[#6366F1]" />
+        <div className="w-7 h-7 rounded-lg bg-info/10 flex items-center justify-center shrink-0">
+          <FolderOpen className="size-3.5 text-info-foreground" />
         </div>
         <span className="font-medium text-[13px]">{doc.title}</span>
       </div>
@@ -75,10 +75,10 @@ const columns: ColumnDef<Document>[] = [
         className={`border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5 ${
           doc.is_archived
             ? "bg-muted text-muted-foreground"
-            : "bg-[#34D399]/10 text-[#1A6B5A]"
+            : "bg-success/10 text-success-foreground"
         }`}
       >
-        <span className={`w-1.5 h-1.5 rounded-full ${doc.is_archived ? "bg-muted-foreground" : "bg-[#34D399]"}`} />
+        <span className={`w-1.5 h-1.5 rounded-full ${doc.is_archived ? "bg-muted-foreground" : "bg-success"}`} />
         {doc.is_archived ? "Archived" : "Active"}
       </Badge>
     ),

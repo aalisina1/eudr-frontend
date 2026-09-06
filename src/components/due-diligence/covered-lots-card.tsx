@@ -38,8 +38,8 @@ const VALIDATION_BADGE: Record<
 > = {
   PASSED: null,
   FAILED: { label: "Deforestation", className: "bg-destructive/10 text-destructive" },
-  PENDING: { label: "Not checked", className: "bg-[#E8C468]/15 text-[#9A7D2E]" },
-  REQUIRES_REVIEW: { label: "Needs review", className: "bg-[#E8C468]/15 text-[#9A7D2E]" },
+  PENDING: { label: "Not checked", className: "bg-warning/15 text-warning-foreground" },
+  REQUIRES_REVIEW: { label: "Needs review", className: "bg-warning/15 text-warning-foreground" },
 };
 
 /** ADR-0014: resolution is a human act recorded beside the verdict, never

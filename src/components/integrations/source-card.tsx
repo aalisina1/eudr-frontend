@@ -48,9 +48,9 @@ const CONNECTION_STATUS_META: Record<
 > = {
   CONNECTED: {
     label: "Connected",
-    dot: "bg-[#34D399]",
-    bg: "bg-[#34D399]/10",
-    text: "text-[#1A6B5A]",
+    dot: "bg-success",
+    bg: "bg-success/10",
+    text: "text-success-foreground",
   },
   UNTESTED: {
     label: "Untested",
@@ -60,9 +60,9 @@ const CONNECTION_STATUS_META: Record<
   },
   FAILED: {
     label: "Failed",
-    dot: "bg-[#C23D3D]",
-    bg: "bg-[#C23D3D]/10",
-    text: "text-[#C23D3D]",
+    dot: "bg-destructive",
+    bg: "bg-destructive/10",
+    text: "text-destructive",
   },
 };
 
@@ -83,7 +83,7 @@ const RUN_STATUS_META: Record<
   FAILED: {
     label: "Failed",
     icon: XCircle,
-    cls: "bg-[#C23D3D]/10 text-[#C23D3D]",
+    cls: "bg-destructive/10 text-destructive",
   },
 };
 

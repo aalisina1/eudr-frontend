@@ -22,7 +22,7 @@ export function CopyChip({ label, value }: { label: string; value: string }) {
         aria-label={`Copy ${label}`}
       >
         {value}
-        {copied ? <Check className="size-3 text-[#34D399]" /> : <Copy className="size-3 opacity-50" />}
+        {copied ? <Check className="size-3 text-success" /> : <Copy className="size-3 opacity-50" />}
       </button>
     </div>
   );

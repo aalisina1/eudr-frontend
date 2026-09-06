@@ -12,17 +12,17 @@ import type { Supplier, KYCStatus, RiskRating } from "@/lib/api/types";
 import { formatDate } from "@/lib/format";
 
 const KYC_COLORS: Record<KYCStatus, { bg: string; text: string; dot: string; label: string }> = {
-  PENDING: { bg: "bg-[#C7956D]/10", text: "text-[#A07850]", dot: "bg-[#C7956D]", label: "Pending" },
-  VERIFIED: { bg: "bg-[#34D399]/10", text: "text-[#1A6B5A]", dot: "bg-[#34D399]", label: "Verified" },
-  REJECTED: { bg: "bg-[#C23D3D]/10", text: "text-[#C23D3D]", dot: "bg-[#C23D3D]", label: "Rejected" },
+  PENDING: { bg: "bg-pending/10", text: "text-pending-foreground", dot: "bg-pending", label: "Pending" },
+  VERIFIED: { bg: "bg-success/10", text: "text-success-foreground", dot: "bg-success", label: "Verified" },
+  REJECTED: { bg: "bg-destructive/10", text: "text-destructive", dot: "bg-destructive", label: "Rejected" },
   EXPIRED: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Expired" },
 };
 
 const RISK_COLORS: Record<RiskRating, { bg: string; text: string; dot: string; label: string }> = {
   NOT_ASSESSED: { bg: "bg-muted", text: "text-muted-foreground", dot: "bg-muted-foreground", label: "Not assessed" },
-  LOW: { bg: "bg-[#34D399]/10", text: "text-[#1A6B5A]", dot: "bg-[#34D399]", label: "Low" },
-  STANDARD: { bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", label: "Standard" },
-  HIGH: { bg: "bg-[#C23D3D]/10", text: "text-[#C23D3D]", dot: "bg-[#C23D3D]", label: "High" },
+  LOW: { bg: "bg-success/10", text: "text-success-foreground", dot: "bg-success", label: "Low" },
+  STANDARD: { bg: "bg-warning/10", text: "text-warning-foreground", dot: "bg-warning", label: "Standard" },
+  HIGH: { bg: "bg-destructive/10", text: "text-destructive", dot: "bg-destructive", label: "High" },
 };
 
 const columns: ColumnDef<Supplier>[] = [

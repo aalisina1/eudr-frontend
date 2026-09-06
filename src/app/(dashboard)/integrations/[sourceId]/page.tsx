@@ -438,9 +438,9 @@ export default function SourceDetailPage() {
 
 function ConnectionStatusBadge({ status }: { status: string }) {
   const meta: Record<string, { dot: string; bg: string; text: string; label: string }> = {
-    CONNECTED: { dot: "bg-[#34D399]", bg: "bg-[#34D399]/10", text: "text-[#1A6B5A]", label: "Connected" },
+    CONNECTED: { dot: "bg-success", bg: "bg-success/10", text: "text-success-foreground", label: "Connected" },
     UNTESTED: { dot: "bg-muted-foreground/40", bg: "bg-muted", text: "text-muted-foreground", label: "Untested" },
-    FAILED: { dot: "bg-[#C23D3D]", bg: "bg-[#C23D3D]/10", text: "text-[#C23D3D]", label: "Failed" },
+    FAILED: { dot: "bg-destructive", bg: "bg-destructive/10", text: "text-destructive", label: "Failed" },
   };
   const m = meta[status] ?? meta.UNTESTED;
   return (

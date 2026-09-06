@@ -27,10 +27,10 @@ const LandPlotMap = dynamic(
 );
 
 const STATUS_STYLE: Record<ValidationStatus, { bg: string; text: string; dot: string; label: string; icon: typeof CheckCircle2 }> = {
-  PENDING: { bg: "bg-[#C7956D]/10", text: "text-[#A07850]", dot: "bg-[#C7956D]", label: "Pending", icon: Clock },
-  PASSED: { bg: "bg-[#34D399]/10", text: "text-[#1A6B5A]", dot: "bg-[#34D399]", label: "Passed", icon: CheckCircle2 },
-  FAILED: { bg: "bg-[#C23D3D]/10", text: "text-[#C23D3D]", dot: "bg-[#C23D3D]", label: "Deforestation Detected", icon: AlertTriangle },
-  REQUIRES_REVIEW: { bg: "bg-[#E8C468]/10", text: "text-[#9A7D2E]", dot: "bg-[#E8C468]", label: "Requires Review", icon: AlertTriangle },
+  PENDING: { bg: "bg-pending/10", text: "text-pending-foreground", dot: "bg-pending", label: "Pending", icon: Clock },
+  PASSED: { bg: "bg-success/10", text: "text-success-foreground", dot: "bg-success", label: "Passed", icon: CheckCircle2 },
+  FAILED: { bg: "bg-destructive/10", text: "text-destructive", dot: "bg-destructive", label: "Deforestation Detected", icon: AlertTriangle },
+  REQUIRES_REVIEW: { bg: "bg-warning/10", text: "text-warning-foreground", dot: "bg-warning", label: "Requires Review", icon: AlertTriangle },
 };
 
 const TH = "text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
@@ -159,11 +159,11 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
                         variant="secondary"
                         className={`border-0 rounded-lg font-medium text-[11px] gap-1.5 px-2.5 ${
                           vr.deforestation_detected
-                            ? "bg-[#C23D3D]/10 text-[#C23D3D]"
-                            : "bg-[#34D399]/10 text-[#1A6B5A]"
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-success/10 text-success-foreground"
                         }`}
                       >
-                        <span className={`w-1.5 h-1.5 rounded-full ${vr.deforestation_detected ? "bg-[#C23D3D]" : "bg-[#34D399]"}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${vr.deforestation_detected ? "bg-destructive" : "bg-success"}`} />
                         {vr.deforestation_detected ? "Detected" : "Clear"}
                       </Badge>
                     </TableCell>
