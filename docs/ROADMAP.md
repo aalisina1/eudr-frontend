@@ -1,13 +1,15 @@
 # Frontend Roadmap
 
-Tracks what's shipped versus what's planned. The integrations 4-tab restructure is the most recent major work.
+Tracks what's shipped versus what's planned. Milestones v0.1.0 through v0.3.1 are complete; v0.3.2 Visual Identity is the wave in flight.
+
+**Planned work is organised by milestone, not by horizon.** `horizon:*` labels are deprecated — the milestone carries roadmap distance and `priority:*` carries queue order.
 
 ## Shipped
 
 ### Priority 1 — Search, filter, pagination
 - Reusable `DataTable` (`src/components/data-table.tsx`) — debounced search, multi-filter, sortable columns, pagination, CSV export.
 - Applied to Suppliers, Supply Chains, Due Diligence, Documents.
-- Plots list is client-side filtered because all plots are loaded for the map.
+- Plots list is client-side filtered over whatever the page fetched. ⚠️ It asks for `?limit=100` against a `PageNumberPagination` API that ignores `limit`, so it receives **20** plots and both the list and the map silently truncate there — #137. The same root cause affects every `DataTable`: `limit`/`offset` are ignored, so page N returns page 1 and CSV export returns 20 rows (#67).
 
 ### Priority 2 — CRUD forms
 - `supplier-form.tsx` — create/edit.
@@ -19,7 +21,7 @@ Tracks what's shipped versus what's planned. The integrations 4-tab restructure 
 ### Priority 3 — Detail pages
 - Suppliers, Plots, Supply Chains, Due Diligence — info card + related collections + edit/delete.
 - Plot detail embeds a Leaflet map of the geometry.
-- All list pages navigate to detail on row click.
+- Most list pages navigate to detail on row click. ⚠️ **Plots does not** — the card's `onClick` only selects the plot on the map, and the only link to `/plots/[id]` anywhere in the app is on DDS detail (#133).
 
 ### Priority 4 — Document management
 - `/documents` list with type/archived/confidential filters.
@@ -81,42 +83,63 @@ The app read as a generic EUDR tool. Spec: vault `10-Specs/product-voice-and-ide
 - `.github/workflows/ci.yml` runs lint + build (build includes type-check).
 - Multi-stage Dockerfile, standalone Next.js output, node:22-alpine runner.
 
+### Sourcing readiness surface (v0.2.1, merged 2026-07-16 · milestone closed 2026-09-06)
+The compliance-officer reframe's Phase 2 and 3, all five screens over the backend readiness endpoint.
+- **Sourcing list** (#28) — readiness stages, tonnes coverage bars, deadline sort.
+- **PO Detail** (#29) — coverage funnel, "what's blocking readiness" checklist, gated File DDS CTA with a keyboard-reachable explanation when it is disabled.
+- **Dashboard worklist** (#30) — Needs filing / Needs remediation / Awaiting data; retired the charts.
+- **Supplier Detail** (#31) — sourcing coverage and data-gap additions.
+- **File DDS composition** (#26) — prefill from a PO, payload meter, split by shipment, 72-hour lock dialog.
+- Retro: `eudr-vault/50-Retros/v0.2.1-sourcing-readiness.md`.
+
+### Shipments surface (v0.3.0, merged 2026-07-30 · milestone closed 2026-09-06)
+- **Shipments list** (#64) and **detail** (#66) — RAG and tracking badges, manual lot assignment, compose a DDS from a consignment.
+- **Port map** (ADR-0025) — Leaflet map plus a "Currently at <port>" readout, degrading to "No location yet"; a "Held at" column on the list.
+- **Reference ledger** (#74) — copyable TRACES chips, customs reference capture, CSV export, on `/shipments/[id]`.
+- **Assign plots to a lot** (#78) — the Sheet that closed the "Complete plots" dead end. Every such CTA used to land on the `/plots` list with no assign path and no way back.
+- **Plot identity** (#83) — plots became distinguishable in pickers and lists (`PLOT-000412` plus the source's own code), per ADR-0026.
+- **23 Playwright journeys** covering `shipments.md`'s 13 acceptance criteria across four roles, plus the map.
+- Retro: `eudr-vault/50-Retros/v0.3.0-shipment-readiness.md`.
+
+### Product identity + the voice gate (v0.3.1, merged 2026-09-06)
+- **Grovetrace identity** (#123) — the app had been shipping a stock Next.js favicon, three stock lucide glyphs standing in for the mark, and four competing product descriptors.
+- **Copy sweep + the gate** (#124) — en-GB throughout, no em dashes, locale-pinned dates. The durable half is `eslint-rules/grovetrace-voice.mjs`, which fails `npm run lint` on an em dash in copy, an en-US spelling, a bare `toLocale*`, or the product name written outside `src/lib/brand.ts`. Prose guidance had already failed twice here; CI does not forget. ADR-0027.
+
+### CI (2026-09-05)
+- `issue-link` fails any PR with no closing keyword and no `no-issue` label.
+- The Playwright journeys run against a real backend on every PR, in this repo and on backend PRs. Both e2e jobs fail on zero passes **or any skip**, so a suite that quietly stops testing cannot go green.
+
+
 ## Planned
 
-### v0.2.1 — Sourcing readiness pipeline & File DDS (next; GATE LIFTED 2026-07-14)
-The compliance-officer reframe's Sourcing/provenance/worklist screens, restructured around a **readiness pipeline** (derived per-PO stages), a **tonnes coverage funnel** (ordered→allocated→geolocated→filed→uncovered), a **deadline-driven worklist**, and the **File DDS** composition page. **Gate lifted by the user** now that v0.2.0's criterion is live-verified (demo still pending) — the wave has started with backend #60 (readiness endpoint) in flight. **All FE screens here are gated on #60's endpoint** (they render its readiness stages / tonnes funnel), so FE #28 (Sourcing list, the entry point) picks up `agent:claude` the moment #60 lands. Design source of truth: `eudr-vault/10-Specs/UI-Workflows/sourcing-readiness.design-prompt.md`; specs `dds-readiness-pipeline.md` + `compliance-flow-reframe.md`. Tracker #27.
-- Sourcing list — readiness stages + coverage bars + deadline sort (#28, delivers reframe Phase 2).
-- PO Detail — coverage funnel + readiness blockers + gated File DDS CTA (#29, reframe Phase 2).
-- Dashboard worklist — Needs filing / Needs remediation / Awaiting data; retires the charts (#30, reframe Phase 3).
-- Supplier Detail — sourcing coverage + data-gaps additions (#31).
-- File DDS composition page — prefill, payload meter + split-by-shipment, 72h lock dialog (#26, re-scoped from the old "select batches" issue).
-- All consume the backend readiness endpoint (`eudr-app` #60) + shipment/deadline fields (`eudr-app` #61).
+### In flight
 
-### v0.3.2 — Visual identity (next; research done 2026-09-06)
-Spec: vault `10-Specs/visual-identity.md`. **The audit inverted the brief:** a good design system already exists in `globals.css` (full light + dark palettes, a derived radius scale); components bypass it with 704 arbitrary-value utilities. Stays inside the "no custom design system" non-objective — this is token consumption, not forked primitives.
-- **#125 (bug, high)** — hardcoded hexes fail WCAG in dark mode; the NEGLIGIBLE badge measures 2.12:1 where the token gives 7.02:1.
-- **#126** — one type scale; 13 arbitrary sizes ship today, six of them half-pixel.
-- **Typography dials + tabular figures** — Fraunces exposes `WONK` and `SOFT` axes and the app loads only `opsz`; extend the display face past page titles; `tabular-nums` by default in tables.
-- **#128** — gate the tokens in CI, after the fixes. **#127** — radius rule (judgement, not lintable).
+- **v0.3.2 Visual Identity** — a good design system already exists in `globals.css`; the components bypass it (704 arbitrary-value utilities). #126 (13 type sizes, six of them half-pixel), #128 (gate the tokens: no hex literals, no arbitrary font sizes), #127 (state a radius rule). #125 and #130 have merged. Spec: `eudr-vault/10-Specs/visual-identity.md`.
 
-### Near-term
-- **Role-aware UI** — hide/disable actions based on `user.role` (ADMIN / COMPLIANCE_OFFICER / VIEWER / SUPPLIER_CONTACT). Today every role sees every button. (The schedule editor and run-now already rely on the backend's admin-only checks; a 403 surfaces via the new error toast, but the actions aren't yet hidden for non-admins.)
-- **`SUPPLIER_CONTACT` portal scope** — once the backend ships object-level permissions, surface only the supplier's own plots / batches / docs.
+### Next
 
-### Medium-term
-- **Draw-on-map plot creation** — today plots are created via GeoJSON paste. Adding draw tools (Leaflet.draw) would close the loop for non-technical users.
-- **Plot clustering + satellite tiles** — current map is a single tile layer with raw markers.
-- **PDF export of DDS** — depends on a backend renderer.
-- **Connector config UIs for FarmForce, AS400, SFTP, REST API, Webhook** — backend stubs exist; UI only handles SQL Server config well.
-- **Custom target definition UI** — even though the backend removed `CustomTargetDefinition` in the 4-domain restructure, a future generalisation may bring it back; if so, build it as a tab inside Mappings.
+- **v0.3.3 Flow Legibility** — the screens exist; the paths between them do not.
+  - **#132** — four of nine sourcing blockers offer a "Fix" button that scrolls to a read-only table. The backend already accepts every field they name, so the fix is a lot-edit Sheet.
+  - **#133** — plot detail is unreachable from the Land Plots list.
+  - **#134** — the plot → lot → PO → shipment chain is invisible; cross-link the detail screens. The deep lineage visualisation stays at v0.4.0 (#24).
+  - **#84** — the remaining context-free remediation CTAs.
+- **v0.3.4 Operational Readiness** — running it for real.
+  - **#135** — no user administration at all; Settings shows only your own profile, and `accounts/users` has never been called. Depends on eudr-app#218 for invitations.
+  - **#67** and **#137** — the paging defects above. Both silently truncate today.
+  - **#136** — Settings reports a hardcoded version `0.1.0`, three milestones out of date.
 
-### Longer-term
-- **A typeface that is legally ours — modified-OFL "Grovetrace Serif".** Fraunces and DM Sans are both SIL OFL, which permits modification and redistribution under a new name. A type designer can adjust a handful of glyphs (the capital G, the numerals, a terminal or two) in days. **Do this when:** v0.3.2 has landed, `WONK`/`SOFT` are tuned and the display face is extended past page titles — i.e. once there is a coherent system to judge it against and `WONK` has shown how much idiosyncrasy the brand can carry. Not before: the same 13 half-pixel sizes in a new face still read as unowned.
-- **A bespoke typeface, commissioned from scratch.** Indicatively mid-five to low-six figures for a usable family, 3–12 months. **Do this only when:** a marketing site, sales deck, PDF reports (needs the backend renderer) and the app all need one visual thread **and** the modified-OFL face above has proven insufficient. The buyer decides on plot geometry, not letterforms (`voice.md`), so this is a brand investment that pays off at scale or on consumer-facing surfaces — neither is where Grovetrace is today.
-- **Notifications dropdown** — backend ships notification CRUD + read actions; the UI doesn't surface them yet.
-- **Audit log viewer** — backend has `/audit/logs/`; build a "history" panel on entity detail pages.
-- **Webhook management UI** — backend has CRUD; needs an Admin Settings sub-page.
-- **Bulk DDS generation** — UI for selecting multiple batches and producing DDS records at once.
+### Later
+
+- **v0.4.0 Geospatial Maturity** — #19 (surface deforestation validation results and plot triage), #24 (end-to-end lineage view: plots → co-ops and processors → DDS), #4 (draw-on-map, clustering, satellite tiles), #79 (contextual `/plots?assignTo=<lotId>` map-based selection).
+- **v0.5.0 DDS Production-Ready** — #25 (risk assessment → mitigation → sign-off UI, over endpoints the backend already has), #5 (PDF UI and bulk DDS generation).
+- **v0.6.0 Operational Visibility** — #6, the notifications dropdown, audit-log viewer and webhook management, all over backend surfaces that already exist.
+- **v0.7.0 Role-Aware Access** — #3, role-aware UI and the `SUPPLIER_CONTACT` portal scope. Today every role sees every button; the backend's admin-only checks surface as a 403 toast rather than a hidden control.
+
+### Unmilestoned, still true
+
+- **Connector config UIs** — #18 (FarmForce, priority:high: the backend connector is live but a person cannot configure it without a management command). AS400, SFTP and Webhook remain backend stubs, so their UIs wait on the backend.
+- **#20** — decide whether commodities and products get a dedicated management UI or stay batch-embedded.
+- **#45** — remove the committed macOS-duplicate e2e spec files.
 
 ## How to add work
 
