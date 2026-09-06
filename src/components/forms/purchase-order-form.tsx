@@ -147,7 +147,7 @@ export function PurchaseOrderForm({ open, onOpenChange }: PurchaseOrderFormProps
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="sm:max-w-md">
         <SheetHeader>
-          <SheetTitle className="font-display text-[22px] italic font-light">New purchase order</SheetTitle>
+          <SheetTitle>New purchase order</SheetTitle>
           <SheetDescription>
             Record an order with an origin supplier. It starts Open, and coverage builds as lots are assigned.
           </SheetDescription>

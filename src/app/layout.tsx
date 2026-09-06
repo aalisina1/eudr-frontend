@@ -10,11 +10,16 @@ const dmSans = DM_Sans({
   display: "swap",
 });
 
+// Fraunces is a variable font with two axes beyond optical size that exist
+// specifically to make it look less like a default: WONK swaps in the
+// idiosyncratic alternates (single-storey a, swashier g, angled terminals)
+// and SOFT rounds the terminals. Both were unloaded until #130. The values
+// live in globals.css (--display-wonk, --display-soft), not here.
 const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-display",
   display: "swap",
-  axes: ["opsz"],
+  axes: ["opsz", "SOFT", "WONK"],
 });
 
 // Backs `--font-mono` (see globals.css `@theme inline`: `--font-mono: var(--font-geist-mono)`).

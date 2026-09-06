@@ -353,7 +353,7 @@ export function DataTable<T>({
                         {emptyIcon}
                       </div>
                     )}
-                    <p className="text-sm font-medium mb-0.5">{emptyTitle}</p>
+                    <p className="text-display text-lg font-light italic mb-1">{emptyTitle}</p>
                     <p className="text-xs text-muted-foreground max-w-md">{emptyDescription}</p>
                     {emptyAction && <div className="mt-4">{emptyAction}</div>}
                   </div>
