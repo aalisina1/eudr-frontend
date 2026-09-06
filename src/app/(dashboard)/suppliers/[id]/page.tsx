@@ -192,7 +192,7 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
 
       {/* Data gaps (Prompt E) — supplier-level blockers aggregated from the
        * same readiness rows. */}
-      <SupplierDataGapsCard pos={readinessPos ?? []} />
+      <SupplierDataGapsCard supplierId={supplier.id} pos={readinessPos ?? []} />
 
       {/* Certifications — moved below Sourcing/Data gaps (Prompt E). */}
       <div>

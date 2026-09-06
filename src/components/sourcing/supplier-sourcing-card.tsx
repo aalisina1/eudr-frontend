@@ -255,9 +255,9 @@ export function SupplierSourcingCard({ pos, isLoading, error, className }: Suppl
           size="sm"
           variant="ghost"
           className="gap-1.5 text-primary"
-          onClick={() => router.push("/integrations")}
+          onClick={() => router.push("/integrations?tab=syncs")}
         >
-          <Cable className="size-3.5" /> View integration
+          <Cable className="size-3.5" /> Review sync records
         </Button>
       </CardFooter>
     </Card>

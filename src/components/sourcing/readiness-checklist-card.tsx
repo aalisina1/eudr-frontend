@@ -43,20 +43,31 @@ type BlockerAction =
  * - missing geolocation is an assign-plots action, which already existed;
  * - over-allocation has no single culprit lot, so it still scrolls to the
  *   table, which now carries an Edit per row;
- * - PLOT_NOT_FOUND / BATCH_NOT_FOUND stay a context-free link to
- *   /integrations, deliberately: that dead end is #84's, and fixing it needs
- *   a per-record view that does not exist yet.
+ * - PLOT_NOT_FOUND / BATCH_NOT_FOUND (#84) land on the Syncs tab, where a
+ *   record that referenced something the organisation does not hold is held
+ *   for review, and the row says so. The blocker payload carries only a count,
+ *   not the references, so a per-record deep link needs the backend follow-up
+ *   filed from #84; until then, naming the tab and what to look for is the
+ *   most the frontend can honestly do.
  */
 const BLOCKER_ACTIONS: Partial<Record<ReadinessBlockerCode, BlockerAction>> = {
   MISSING_HARVEST_PERIOD: { kind: "edit-lot", label: "Fix" },
   MISSING_GEOLOCATION: { kind: "assign-plots", label: "Add plots" },
   PLOTS_FAILED_VALIDATION: { kind: "assign-plots", label: "Review plots" },
   PLOTS_PENDING_VALIDATION: { kind: "assign-plots", label: "Review plots" },
-  PLOT_NOT_FOUND: { kind: "link", label: "Check integrations", href: "/integrations" },
-  BATCH_NOT_FOUND: { kind: "link", label: "Check integrations", href: "/integrations" },
+  PLOT_NOT_FOUND: { kind: "link", label: "Review sync records", href: "/integrations?tab=syncs" },
+  BATCH_NOT_FOUND: { kind: "link", label: "Review sync records", href: "/integrations?tab=syncs" },
   OPERATOR_IDENTITY_INCOMPLETE: { kind: "link", label: "Complete profile", href: "/settings" },
   UNIT_MISMATCH: { kind: "edit-lot", label: "Fix unit" },
   OVER_ALLOCATED: { kind: "link", label: "View lots", href: "#lots" },
+};
+
+/** What to look for, for the two blockers whose fix lives in another screen. */
+const INTEGRATION_HINT: Partial<Record<ReadinessBlockerCode, string>> = {
+  PLOT_NOT_FOUND:
+    "A sync referenced plot codes your organisation does not hold. Those records are held for review on the Syncs tab.",
+  BATCH_NOT_FOUND:
+    "A sync referenced lot codes your organisation does not hold. Those records are held for review on the Syncs tab.",
 };
 
 /** First lot whose per-lot breakdown actually has the issue this blocker
@@ -119,10 +130,15 @@ function GapRow({
     }
   }
 
+  const hint = INTEGRATION_HINT[blocker.code];
+
   return (
     <div className="flex items-center gap-2.5 rounded-lg border border-border/60 px-3 py-2.5">
       <AlertTriangle className="size-4 shrink-0 text-destructive" />
-      <span className="flex-1 text-sm">{blocker.message}</span>
+      <span className="flex-1 text-sm">
+        {blocker.message}
+        {hint && <span className="mt-0.5 block text-xs text-muted-foreground">{hint}</span>}
+      </span>
       {action && onClick && (
         <Button
           size="sm"

@@ -148,8 +148,10 @@ describe("SupplierSourcingCard", () => {
     const user = userEvent.setup();
     render(<SupplierSourcingCard pos={[]} />);
     expect(screen.getByText(/arrives via your connected integrations/i)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /View integration/i }));
-    expect(push).toHaveBeenCalledWith("/integrations");
+    // #84: lands on the Syncs tab, where records held for review live, rather
+    // than the bare 4-tab surface.
+    await user.click(screen.getByRole("button", { name: /Review sync records/i }));
+    expect(push).toHaveBeenCalledWith("/integrations?tab=syncs");
   });
 
   it("shows a loading state and no table while isLoading", () => {

@@ -4,6 +4,15 @@ import { renderWithProviders, mockPaginatedResponse } from "../helpers";
 import IntegrationsPage from "@/app/(dashboard)/integrations/page";
 import type { DataSource } from "@/lib/api/types";
 
+let searchParams = new URLSearchParams();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn(), prefetch: vi.fn() }),
+  usePathname: () => "/integrations",
+  useParams: () => ({}),
+  useSearchParams: () => searchParams,
+  redirect: vi.fn(),
+}));
+
 const mockSources: DataSource[] = [
   {
     id: "ds-1",
@@ -103,5 +112,19 @@ describe("IntegrationsPage", () => {
     await waitFor(() => {
       expect(screen.getByText("No integrations yet")).toBeInTheDocument();
     });
+  });
+});
+
+/** eudr-frontend#84: remediation CTAs deep-link here with ?tab=syncs. */
+describe("/integrations — ?tab= URL param (#84)", () => {
+  it("opens the Syncs tab when ?tab=syncs is present", async () => {
+    searchParams = new URLSearchParams("tab=syncs");
+    renderWithProviders(<IntegrationsPage />);
+    expect(await screen.findByRole("tab", { name: /Syncs/i, selected: true })).toBeInTheDocument();
+  });
+  it("ignores an unknown tab value and stays on Sources", async () => {
+    searchParams = new URLSearchParams("tab=bogus");
+    renderWithProviders(<IntegrationsPage />);
+    expect(await screen.findByRole("tab", { name: /Sources/i, selected: true })).toBeInTheDocument();
   });
 });
