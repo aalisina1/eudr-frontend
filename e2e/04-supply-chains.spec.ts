@@ -13,7 +13,7 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { expectListResponded } from "./helpers";
+import { CREDENTIALS, expectListResponded, login } from "./helpers";
 
 const READY_PO = {
   id: "po-e2e-ready",
@@ -459,15 +459,28 @@ test.describe("PO Detail — a blocker is fixable in place (#132)", () => {
     await expect(page).toHaveURL(new RegExp(`/sourcing/${GAPS_DETAIL.id}$`));
   });
 
-  test("VIEWER sees the blocker but no Fix and no per-row Edit", async ({ page }) => {
-    await routeReadinessDetail(page, { ...GAPS_DETAIL, blockers: [GAPS_DETAIL.blockers[0]] });
-    await stubLookups(page);
-    await page.route("**/api/v1/accounts/me/", async (route) => {
-      await route.fulfill({ json: { id: "u-viewer", email: "viewer@canopy.test", role: "VIEWER", organization_id: "o", organization_name: "Org" } });
+  test.describe("as VIEWER", () => {
+    // A real viewer login, not a stubbed /me: the first version of this test
+    // stubbed a URL the hook never calls, and passed only because
+    // toHaveCount(0) was checked before the role had resolved. CI's timing
+    // caught it. See the waitForResponse below.
+    test.use({ storageState: { cookies: [], origins: [] } });
+
+    test("VIEWER sees the blocker but no Fix and no per-row Edit", async ({ page }) => {
+      await login(page, CREDENTIALS.viewer);
+      await routeReadinessDetail(page, { ...GAPS_DETAIL, blockers: [GAPS_DETAIL.blockers[0]] });
+      await stubLookups(page);
+      // The write gate reads the role from /auth/users/me/, a separate fetch
+      // from the readiness data that paints the heading. A count-of-zero
+      // checked before that response lands is vacuously true (it was, and a
+      // compliance login passed this test). Wait for the role first.
+      const me = page.waitForResponse((r) => r.url().includes("/api/v1/auth/users/me/") && r.ok());
+      await page.goto(`/sourcing/${GAPS_DETAIL.id}`);
+      await me;
+      await expect(page.getByRole("heading", { name: "PO-2026-E2E8" })).toBeVisible();
+      await expect(page.getByText("2 lots missing harvest period")).toBeVisible();
+      await expect(page.getByRole("button", { name: /^Fix$/ })).toHaveCount(0);
+      await expect(page.getByRole("button", { name: /^Edit$/ })).toHaveCount(0);
     });
-    await page.goto(`/sourcing/${GAPS_DETAIL.id}`);
-    await expect(page.getByText("2 lots missing harvest period")).toBeVisible();
-    await expect(page.getByRole("button", { name: /^Fix$/ })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: /^Edit$/ })).toHaveCount(0);
   });
 });
