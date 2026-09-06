@@ -1073,3 +1073,79 @@ export interface PlotLineageLot {
 export interface PlotLineage {
   lots: PlotLineageLot[];
 }
+
+// ──────────────────────────────────────────────
+// Organisation administration (eudr-app #218/#222, ADR-0028)
+// ──────────────────────────────────────────────
+
+/** Roles an access group may grant. `SUPPLIER_CONTACT` is deliberately absent:
+ * it is an identity rather than a job function, and it sits outside the
+ * privilege order the backend's `effective_role` resolves over (ADR-0028). */
+export type GrantableRole = "ADMIN" | "COMPLIANCE_OFFICER" | "VIEWER";
+
+export interface AccessGroupSummary {
+  id: string;
+  name: string;
+  role: GrantableRole;
+}
+
+export interface AccessGroup extends AccessGroupSummary {
+  description: string;
+  member_count: number;
+  members: OrgUserSummary[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrgUserSummary {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: User["role"];
+}
+
+/** A user as the administration screens see them. Distinct from `User`, which
+ * mirrors `UserMeSerializer` (the caller's own profile) and carries neither the
+ * effective role nor group membership. */
+export interface OrgUser extends OrgUserSummary {
+  /** The direct grant: the only role an admin edits per user. */
+  role: User["role"];
+  /** What authorisation actually runs on: the strongest of the direct role and
+   * the roles of `access_groups`. */
+  effective_role: User["role"];
+  access_groups: AccessGroupSummary[];
+  is_active: boolean;
+}
+
+export type InvitationStatus = "PENDING" | "ACCEPTED" | "REVOKED" | "EXPIRED";
+
+export interface Invitation {
+  id: string;
+  email: string;
+  role: User["role"];
+  groups: AccessGroupSummary[];
+  status: InvitationStatus;
+  invited_by_email: string | null;
+  created_at: string;
+  expires_at: string;
+  accepted_at: string | null;
+  revoked_at: string | null;
+}
+
+/** The create response, and the only time the token is ever disclosed. */
+export interface InvitationCreated {
+  id: string;
+  email: string;
+  role: User["role"];
+  token: string;
+  expires_at: string;
+}
+
+/** What the unauthenticated accept page is allowed to know. */
+export interface InvitationPreview {
+  email: string;
+  role: User["role"];
+  organization_name: string;
+  expires_at: string;
+}
