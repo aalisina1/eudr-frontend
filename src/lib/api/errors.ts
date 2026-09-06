@@ -16,7 +16,7 @@
  * It does NOT change authFetch's contract or make it throw automatically.
  */
 
-const DEFAULT_ERROR_MESSAGE = "Something went wrong. Please try again.";
+export const DEFAULT_ERROR_MESSAGE = "The request failed and the server gave no reason. Try again.";
 
 /**
  * Extract a human-readable message from an API error shape or a thrown Error.

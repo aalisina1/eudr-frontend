@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getErrorMessage } from "@/lib/api/errors";
+import { getErrorMessage, DEFAULT_ERROR_MESSAGE } from "@/lib/api/errors";
 
 describe("getErrorMessage", () => {
   it("extracts `detail` from a DRF-style error body", () => {
@@ -35,20 +35,16 @@ describe("getErrorMessage", () => {
   });
 
   it("falls back to a generic message for an empty object", () => {
-    expect(getErrorMessage({})).toBe("Something went wrong. Please try again.");
+    expect(getErrorMessage({})).toBe(DEFAULT_ERROR_MESSAGE);
   });
 
   it("falls back to a generic message for null/undefined", () => {
-    expect(getErrorMessage(null)).toBe("Something went wrong. Please try again.");
-    expect(getErrorMessage(undefined)).toBe(
-      "Something went wrong. Please try again."
-    );
+    expect(getErrorMessage(null)).toBe(DEFAULT_ERROR_MESSAGE);
+    expect(getErrorMessage(undefined)).toBe(DEFAULT_ERROR_MESSAGE);
   });
 
   it("falls back to a generic message when detail/error are not strings", () => {
-    expect(getErrorMessage({ detail: 123 })).toBe(
-      "Something went wrong. Please try again."
-    );
+    expect(getErrorMessage({ detail: 123 })).toBe(DEFAULT_ERROR_MESSAGE);
   });
 
   it("ignores blank detail and falls through to error", () => {

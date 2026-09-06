@@ -100,7 +100,7 @@ function PlotsPageInner() {
         <div>
           <h1 className="text-display text-2xl font-light italic mb-0.5">Land Plots</h1>
           <p className="text-sm text-muted-foreground">
-            {data ? `${data.count} geo-referenced parcels` : "Geolocation & validation"}
+            {data ? `${data.count} geo-referenced parcels` : "The land behind every batch you file"}
           </p>
         </div>
         <Button onClick={() => setPlotFormOpen(true)} className="gap-1.5">

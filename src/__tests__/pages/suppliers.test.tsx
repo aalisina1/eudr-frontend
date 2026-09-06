@@ -72,7 +72,7 @@ describe("SuppliersPage", () => {
     renderWithProviders(<SuppliersPage />);
     expect(screen.getByText("Suppliers")).toBeInTheDocument();
     expect(
-      screen.getByText("Manage your supply chain partners")
+      screen.getByText(/whether their plot data is good enough to file on/i)
     ).toBeInTheDocument();
   });
 

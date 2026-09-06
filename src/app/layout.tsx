@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans, Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/providers/providers";
+import { PRODUCT_TITLE, PRODUCT_DESCRIPTION } from "@/lib/brand";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -27,8 +28,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Grovetrace — EUDR Compliance Platform",
-  description: "Deforestation-free supply chain management & due diligence reporting",
+  title: PRODUCT_TITLE,
+  description: PRODUCT_DESCRIPTION,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

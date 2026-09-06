@@ -129,7 +129,9 @@ export default function DocumentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-display text-2xl font-light italic mb-0.5">Documents</h1>
-          <p className="text-sm text-muted-foreground">Compliance documents &amp; archival records</p>
+          <p className="text-sm text-muted-foreground">
+            Evidence you must keep for five years after a statement is filed
+          </p>
         </div>
         <Button onClick={() => setFormOpen(true)} className="gap-1.5">
           <Plus className="size-4" />
@@ -148,7 +150,7 @@ export default function DocumentsPage() {
         onRowClick={(doc) => router.push(`/documents/${doc.id}`)}
         emptyIcon={<FileQuestion className="w-5 h-5 text-muted-foreground" />}
         emptyTitle="No documents yet"
-        emptyDescription="Upload compliance documents to maintain your EUDR archival records"
+        emptyDescription="EUDR requires the evidence behind a statement to be retrievable for five years. Nothing is stored yet."
       />
 
       <DocumentForm open={formOpen} onOpenChange={setFormOpen} />

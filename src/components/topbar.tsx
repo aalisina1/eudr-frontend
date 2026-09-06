@@ -1,9 +1,11 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Bell, ChevronRight, Leaf } from "lucide-react";
+import { Bell, ChevronRight } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import { PRODUCT_NAME } from "@/lib/brand";
+import { GrovetraceMark } from "@/components/brand/grovetrace-mark";
 
 /**
  * Route → breadcrumb label, in the same order/labelling as the sidebar nav
@@ -22,9 +24,9 @@ const CRUMBS: { prefix: string; label: string }[] = [
 ];
 
 function crumbFor(pathname: string | null): string {
-  if (!pathname) return "Grovetrace";
+  if (!pathname) return PRODUCT_NAME;
   const match = CRUMBS.find((c) => pathname === c.prefix || pathname.startsWith(`${c.prefix}/`));
-  return match?.label ?? "Grovetrace";
+  return match?.label ?? PRODUCT_NAME;
 }
 
 /**
@@ -43,8 +45,8 @@ export function Topbar() {
         <SidebarTrigger className="-ml-2 text-muted-foreground hover:text-foreground transition-colors" />
         <Separator orientation="vertical" className="h-4 bg-border/60" />
         <div className="flex items-center gap-2.5 text-[13px]">
-          <Leaf className="size-3.5 text-primary" />
-          <span className="text-muted-foreground">Grovetrace</span>
+          <GrovetraceMark variant="small" className="size-3.5 text-primary" />
+          <span className="text-muted-foreground">{PRODUCT_NAME}</span>
           <ChevronRight className="size-3.5 text-border" />
           <span className="font-semibold text-foreground">{crumb}</span>
         </div>
