@@ -241,9 +241,20 @@
 ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
 
 /* ───── Utility classes ───── */
+/* Display face. Fraunces' WONK and SOFT axes are the dials that make it
+   read as ours rather than as "a serif"; they are held as tokens so the
+   whole app moves together, and so the roadmap's "modified-OFL Grovetrace
+   Serif" decision can be judged against a tuned baseline (#130). */
+:root {
+  --display-wonk: 1;
+  --display-soft: 40;
+}
 .text-display {
   font-family: var(--font-display);
-  font-variation-settings: "opsz" 72;
+  font-variation-settings:
+    "opsz" 72,
+    "WONK" var(--display-wonk),
+    "SOFT" var(--display-soft);
 }
 
 /* Shared card-elevation idiom — see --shadow-card above. */
