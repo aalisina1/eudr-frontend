@@ -151,7 +151,7 @@ export function SourceCard({
 
   return (
     <Card
-      className="group relative overflow-hidden border-border/50 bg-card hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
+      className="group relative overflow-hidden border-border/50 bg-card hover:shadow-card transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
       onClick={() => onNavigate(source.id)}
     >
       {/* Accent bar */}

@@ -24,7 +24,7 @@ interface WorkCardProps {
  * onto our real `Card` primitives. */
 export function WorkCard({ title, description, count, emptyText, isLoading, children }: WorkCardProps) {
   return (
-    <Card className="shadow-[0_1px_2px_rgba(11,29,28,0.04),0_10px_26px_-18px_rgba(11,29,28,0.14)]">
+    <Card className="shadow-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2.5">
           {title}

@@ -163,7 +163,7 @@ function PlotsPageInner() {
                   <div
                     key={plot.id}
                     onClick={() => setSelectedPlotId(plot.id)}
-                    className={`rounded-xl border bg-card p-4 hover:shadow-[0_4px_20px_rgba(0,0,0,0.05)] transition-all duration-200 cursor-pointer group ${selectedPlotId === plot.id ? "border-primary/50 shadow-[0_4px_20px_rgba(0,0,0,0.05)]" : "border-border/50"}`}
+                    className={`rounded-xl border bg-card p-4 hover:shadow-card transition-all duration-200 cursor-pointer group ${selectedPlotId === plot.id ? "border-primary/50 shadow-card" : "border-border/50"}`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <p className="font-medium text-sm leading-tight group-hover:text-primary transition-colors">
@@ -201,7 +201,7 @@ function PlotsPageInner() {
         </div>
 
         {/* Map */}
-        <div className="lg:col-span-2 rounded-2xl overflow-hidden border border-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)] relative z-0">
+        <div className="lg:col-span-2 rounded-2xl overflow-hidden border border-border/50 shadow-card relative z-0">
           <LandPlotMap plots={data?.results ?? []} selectedPlotId={selectedPlotId} />
         </div>
       </div>

@@ -82,7 +82,7 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
       </Button>
 
       {/* Header Card */}
-      <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -130,7 +130,7 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {/* Map */}
-      <div className="rounded-2xl overflow-hidden border border-border/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]" style={{ height: 400 }}>
+      <div className="rounded-2xl overflow-hidden border border-border/50 shadow-card" style={{ height: 400 }}>
         <LandPlotMap plots={[plot]} selectedPlotId={plot.id} />
       </div>
 
@@ -138,7 +138,7 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
       <div>
         <h2 className="text-sm font-medium mb-3">Validation results</h2>
         {plot.validation_results && plot.validation_results.length > 0 ? (
-          <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+          <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-card">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-border/50">
