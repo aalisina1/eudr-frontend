@@ -94,6 +94,17 @@ The app read as a generic EUDR tool. Spec: vault `10-Specs/product-voice-and-ide
 - **Login + shared strings** (#116, #117, PR #123) — the hero opens on a customs deadline rather than an ESG tagline; `DataTable` and `getErrorMessage` defaults state the specific fact instead of "Something went wrong".
 - **Copy sweep + CI gate** (#118, #119, PR #124) — 52 em dashes out of copy, en-GB throughout, 39 `toLocale*` calls behind `src/lib/format.ts` pinned to en-GB (and date-only values in UTC, fixing a latent previous-day bug). **`eslint-rules/grovetrace-voice.mjs` gates all of it** in `npm run lint`, with `RuleTester` proving each check reds. Left open: #120 (comment em dashes), #121 (route/label mismatch).
 
+### Visual identity (v0.3.2, merged 2026-09-06)
+The research inverted its own brief: a good design system already existed in `globals.css` (full light + dark palettes, a derived radius scale, a card-elevation idiom) and 704 arbitrary-value utilities bypassed it. The wave made every bypass either fixed or un-bypassable, and forked no primitive — the "no custom design system" non-objective stood throughout. Spec: vault `10-Specs/visual-identity.md`.
+
+- **Semantic status tokens** (#125, PR #131) — the NEGLIGIBLE badge's hardcoded `text-[#1A6B5A]` measured **2.12:1** in dark mode; `success`/`warning`/`pending`/`info` pairs now clear AA on their tint in both themes, held by `status-token-contrast.test.ts`.
+- **Typography dials** (#130, PR #138) — Fraunces' `WONK`/`SOFT` axes were in the font file, switched off; now loaded and held as tokens. Display face carried through Sheet/Dialog titles via the primitives; `tabular-nums` the `TableCell` default.
+- **One type scale** (#126, PR #139) — xs 11 / sm 13 / base 15 in `@theme`, replacing 13 arbitrary sizes (six half-pixel). A `2xs` step was tried and rejected by the test's own 1px-gap check.
+- **Token gate** (#128, PR #141) — `eslint-rules/grovetrace-tokens.mjs`: no hex in a utility, no arbitrary font size, no literal shadow. Found 33 hexes in `.ts` status maps every prior `*.tsx` grep had missed.
+- **Radius rule** (#127, PR #143) — stated in `.claude/rules/components.md` (radius steps up with nesting depth); 61 usages reconciled. Corrected the spec: the distribution was flat only in aggregate, 73–100% consistent per element kind.
+
+Left open from the identity wave, re-homed: #121 → v0.3.3 (it is a flow-legibility item); #120 → unmilestoned.
+
 ### Testing
 - 18 Vitest suites: API client, auth, types, utils, DataTable, AppSidebar, cron helpers, integrations (syncs/schedule/source-card), and page-level smoke tests for the major routes.
 
@@ -107,15 +118,14 @@ The app read as a generic EUDR tool. Spec: vault `10-Specs/product-voice-and-ide
 
 ### In flight
 
-- **v0.3.2 Visual Identity** — a good design system already exists in `globals.css`; the components bypass it (704 arbitrary-value utilities). #126 (13 type sizes, six of them half-pixel), #128 (gate the tokens: no hex literals, no arbitrary font sizes), #127 (state a radius rule). #125 and #130 have merged. Spec: `eudr-vault/10-Specs/visual-identity.md`.
-
-### Next
-
 - **v0.3.3 Flow Legibility** — the screens exist; the paths between them do not.
   - **#132** — four of nine sourcing blockers offer a "Fix" button that scrolls to a read-only table. The backend already accepts every field they name, so the fix is a lot-edit Sheet.
   - **#133** — plot detail is unreachable from the Land Plots list.
   - **#134** — the plot → lot → PO → shipment chain is invisible; cross-link the detail screens. The deep lineage visualisation stays at v0.4.0 (#24).
   - **#84** — the remaining context-free remediation CTAs.
+  - **#121** — `/due-diligence` is labelled "Submissions" and `/supply-chains` "Sourcing"; the URL is visible in every demo. Needs a redirect decision (`/data-import` already redirects).
+### Next
+
 - **v0.3.4 Operational Readiness** — running it for real.
   - **#135** — no user administration at all; Settings shows only your own profile, and `accounts/users` has never been called. Depends on eudr-app#218 for invitations.
   - **#67** and **#137** — the paging defects above. Both silently truncate today.
@@ -133,6 +143,7 @@ The app read as a generic EUDR tool. Spec: vault `10-Specs/product-voice-and-ide
 - **Connector config UIs** — #18 (FarmForce, priority:high: the backend connector is live but a person cannot configure it without a management command). AS400, SFTP and Webhook remain backend stubs, so their UIs wait on the backend.
 - **#20** — decide whether commodities and products get a dedicated management UI or stay batch-embedded.
 - **#45** — remove the committed macOS-duplicate e2e spec files.
+- **#120** — 393 em dashes in code comments. No user impact; deferred from v0.3.1 so the copy diff stayed readable. Lands as a pure-noise diff whenever convenient.
 
 ## How to add work
 
