@@ -36,7 +36,7 @@ import type {
 
 const TARGET_TYPES: { value: TargetObjectType; label: string }[] = [
   { value: "LAND_PLOT", label: "Land Plot" },
-  { value: "BATCH", label: "Supply Chain Batch" },
+  { value: "BATCH", label: "Batch (a purchase order or a lot)" },
   { value: "SUPPLIER", label: "Supplier" },
   { value: "DDS_HEADER", label: "DDS Header" },
   { value: "PRODUCT", label: "Product" },

@@ -117,13 +117,16 @@ interface ShipmentGroup {
   key: string;
   label: string | null;
   deadline: string | null;
+  /** #134: the shipment's id when the backend supplies it (eudr-app#225), so
+   * the header can be a link. Null on older payloads: the label stays text. */
+  consignmentId: string | null;
   lots: LotReadiness[];
 }
 
 function groupByShipment(lots: LotReadiness[]): ShipmentGroup[] {
   const hasShipmentData = lots.some((l) => l.shipment_reference);
   if (!hasShipmentData) {
-    return [{ key: "__all__", label: null, deadline: null, lots }];
+    return [{ key: "__all__", label: null, deadline: null, consignmentId: null, lots }];
   }
 
   const order: string[] = [];
@@ -145,6 +148,7 @@ function groupByShipment(lots: LotReadiness[]): ShipmentGroup[] {
       key,
       label: key === "__unassigned__" ? "No shipment assigned" : key,
       deadline,
+      consignmentId: key === "__unassigned__" ? null : (groupLots.find((l) => l.consignment_id)?.consignment_id ?? null),
       lots: groupLots,
     };
   });
@@ -191,7 +195,13 @@ function GroupHeaderRow({
     <TableRow className="bg-foreground/4 hover:bg-foreground/4">
       <TableCell colSpan={COLUMN_COUNT} className="py-1.5">
         <span className="inline-flex w-full items-center gap-3">
-          <span className="text-sm font-semibold">{group.label}</span>
+          {group.consignmentId ? (
+            <Link href={`/shipments/${group.consignmentId}`} className="text-sm font-semibold text-primary hover:underline">
+              {group.label}
+            </Link>
+          ) : (
+            <span className="text-sm font-semibold">{group.label}</span>
+          )}
           {group.deadline && <DeadlineChip etaLabel={formatEta(group.deadline)} days={days} />}
           {isUnassigned && canAssignUnassigned && onAssignUnassigned && (
             <Button
