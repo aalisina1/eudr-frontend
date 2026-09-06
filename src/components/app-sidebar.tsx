@@ -16,7 +16,6 @@ import {
   LogOut,
   Moon,
   Sun,
-  TreePine,
 } from "lucide-react";
 import {
   Sidebar,
@@ -33,6 +32,8 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { auth } from "@/lib/auth";
+import { GrovetraceMark } from "@/components/brand/grovetrace-mark";
+import { PRODUCT_NAME, PRODUCT_DESCRIPTOR } from "@/lib/brand";
 
 /** Left accent bar shown on the active nav item — ported from the prototype
  * shell's `NavBtn` (a 3px pill in `--sidebar-primary`, inset 10px top/bottom). */
@@ -82,15 +83,17 @@ export function AppSidebar() {
       <SidebarHeader className="px-5 pt-6 pb-4">
         <div className="flex items-center gap-3">
           <div className="w-[34px] h-[34px] rounded-md bg-sidebar-primary flex items-center justify-center">
-            <TreePine className="w-[18px] h-[18px] text-sidebar" />
+            <GrovetraceMark variant="small" className="w-[19px] h-[19px] text-sidebar" />
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="font-semibold text-[15px] tracking-tight text-sidebar-foreground leading-none">
-              Grovetrace
+              {PRODUCT_NAME}
             </span>
-            <span className="text-[10px] tracking-[0.12em] uppercase text-sidebar-foreground/35 leading-none">
-              EUDR Compliance
-            </span>
+            {PRODUCT_DESCRIPTOR && (
+              <span className="text-[10px] tracking-[0.12em] uppercase text-sidebar-foreground/35 leading-none">
+                {PRODUCT_DESCRIPTOR}
+              </span>
+            )}
           </div>
         </div>
       </SidebarHeader>

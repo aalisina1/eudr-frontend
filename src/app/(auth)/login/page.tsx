@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { TreePine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { login } from "@/lib/api/client";
 import { auth } from "@/lib/auth";
+import { GrovetraceMark } from "@/components/brand/grovetrace-mark";
+import { PRODUCT_NAME, PRODUCT_DESCRIPTOR } from "@/lib/brand";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -60,15 +61,17 @@ export default function LoginPage() {
         <div className="relative z-10 p-12 pt-14">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[#34D399] flex items-center justify-center">
-              <TreePine className="w-5 h-5 text-[#0B1D1C]" />
+              <GrovetraceMark variant="small" className="w-[22px] h-[22px] text-[#0B1D1C]" />
             </div>
             <div>
               <span className="text-white text-lg font-semibold tracking-tight block leading-none">
-                Grovetrace
+                {PRODUCT_NAME}
               </span>
-              <span className="text-white/40 text-[11px] tracking-widest uppercase">
-                EUDR Platform
-              </span>
+              {PRODUCT_DESCRIPTOR && (
+                <span className="text-white/40 text-[11px] tracking-widest uppercase">
+                  {PRODUCT_DESCRIPTOR}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -78,47 +81,38 @@ export default function LoginPage() {
             EU Regulation 2023/1115
           </p>
           <h1 className="text-display text-white text-[clamp(2.5rem,4vw,3.5rem)] font-light leading-[1.1] mb-6 italic">
-            Protecting forests through transparency
+            Know which shipments will clear, before they land
           </h1>
           <p className="text-white/50 text-lg leading-relaxed max-w-md">
-            Track your supply chain from origin to shelf. Verify land plots, manage
-            suppliers, and generate compliance statements.
+            Every arriving consignment sits in one list, ordered by whatever runs
+            out of time first. The plot geometry and supplier records behind it
+            are checked in advance, not in the week the container ships.
           </p>
         </div>
 
         <div className="relative z-10 p-12 pb-10">
-          <div className="flex items-center gap-4 text-[13px] text-white/30">
-            <span>Deforestation-free</span>
+          <div className="flex items-center gap-2.5 text-[13px] text-white/30">
             <span className="w-1 h-1 rounded-full bg-[#34D399]/40" />
-            <span>Compliant</span>
-            <span className="w-1 h-1 rounded-full bg-[#34D399]/40" />
-            <span>Traceable</span>
+            <span>Statements file directly to TRACES</span>
           </div>
         </div>
       </div>
 
       {/* ── Right: login form ── */}
       <div className="flex-1 flex items-center justify-center p-8 relative">
-        <div className="absolute top-8 right-8 text-[11px] text-muted-foreground tracking-wider uppercase">
-          v1.0
-        </div>
-
         <div className="w-full max-w-[360px]">
           {/* Mobile logo */}
           <div className="flex items-center gap-2.5 mb-10 lg:hidden">
             <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-              <TreePine className="w-4 h-4 text-primary-foreground" />
+              <GrovetraceMark variant="small" className="w-[19px] h-[19px] text-primary-foreground" />
             </div>
-            <span className="font-semibold text-lg tracking-tight">Grovetrace</span>
+            <span className="font-semibold text-lg tracking-tight">{PRODUCT_NAME}</span>
           </div>
 
           <div className="mb-8">
-            <h2 className="text-display text-2xl font-normal italic text-foreground mb-1.5">
-              Welcome back
+            <h2 className="text-display text-2xl font-normal italic text-foreground">
+              Sign in
             </h2>
-            <p className="text-muted-foreground text-sm">
-              Sign in to continue to your dashboard
-            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -166,7 +160,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-[11px] text-center text-muted-foreground/60 mt-10">
-            Grovetrace EUDR Compliance Platform
+            {PRODUCT_NAME}
           </p>
         </div>
       </div>

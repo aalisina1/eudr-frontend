@@ -3,6 +3,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "./helpers";
 import { AppSidebar } from "@/components/app-sidebar";
+import { PRODUCT_NAME, PRODUCT_DESCRIPTOR } from "@/lib/brand";
 
 // The sidebar uses SidebarProvider context. Mock the UI primitives
 // to just render children so we can test navigation items.
@@ -41,10 +42,28 @@ vi.mock("@/components/ui/sidebar", () => ({
 }));
 
 describe("AppSidebar", () => {
-  it("renders the Grovetrace branding", () => {
+  it("renders the product name from the single brand definition", () => {
+    // Was asserting a hardcoded "EUDR Compliance" subtitle. That subtitle was
+    // one of four competing descriptors and is gone by decision; the descriptor
+    // slot is now empty so the name stands alone. See ADR-0027 and
+    // 10-Specs/product-voice-and-identity.md Decision 1.
     renderWithProviders(<AppSidebar />);
-    expect(screen.getByText("Grovetrace")).toBeInTheDocument();
-    expect(screen.getByText("EUDR Compliance")).toBeInTheDocument();
+    expect(screen.getByText(PRODUCT_NAME)).toBeInTheDocument();
+  });
+
+  it("renders the real mark, not a stock icon", () => {
+    renderWithProviders(<AppSidebar />);
+    expect(screen.getByRole("img", { name: "Grovetrace" })).toBeInTheDocument();
+  });
+
+  it("shows the descriptor only when one is set", () => {
+    renderWithProviders(<AppSidebar />);
+    if (PRODUCT_DESCRIPTOR) {
+      expect(screen.getByText(PRODUCT_DESCRIPTOR)).toBeInTheDocument();
+    } else {
+      // No empty element left behind where the old subtitle used to sit.
+      expect(screen.queryByText("EUDR Compliance")).not.toBeInTheDocument();
+    }
   });
 
   it("renders all main navigation items", () => {

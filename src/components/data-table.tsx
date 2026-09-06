@@ -111,15 +111,15 @@ export function DataTable<T>({
   extraParams = EMPTY_EXTRA_PARAMS,
   toolbarExtra,
   searchable = true,
-  searchPlaceholder = "Search...",
+  searchPlaceholder = "Search",
   pageSize = 20,
   rowKey,
   onRowClick,
   exportable = false,
   exportFilename,
   emptyIcon,
-  emptyTitle = "No results",
-  emptyDescription = "Try adjusting your search or filters",
+  emptyTitle = "Nothing matches",
+  emptyDescription = "No rows match the current search and filters. Clear them to see everything.",
   emptyAction,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
@@ -161,7 +161,7 @@ export function DataTable<T>({
     queryKey: [queryKey, queryParams],
     queryFn: async () => {
       const res = await authFetch(`${endpoint}?${queryParams}`);
-      if (!res.ok) throw new Error("Failed to fetch data");
+      if (!res.ok) throw new Error("The server rejected the request for this list.");
       return res.json();
     },
     placeholderData: keepPreviousData,
@@ -292,7 +292,8 @@ export function DataTable<T>({
       {error && (
         <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/8 rounded-xl px-4 py-3 border border-destructive/15">
           <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" />
-          Failed to load data. Is the API running?
+          This list could not be loaded, so it is showing nothing rather than
+          everything. Reload the page; if it keeps failing the server is unreachable.
         </div>
       )}
 

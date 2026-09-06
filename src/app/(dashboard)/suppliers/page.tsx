@@ -198,7 +198,9 @@ function SuppliersPageInner() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-display text-2xl font-light italic mb-0.5">Suppliers</h1>
-          <p className="text-sm text-muted-foreground">Manage your supply chain partners</p>
+          <p className="text-sm text-muted-foreground">
+            Who you buy from, and whether their plot data is good enough to file on
+          </p>
         </div>
         <Button onClick={() => setFormOpen(true)} className="gap-1.5">
           <Plus className="size-4" />
@@ -219,7 +221,7 @@ function SuppliersPageInner() {
         onRowClick={(s) => router.push(`/suppliers/${s.id}`)}
         emptyIcon={<Users className="w-5 h-5 text-muted-foreground" />}
         emptyTitle="No suppliers yet"
-        emptyDescription="Add your first supplier to get started"
+        emptyDescription="Suppliers arrive from a connected ERP (see Integrations), or add the first one by hand"
       />
 
       <SupplierForm open={formOpen} onOpenChange={setFormOpen} />

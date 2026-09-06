@@ -152,7 +152,7 @@ describe("DataTable", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("Failed to load data. Is the API running?")
+        screen.getByText(/this list could not be loaded/i)
       ).toBeInTheDocument();
     });
   });

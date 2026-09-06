@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Grovetrace mark, small variant. Colour is favicon-tuned (#2e8f5b, the
+       midpoint of brand #1f6b43 and dark-mode #4caf7d) so it reads on both a
+       light and a dark browser tab strip. Source of truth for the artwork:
+       grovetrace-company/04-ops/brand/grovetrace-mark-small.svg -->
+  <polygon points="50,11 82,31 71,65 29,63 18,29" fill="none" stroke="#2e8f5b" stroke-width="12" stroke-linejoin="round"/>
+  <circle cx="50" cy="11" r="9.5" fill="#2e8f5b"/>
+  <circle cx="82" cy="31" r="9.5" fill="#2e8f5b"/>
+  <circle cx="18" cy="29" r="9.5" fill="#2e8f5b"/>
+  <rect x="44.5" y="64" width="11" height="27" rx="5" fill="#2e8f5b"/>
+</svg>

@@ -1,0 +1,5 @@
+Kept so the directory survives in git after the unreferenced Next.js starter
+assets (next/vercel/window/globe/file.svg) were deleted. The Dockerfile does
+`COPY --from=builder /app/public ./public`, which fails outright if public/
+does not exist. The favicon lives at src/app/icon.svg (App Router convention)
+and the mark is an inline component, so nothing else needs to be here.
