@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { getErrorMessage } from "@/lib/api/errors";
+import { formatDate } from "@/lib/format";
 import type {
   DataSource,
   IngestJob,
@@ -233,7 +234,7 @@ export function SourceCard({
               ? `${source.schema_count} object${source.schema_count !== 1 ? "s" : ""}`
               : "No objects"}
           </span>
-          <span>{new Date(source.created_at).toLocaleDateString()}</span>
+          <span>{formatDate(source.created_at)}</span>
         </div>
       </CardContent>
     </Card>

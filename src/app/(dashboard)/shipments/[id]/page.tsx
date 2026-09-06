@@ -34,7 +34,7 @@ function DivergenceBadge({ manual, eta }: { manual: string | null; eta: string |
   return (
     <Badge
       variant="outline"
-      title="Manual date differs from live ETA — the clearance date drives the countdown"
+      title="Manual date differs from live ETA. The clearance date drives the countdown."
       className={cn(manualLater ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-border text-muted-foreground")}
     >
       Date ≠ ETA
@@ -137,7 +137,7 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
             <DivergenceBadge manual={c.expected_clearance_date} eta={c.latest_eta} />
           </div>
           {!c.expected_clearance_date && !c.latest_eta && (
-            <p className="text-sm text-muted-foreground">No clearance date or ETA set{canWrite ? " — set one via Edit." : "."}</p>
+            <p className="text-sm text-muted-foreground">No clearance date or ETA set{canWrite ? ". Set one via Edit." : "."}</p>
           )}
           {/* Tracking status line */}
           <div className="flex items-center gap-2 text-sm">

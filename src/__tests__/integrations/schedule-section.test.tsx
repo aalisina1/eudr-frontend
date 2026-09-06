@@ -122,7 +122,7 @@ describe("ScheduleSection", () => {
     renderWithProviders(<ScheduleSection sourceId="src-1" />);
 
     // INTERVAL schedules show a notice, not a cron field.
-    expect(await screen.findByText(/runs every/i)).toBeInTheDocument();
+    expect(await screen.findByText(/running every/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/cron expression/i)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /pause/i }));

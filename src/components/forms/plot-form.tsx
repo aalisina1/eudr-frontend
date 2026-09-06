@@ -36,7 +36,7 @@ const plotSchema = z.object({
         return false;
       }
     },
-    { message: "Invalid GeoJSON — must have 'type' and 'coordinates'" },
+    { message: "Invalid GeoJSON. It must have 'type' and 'coordinates'." },
   ),
 });
 
@@ -103,7 +103,7 @@ export function PlotForm({ open, onOpenChange }: PlotFormProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>Add Land Plot</SheetTitle>
+          <SheetTitle>Add land plot</SheetTitle>
           <SheetDescription>
             Register a new geo-referenced parcel. Paste GeoJSON geometry below.
           </SheetDescription>
@@ -162,7 +162,7 @@ export function PlotForm({ open, onOpenChange }: PlotFormProps) {
             <Label htmlFor="collection_date">Collection Date</Label>
             <Input id="collection_date" type="date" {...register("collection_date")} />
             <p className="text-[11px] text-muted-foreground">
-              When the geolocation was collected — not today&rsquo;s date, unless
+              When the geolocation was collected, not today&rsquo;s date, unless
               it was surveyed today.
             </p>
           </div>

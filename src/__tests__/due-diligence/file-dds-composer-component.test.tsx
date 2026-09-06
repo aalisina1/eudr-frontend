@@ -190,7 +190,7 @@ describe("FileDdsComposer", () => {
     globalThis.fetch = makeFetch();
     renderWithProviders(<FileDdsComposer poId="po-1" />);
 
-    expect(await screen.findByRole("heading", { name: "New Due Diligence Statement" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "New due diligence statement" })).toBeInTheDocument();
     expect(screen.getByText("Pre-filled from PO-2026-0219")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("LOT-GH-26-0001")).toBeInTheDocument());
     expect(screen.getByText("LOT-GH-26-0002")).toBeInTheDocument();
@@ -267,7 +267,7 @@ describe("FileDdsComposer", () => {
     globalThis.fetch = makeFetch({ estimate: OVER_LIMIT_ESTIMATE });
     renderWithProviders(<FileDdsComposer poId="po-1" />);
 
-    expect(await screen.findByText("31.2 MB — exceeds the TRACES 25.0 MB limit")).toBeInTheDocument();
+    expect(await screen.findByText("31.2 MB, over the TRACES 25.0 MB limit")).toBeInTheDocument();
     expect(
       screen.getByText(/Split into 2 statements by shipment: MV Elbe Trader \(14\.1 MB\) · MV Baltic Star \(17\.1 MB\)/),
     ).toBeInTheDocument();
@@ -289,7 +289,7 @@ describe("FileDdsComposer", () => {
 
     expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
     expect(screen.getByText("Submit to TRACES?")).toBeInTheDocument();
-    expect(screen.getByText(/locks — you have 72 hours to amend it/)).toBeInTheDocument();
+    expect(screen.getByText(/locks\. You have 72 hours to amend it/)).toBeInTheDocument();
   });
 
   it("confirming Submit statement creates the DDS with the checked batch_ids, submits it for review, and hands off to the DDS detail page", async () => {
@@ -576,7 +576,7 @@ describe("FileDdsComposer — activity type, audit coverage", () => {
     //
     // A COMPLIANCE_OFFICER gets 403 from GET /accounts/organization/, so
     // `orgDefault` is "" and the composer prints "Set a default in Settings to
-    // prefill this." Settings' Operator Identity card is fed by that same
+    // prefill this." Settings' Operator identity card is fed by that same
     // admin-only endpoint, so it renders "Unable to load operator identity."
     // for them. The instruction names a screen they cannot act on.
     //

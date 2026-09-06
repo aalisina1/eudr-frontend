@@ -194,7 +194,7 @@ export function DocumentForm({ open, onOpenChange, document }: DocumentFormProps
               className="rounded border-border/60"
             />
             <Label htmlFor="is_confidential" className="text-[13px]">
-              Confidential — not shared with partners
+              Confidential (not shared with partners)
             </Label>
           </div>
 

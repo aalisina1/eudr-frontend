@@ -275,7 +275,7 @@ describe("OperatorIdentityCard — usual activity", () => {
 
     expect(await screen.findByText(/usual activity/i)).toBeInTheDocument();
     expect(
-      await screen.findByText(/no default — chosen per statement/i),
+      await screen.findByText(/no default, chosen per statement/i),
     ).toBeInTheDocument();
   });
 });

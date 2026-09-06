@@ -201,7 +201,7 @@ test.describe("TRACES panel — AVAILABLE state (TRACES T2)", () => {
 
     // Wait for the TRACES panel section to mount.
     await expect(
-      page.getByText("TRACES Submission", { exact: false }).first(),
+      page.getByText("TRACES submission", { exact: false }).first(),
     ).toBeVisible({ timeout: 15_000 });
 
     // The CopyChip renders: <p class="text-muted-foreground text-xs">{label}</p> + <button>{value}</button>
@@ -244,7 +244,7 @@ test.describe("TRACES panel — submit flow (TRACES T3)", () => {
 
     // Wait for the panel to render (no submission state).
     await expect(
-      page.getByText("TRACES Submission", { exact: false }).first(),
+      page.getByText("TRACES submission", { exact: false }).first(),
     ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Not submitted to TRACES.")).toBeVisible({ timeout: 10_000 });
 
@@ -285,7 +285,7 @@ test.describe("TRACES panel — submit flow (TRACES T3)", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("Credentials screen (TRACES T4)", () => {
-  test("Settings page shows the TRACES Connection card", async ({ page }) => {
+  test("Settings page shows the TRACES connection card", async ({ page }) => {
     // Stub credentials to empty so we see the empty state CTA.
     await page.route("**/api/v1/traces/credentials/**", async (route) => {
       await route.fulfill({ json: CREDS_EMPTY });
@@ -295,7 +295,7 @@ test.describe("Credentials screen (TRACES T4)", () => {
     await expect(page).toHaveURL(/\/settings/);
 
     // The CredentialsCard header is visible.
-    await expect(page.getByText("TRACES Connection", { exact: false })).toBeVisible({
+    await expect(page.getByText("TRACES connection", { exact: false })).toBeVisible({
       timeout: 15_000,
     });
 
@@ -316,7 +316,7 @@ test.describe("Credentials screen (TRACES T4)", () => {
     });
 
     await page.goto("/settings");
-    await expect(page.getByText("TRACES Connection", { exact: false })).toBeVisible({
+    await expect(page.getByText("TRACES connection", { exact: false })).toBeVisible({
       timeout: 15_000,
     });
     await expect(
@@ -343,7 +343,7 @@ test.describe("Credentials screen (TRACES T4)", () => {
       await page.goto("/settings");
 
       // Wait for the card to load.
-      await expect(page.getByText("TRACES Connection", { exact: false })).toBeVisible({
+      await expect(page.getByText("TRACES connection", { exact: false })).toBeVisible({
         timeout: 15_000,
       });
 

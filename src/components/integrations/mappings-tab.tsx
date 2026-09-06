@@ -181,7 +181,7 @@ export function MappingsTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium">Mapping Configurations</h3>
+          <h3 className="text-sm font-medium">Mapping configurations</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             Define how source columns or transformation output map to target object fields.
           </p>
@@ -393,7 +393,7 @@ function CreateMappingForm({
         <Button variant="ghost" size="sm" onClick={onBack}>
           <ArrowLeft className="size-4" />
         </Button>
-        <h3 className="text-sm font-medium">Create Mapping Configuration</h3>
+        <h3 className="text-sm font-medium">Create mapping configuration</h3>
       </div>
 
       <Card className="border-border/50">
@@ -676,7 +676,7 @@ function EditMappingForm({
         <Button variant="ghost" size="sm" onClick={onBack}>
           <ArrowLeft className="size-4" />
         </Button>
-        <h3 className="text-sm font-medium">Edit Mapping Configuration</h3>
+        <h3 className="text-sm font-medium">Edit mapping configuration</h3>
       </div>
 
       <Card className="border-border/50">
@@ -1201,7 +1201,7 @@ function FieldMappingEditor({
                   onChange={(e) => updateRow(row.id, "source_path", e.target.value)}
                   className="h-7 rounded-md border border-input bg-transparent px-2 text-xs"
                 >
-                  <option value="">— unmapped —</option>
+                  <option value="">Not mapped</option>
                   {sourceColumns.map((col, i) => (
                     <option key={i} value={col.qualifiedName}>
                       {col.qualifiedName}

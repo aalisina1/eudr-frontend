@@ -135,7 +135,7 @@ export function PurchaseOrderForm({ open, onOpenChange }: PurchaseOrderFormProps
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ["batches-readiness"] });
       toast.success("Purchase order created", {
-        description: `${created.reference_number} added as Open — assign lots to start building coverage.`,
+        description: `${created.reference_number} added as Open. Assign lots to start building coverage.`,
       });
       reset(defaultValues());
       onOpenChange(false);
@@ -149,7 +149,7 @@ export function PurchaseOrderForm({ open, onOpenChange }: PurchaseOrderFormProps
         <SheetHeader>
           <SheetTitle className="font-display text-[22px] italic font-light">New purchase order</SheetTitle>
           <SheetDescription>
-            Record an order with an origin supplier. It starts Open — coverage builds as lots are assigned.
+            Record an order with an origin supplier. It starts Open, and coverage builds as lots are assigned.
           </SheetDescription>
         </SheetHeader>
 
@@ -210,7 +210,7 @@ export function PurchaseOrderForm({ open, onOpenChange }: PurchaseOrderFormProps
           </div>
 
           <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-            No plots are picked here — land plots are captured per lot once the order is allocated.
+            No plots are picked here. Land plots are captured per lot once the order is allocated.
           </p>
 
           {mutation.isError && <p className="text-xs text-destructive">{getErrorMessage(mutation.error)}</p>}

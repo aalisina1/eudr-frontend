@@ -5,7 +5,7 @@ import { test, expect } from "@playwright/test";
 const plotCards = (page: import("@playwright/test").Page) =>
   page.locator("div.group.cursor-pointer");
 
-test.describe("Land Plots & Geolocation (B2/C1/C2)", () => {
+test.describe("Land plots & Geolocation (B2/C1/C2)", () => {
   test("page loads the map and the plot card list", async ({ page }) => {
     await page.goto("/plots");
     await expect(page.locator(".leaflet-container")).toBeVisible({ timeout: 15_000 });

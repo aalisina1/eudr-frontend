@@ -18,6 +18,7 @@ import {
 import { DeadlineChip } from "@/components/sourcing/deadline-chip";
 import { UNIT_LABELS, daysUntil, formatEta } from "@/lib/readiness-format";
 import type { LotReadiness } from "@/lib/api/types";
+import { formatNumber } from "@/lib/format";
 
 /** "Oct – Dec 2025" (design vocabulary) from the lot's harvest period dates;
  * `null` when the start date is missing (renders the destructive "Missing"
@@ -82,7 +83,7 @@ function LotRow({ lot }: { lot: LotReadiness }) {
         <span className="font-mono text-[13px] font-medium">{lot.reference_number}</span>
       </TableCell>
       <TableCell className="text-right font-mono">
-        {Math.round(Number(lot.quantity)).toLocaleString()} {unitLabel}
+        {formatNumber(Math.round(Number(lot.quantity)))} {unitLabel}
       </TableCell>
       <TableCell>
         {harvest ? <span className="text-[13px]">{harvest}</span> : <Badge variant="destructive">Missing</Badge>}

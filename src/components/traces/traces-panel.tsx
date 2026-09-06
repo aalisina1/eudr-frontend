@@ -159,7 +159,7 @@ function AmendWindow({ submittedAt }: { submittedAt: string | null }) {
   }
   return (
     <p className="text-xs text-muted-foreground">
-      Amendment window closed — a correction now files a new submission with a new reference number.
+      Amendment window closed. A correction now files a new submission with a new reference number.
     </p>
   );
 }
@@ -569,7 +569,7 @@ export function TracesPanel({
     <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
-          TRACES Submission
+          TRACES submission
         </h2>
         <Badge
           variant="secondary"
@@ -594,7 +594,7 @@ export function TracesPanel({
         <p className="flex items-start gap-2 text-sm text-muted-foreground">
           <AlertTriangle className="size-4 mt-0.5 shrink-0" />
           Could not load this statement&rsquo;s TRACES status. It may still be
-          filed — reload before acting on it.
+          filed, so reload before acting on it.
         </p>
       ) : display === "available" ? (
         <div className="space-y-3">
@@ -634,7 +634,7 @@ export function TracesPanel({
             <div className="space-y-3 rounded-xl border border-border/40 bg-secondary/25 px-4 py-3">
               <p className="text-xs text-muted-foreground">
                 {sub!.submission_type === "CREATE"
-                  ? "The statement is filed with TRACES — what failed was checking its status."
+                  ? "The statement is filed with TRACES. What failed was checking its status."
                   : `The ${
                       sub!.submission_type === "WITHDRAW" ? "withdrawal" : "amendment"
                     } failed. The statement is still filed with TRACES.`}
@@ -707,8 +707,8 @@ export function TracesPanel({
           {display === "submitting"
             ? IN_FLIGHT_COPY[sub?.submission_type ?? "CREATE"]
             : display === "withdrawing"
-              ? "Withdrawal sent — waiting for TRACES to retract the statement…"
-              : "Submitted — waiting for TRACES to resolve…"}
+              ? "Withdrawal sent. Waiting for TRACES to retract the statement…"
+              : "Submitted. Waiting for TRACES to resolve…"}
         </p>
       ) : SETTLED_COPY[display] ? (
         <p className="text-sm text-muted-foreground">
@@ -747,7 +747,7 @@ export function TracesPanel({
 
       <div className="mt-5 pt-4 border-t border-border/50">
         <h3 className="text-[10px] font-medium tracking-[0.14em] uppercase text-muted-foreground mb-3">
-          TRACES Timeline
+          TRACES timeline
         </h3>
         <div>
           {timeline.map((step, i) => (
@@ -782,8 +782,8 @@ export function TracesPanel({
                 </>
               ) : (
                 <>
-                  This re-files the statement as it stands now — including any
-                  corrections since made to its lots or plots — keeping the same
+                  This re-files the statement as it stands now, including any
+                  corrections since made to its lots or plots, and keeps the same
                   reference number{" "}
                   <span className="font-mono">{sub?.traces_reference_number}</span>
                   . TRACES re-runs risk profiling. This is a regulated action.

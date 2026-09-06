@@ -181,7 +181,7 @@ export function CredentialsForm({
               <p className="text-xs text-destructive">{errors.password.message}</p>
             )}
             <p className="text-[11px] text-muted-foreground">
-              The web-service Authentication Key from TRACES — not your TRACES
+              The web-service Authentication Key from TRACES, not your TRACES
               account password. Write-only: never displayed after saving.
             </p>
           </div>
@@ -242,7 +242,7 @@ export function CredentialsForm({
             <p className="text-[11px] text-muted-foreground">
               Your operator&rsquo;s Web Service Identifier, shown on your
               operator registration in TRACES. It tells TRACES which operator a
-              submission is filed for &mdash; without it a filing carries no
+              submission is filed for. Without it a filing carries no
               operator identity, which TRACES rejects with &ldquo;operator EORI
               for activity missing&rdquo;. This is not the Web Service Client
               ID above: that identifies the software, this identifies you.

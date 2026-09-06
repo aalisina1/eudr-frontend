@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { getErrorMessage } from "@/lib/api/errors";
+import { formatNumber } from "@/lib/format";
 import type {
   SyncConfig,
   SyncJob,
@@ -110,7 +111,7 @@ export function SyncsTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium">Sync Configurations</h3>
+          <h3 className="text-sm font-medium">Sync configurations</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             Schedule and execute batch syncs that apply mappings to populate core models.
           </p>
@@ -334,7 +335,7 @@ function CreateSyncForm({
         <Button variant="ghost" size="sm" onClick={onBack}>
           <ArrowLeft className="size-4" />
         </Button>
-        <h3 className="text-sm font-medium">Create Sync Configuration</h3>
+        <h3 className="text-sm font-medium">Create sync configuration</h3>
       </div>
 
       <Card className="border-border/50">
@@ -410,7 +411,7 @@ function CreateSyncForm({
   );
 }
 
-// ── Sync Jobs View ──
+// ── Sync jobs View ──
 
 function SyncJobsView({
   configId,
@@ -462,7 +463,7 @@ function SyncJobsView({
           <Button variant="ghost" size="sm" onClick={onBack}>
             <ArrowLeft className="size-4" />
           </Button>
-          <h3 className="text-sm font-medium">Sync Jobs</h3>
+          <h3 className="text-sm font-medium">Sync jobs</h3>
         </div>
         <Button
           variant="outline"
@@ -542,7 +543,7 @@ function SyncJobsView({
                       </td>
                       <td className="px-4 py-2.5 text-xs text-muted-foreground">
                         {job.started_at
-                          ? new Date(job.started_at).toLocaleString()
+                          ? formatNumber(job.started_at)
                           : "\u2014"}
                       </td>
                       <td className="px-4 py-2.5">
@@ -567,7 +568,7 @@ function SyncJobsView({
   );
 }
 
-// ── Sync Records View ──
+// ── Sync records View ──
 
 function SyncRecordsView({
   jobId,
@@ -691,7 +692,7 @@ function SyncRecordsView({
           <Button variant="ghost" size="sm" onClick={onBack}>
             <ArrowLeft className="size-4" />
           </Button>
-          <h3 className="text-sm font-medium">Sync Records</h3>
+          <h3 className="text-sm font-medium">Sync records</h3>
         </div>
         <div className="flex items-center gap-2">
           <select
@@ -868,7 +869,7 @@ function RecordRow({
           </Badge>
         </td>
         <td className="px-4 py-2.5 text-xs text-muted-foreground">
-          {new Date(rec.created_at).toLocaleString()}
+          {formatNumber(rec.created_at)}
         </td>
         <td className="px-4 py-2.5">
           <Button

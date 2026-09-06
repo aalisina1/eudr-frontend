@@ -4,7 +4,7 @@ import { test, expect } from "@playwright/test";
 const NAV = [
   { name: "Dashboard", path: /\/dashboard/ },
   { name: "Suppliers", path: /\/suppliers/ },
-  { name: "Land Plots", path: /\/plots/ },
+  { name: "Land plots", path: /\/plots/ },
   { name: "Sourcing", path: /\/supply-chains/ }, // renamed from "Supply Chains", #28
   { name: "Submissions", path: /\/due-diligence/ },
   { name: "Documents", path: /\/documents/ },

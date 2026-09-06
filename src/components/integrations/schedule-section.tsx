@@ -168,7 +168,7 @@ export function ScheduleSection({ sourceId }: { sourceId: string }) {
       <CardContent className="p-6 space-y-5">
         <div className="flex items-center gap-2">
           <CalendarClock className="size-4 text-emerald-600" />
-          <h3 className="text-sm font-medium">Ingestion Schedule</h3>
+          <h3 className="text-sm font-medium">Ingestion schedule</h3>
           <span
             className={`ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
               enabled
@@ -184,7 +184,7 @@ export function ScheduleSection({ sourceId }: { sourceId: string }) {
           <div className="rounded-lg border border-border/60 bg-muted/40 px-3.5 py-3 text-xs text-muted-foreground">
             This source uses an{" "}
             <span className="font-medium text-foreground">interval</span>{" "}
-            schedule — runs every{" "}
+            schedule, running every{" "}
             <span className="font-medium text-foreground">
               {intervalSeconds ?? "?"}s
             </span>

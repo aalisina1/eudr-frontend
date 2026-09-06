@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import type { DueDiligenceStatement, TracesSubmission, TracesSubmissionStatus } from "@/lib/api/types";
 import { DDS_STATUS_STYLE } from "@/lib/dds-status";
 import { deriveTracesDisplay, TRACES_DISPLAY_STYLE } from "@/lib/traces-status";
+import { formatDate } from "@/lib/format";
 
 const RISK_LABEL: Record<string, string> = {
   NEGLIGIBLE: "Negligible",
@@ -258,7 +259,7 @@ function DueDiligencePageInner() {
         sortable: true,
         render: (stmt) => (
           <span className="text-muted-foreground text-[13px]">
-            {stmt.submitted_at ? new Date(stmt.submitted_at).toLocaleDateString() : "—"}
+            {stmt.submitted_at ? formatDate(stmt.submitted_at) : "—"}
           </span>
         ),
       },
@@ -268,7 +269,7 @@ function DueDiligencePageInner() {
         sortable: true,
         render: (stmt) => (
           <span className="text-muted-foreground text-[13px]">
-            {new Date(stmt.created_at).toLocaleDateString()}
+            {formatDate(stmt.created_at)}
           </span>
         ),
       },
@@ -314,7 +315,7 @@ function DueDiligencePageInner() {
         onRowClick={(stmt) => router.push(`/due-diligence/${stmt.id}`)}
         emptyIcon={<FileQuestion className="w-5 h-5 text-muted-foreground" />}
         emptyTitle="No statements yet"
-        emptyDescription="Statements are filed from a purchase order — open Sourcing and pick one that is ready to file"
+        emptyDescription="Statements are filed from a purchase order. Open Sourcing and pick one that is ready to file."
       />
 
     </div>

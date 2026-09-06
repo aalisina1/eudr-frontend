@@ -32,7 +32,7 @@ export function AwaitingDataCard() {
       title="Awaiting data"
       description="Orders that can't move forward until data arrives"
       count={awaiting.length}
-      emptyText="No orders waiting on data — syncs are up to date"
+      emptyText="No orders waiting on data. Syncs are up to date."
       isLoading={isLoading}
     >
       {awaiting.map((po) => (

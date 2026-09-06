@@ -11,9 +11,9 @@
 export function SupplierContactPlaceholder() {
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center gap-2 px-6 text-center">
-      <p className="text-lg font-medium text-foreground">No organization-wide compliance data here</p>
+      <p className="text-lg font-medium text-foreground">No organisation-wide compliance data here</p>
       <p className="max-w-md text-sm text-muted-foreground">
-        You don&apos;t have access to organization-wide compliance data — contact your organization administrator.
+        You don&apos;t have access to organisation-wide compliance data. Ask your organisation administrator for access.
       </p>
     </div>
   );

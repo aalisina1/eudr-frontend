@@ -85,7 +85,7 @@ export function TransformationsTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium">SQL Transformations</h3>
+          <h3 className="text-sm font-medium">SQL transformations</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             Write SQL queries to join, filter, or aggregate data across sources.
           </p>

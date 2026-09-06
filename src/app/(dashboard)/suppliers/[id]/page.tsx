@@ -20,6 +20,7 @@ import { SupplierForm } from "@/components/forms/supplier-form";
 import { SupplierSourcingCard } from "@/components/sourcing/supplier-sourcing-card";
 import { SupplierDataGapsCard } from "@/components/sourcing/supplier-data-gaps-card";
 import type { BatchReadiness, PaginatedResponse, Supplier, KYCStatus, RiskRating } from "@/lib/api/types";
+import { formatDate } from "@/lib/format";
 
 const KYC_COLORS: Record<KYCStatus, { bg: string; text: string; dot: string; label: string }> = {
   PENDING: { bg: "bg-[#C7956D]/10", text: "text-[#A07850]", dot: "bg-[#C7956D]", label: "Pending" },
@@ -171,15 +172,15 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
           </div>
           <div>
             <p className="text-muted-foreground text-xs mb-0.5">KYC Verified</p>
-            <p className="text-xs">{supplier.kyc_verified_at ? new Date(supplier.kyc_verified_at).toLocaleDateString() : "—"}</p>
+            <p className="text-xs">{supplier.kyc_verified_at ? formatDate(supplier.kyc_verified_at) : "—"}</p>
           </div>
           <div>
             <p className="text-muted-foreground text-xs mb-0.5">Created</p>
-            <p className="text-xs">{new Date(supplier.created_at).toLocaleDateString()}</p>
+            <p className="text-xs">{formatDate(supplier.created_at)}</p>
           </div>
           <div>
             <p className="text-muted-foreground text-xs mb-0.5">Updated</p>
-            <p className="text-xs">{new Date(supplier.updated_at).toLocaleDateString()}</p>
+            <p className="text-xs">{formatDate(supplier.updated_at)}</p>
           </div>
         </div>
       </div>
@@ -218,8 +219,8 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
                     <TableCell className="text-[13px] font-medium">{cert.certification_type}</TableCell>
                     <TableCell className="text-[13px] font-mono">{cert.certificate_number}</TableCell>
                     <TableCell className="text-[13px]">{cert.issuing_body}</TableCell>
-                    <TableCell className="text-muted-foreground text-[13px]">{new Date(cert.valid_from).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-muted-foreground text-[13px]">{new Date(cert.valid_until).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-muted-foreground text-[13px]">{formatDate(cert.valid_from)}</TableCell>
+                    <TableCell className="text-muted-foreground text-[13px]">{formatDate(cert.valid_until)}</TableCell>
                     <TableCell>
                       <Badge
                         variant="secondary"

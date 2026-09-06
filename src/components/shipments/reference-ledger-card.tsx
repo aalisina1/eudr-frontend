@@ -170,8 +170,8 @@ export function ReferenceLedgerCard({
         {data.uncovered_lot_count > 0 && (
           <p className="mt-3 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-xs text-accent">
             {data.uncovered_lot_count}{" "}
-            {data.uncovered_lot_count === 1 ? "lot" : "lots"} not covered by any DDS —
-            ledger incomplete.
+            {data.uncovered_lot_count === 1 ? "lot" : "lots"} not covered by any DDS.
+            The ledger is incomplete.
           </p>
         )}
       </CardContent>

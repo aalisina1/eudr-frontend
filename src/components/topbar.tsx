@@ -15,7 +15,7 @@ import { GrovetraceMark } from "@/components/brand/grovetrace-mark";
 const CRUMBS: { prefix: string; label: string }[] = [
   { prefix: "/dashboard", label: "Dashboard" },
   { prefix: "/suppliers", label: "Suppliers" },
-  { prefix: "/plots", label: "Land Plots" },
+  { prefix: "/plots", label: "Land plots" },
   { prefix: "/supply-chains", label: "Sourcing" },
   { prefix: "/due-diligence", label: "Submissions" },
   { prefix: "/documents", label: "Documents" },

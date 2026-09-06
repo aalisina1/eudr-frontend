@@ -174,7 +174,7 @@ describe("ActionQueueCard", () => {
   it("shows the single quiet line when all three groups are empty", async () => {
     mockApi({});
     renderWithProviders(<ActionQueueCard />);
-    await waitFor(() => expect(screen.getByText("Nothing needs action — you're caught up.")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Nothing needs action. You're caught up.")).toBeInTheDocument());
   });
 
   it("hides every row's CTA when showCta is false, without hiding the row content", async () => {
@@ -205,6 +205,6 @@ describe("ActionQueueCard", () => {
   it("degrades to the calm empty state without crashing when a request fails", async () => {
     mockApi({ readinessStatus: 500 });
     renderWithProviders(<ActionQueueCard />);
-    await waitFor(() => expect(screen.getByText("Nothing needs action — you're caught up.")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Nothing needs action. You're caught up.")).toBeInTheDocument());
   });
 });

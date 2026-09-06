@@ -22,6 +22,7 @@ import { DDS_STATUS_STYLE } from "@/lib/dds-status";
 import { TracesPanel } from "@/components/traces/traces-panel";
 import { CoveredLotsCard } from "@/components/due-diligence/covered-lots-card";
 import { useLatestTracesSubmission } from "@/hooks/use-latest-traces-submission";
+import { formatDate } from "@/lib/format";
 
 const TH = "text-[11px] font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
 
@@ -290,11 +291,11 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
               <MetaRow label="TRACES Reference" value={stmt.traces_reference || "—"} mono />
               <MetaRow
                 label="Submitted"
-                value={stmt.submitted_at ? new Date(stmt.submitted_at).toLocaleDateString() : "—"}
+                value={stmt.submitted_at ? formatDate(stmt.submitted_at) : "—"}
               />
               <MetaRow
                 label="Valid Until"
-                value={stmt.valid_until ? new Date(stmt.valid_until).toLocaleDateString() : "—"}
+                value={stmt.valid_until ? formatDate(stmt.valid_until) : "—"}
               />
             </div>
 
@@ -306,9 +307,9 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
             )}
           </div>
 
-          {/* Risk Assessments */}
+          {/* Risk assessments */}
           <div>
-            <h2 className="text-sm font-medium mb-3">Risk Assessments</h2>
+            <h2 className="text-sm font-medium mb-3">Risk assessments</h2>
             {stmt.risk_assessments && stmt.risk_assessments.length > 0 ? (
               <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-card">
                 <Table>
@@ -331,7 +332,7 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
                         <TableCell className="text-[13px]">{ra.traceability_completeness}%</TableCell>
                         <TableCell className="text-[13px]">{ra.overall_conclusion || "—"}</TableCell>
                         <TableCell className="text-muted-foreground text-[13px]">
-                          {new Date(ra.assessed_at).toLocaleDateString()}
+                          {formatDate(ra.assessed_at)}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -359,8 +360,8 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
 
       {/* Timestamps */}
       <div className="text-xs text-muted-foreground flex gap-4">
-        <span>Created: {new Date(stmt.created_at).toLocaleDateString()}</span>
-        <span>Updated: {new Date(stmt.updated_at).toLocaleDateString()}</span>
+        <span>Created: {formatDate(stmt.created_at)}</span>
+        <span>Updated: {formatDate(stmt.updated_at)}</span>
       </div>
 
       <DDSForm open={editOpen} onOpenChange={setEditOpen} statement={stmt} />

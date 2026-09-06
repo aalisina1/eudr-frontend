@@ -187,7 +187,7 @@ describe("initial viewport", () => {
     /**
      * The bug this covers shipped to production: fitBounds ran while Leaflet
      * still had a 0x0 cached size, which does not throw — it silently leaves
-     * the map on its setView() world default. The Land Plots page showed the
+     * the map on its setView() world default. The Land plots page showed the
      * whole planet with 18 West African plots invisible on it.
      *
      * Ordering is the whole fix, so ordering is what this asserts.

@@ -17,7 +17,7 @@ describe("WorkCard", () => {
 
   it("does not render a count badge when count is 0", () => {
     render(
-      <WorkCard title="Needs filing" description="desc" count={0} emptyText="Nothing needs filing — all covered">
+      <WorkCard title="Needs filing" description="desc" count={0} emptyText="Nothing needs filing. All covered.">
         <div>row content</div>
       </WorkCard>
     );
@@ -26,11 +26,11 @@ describe("WorkCard", () => {
 
   it("renders the quiet empty line (with a check icon) instead of children when count is 0", () => {
     render(
-      <WorkCard title="Needs filing" description="desc" count={0} emptyText="Nothing needs filing — all covered">
+      <WorkCard title="Needs filing" description="desc" count={0} emptyText="Nothing needs filing. All covered.">
         <div>row content</div>
       </WorkCard>
     );
-    expect(screen.getByText("Nothing needs filing — all covered")).toBeInTheDocument();
+    expect(screen.getByText("Nothing needs filing. All covered.")).toBeInTheDocument();
     expect(screen.queryByText("row content")).not.toBeInTheDocument();
   });
 

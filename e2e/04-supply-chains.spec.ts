@@ -261,7 +261,9 @@ test.describe("PO Detail — Ready to file state (#29)", () => {
     }
 
     // All-clear readiness checklist.
-    await expect(page.getByText("All data complete — this PO is ready to file")).toBeVisible();
+    // Copy updated by #118 (em dashes removed from user-visible strings); this
+    // asserts the replacement wording, not the retired one.
+    await expect(page.getByText("All data complete. This PO is ready to file.")).toBeVisible();
 
     // Lots table, grouped-by-shipment fallback (no shipment data yet) renders flat.
     await expect(page.getByText("LOT-GH-26-0871")).toBeVisible();

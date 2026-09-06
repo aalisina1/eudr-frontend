@@ -85,7 +85,7 @@ export function ActionQueueCard({ showCta = true }: { showCta?: boolean }) {
       href: `/shipments/${row.id}`,
       tone: "critical",
       meta: <Badge variant="destructive">{days != null ? `lands ${days}d` : "lands soon"}</Badge>,
-      reason: `${uncovered} lot${uncovered === 1 ? "" : "s"} uncovered — customs window closing`,
+      reason: `${uncovered} lot${uncovered === 1 ? "" : "s"} uncovered, customs window closing`,
       actionHref: `/shipments/${row.id}`,
       actionLabel: "Cover now",
       actionVariant: "solid",
@@ -142,9 +142,9 @@ export function ActionQueueCard({ showCta = true }: { showCta?: boolean }) {
   return (
     <WorkCard
       title="Action Queue"
-      description="Most time-critical first — one action per row"
+      description="Most time-critical first, one action per row"
       count={items.length}
-      emptyText="Nothing needs action — you're caught up."
+      emptyText="Nothing needs action. You're caught up."
       isLoading={isLoading}
     >
       {items.map((item) => (

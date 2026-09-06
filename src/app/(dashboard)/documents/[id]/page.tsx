@@ -18,6 +18,7 @@ import { ArrowLeft, Pencil, FolderOpen, Archive, Lock } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { DocumentForm } from "@/components/forms/document-form";
 import type { Document, DocumentType } from "@/lib/api/types";
+import { formatDate } from "@/lib/format";
 
 const TYPE_LABEL: Record<DocumentType, string> = {
   SUPPLIER_DECLARATION: "Supplier Declaration",
@@ -169,11 +170,11 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
           </div>
           <div>
             <p className="text-muted-foreground text-xs mb-0.5">Archival Deadline</p>
-            <p className="text-xs">{doc.archival_deadline ? new Date(doc.archival_deadline).toLocaleDateString() : "—"}</p>
+            <p className="text-xs">{doc.archival_deadline ? formatDate(doc.archival_deadline) : "—"}</p>
           </div>
           <div>
             <p className="text-muted-foreground text-xs mb-0.5">Uploaded</p>
-            <p className="text-xs">{new Date(doc.uploaded_at).toLocaleDateString()}</p>
+            <p className="text-xs">{formatDate(doc.uploaded_at)}</p>
           </div>
         </div>
 
@@ -228,9 +229,9 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
         )}
       </div>
 
-      {/* Version History */}
+      {/* Version history */}
       <div>
-        <h2 className="text-sm font-medium mb-3">Version History</h2>
+        <h2 className="text-sm font-medium mb-3">Version history</h2>
         {doc.versions && doc.versions.length > 0 ? (
           <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
             <Table>
@@ -253,7 +254,7 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
                     </TableCell>
                     <TableCell className="text-[13px]">{v.change_notes || "—"}</TableCell>
                     <TableCell className="text-muted-foreground text-[13px]">
-                      {new Date(v.uploaded_at).toLocaleDateString()}
+                      {formatDate(v.uploaded_at)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -269,7 +270,7 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
 
       {doc.archived_at && (
         <div className="text-xs text-muted-foreground">
-          Archived: {new Date(doc.archived_at).toLocaleDateString()}
+          Archived: {formatDate(doc.archived_at)}
         </div>
       )}
 

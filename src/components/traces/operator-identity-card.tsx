@@ -11,6 +11,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { getErrorMessage } from "@/lib/api/errors";
 import type { Organization } from "@/lib/api/types";
 import { OperatorIdentityForm } from "@/components/traces/operator-identity-form";
+import { ACTIVITY_TYPE_LABEL } from "@/lib/activity-type";
 
 const ORG_TYPE_LABEL: Record<string, string> = {
   OPERATOR: "Operator",
@@ -21,11 +22,7 @@ const ORG_TYPE_LABEL: Record<string, string> = {
 
 /** The regulator's own wording for each activity, matching the edit sheet and
  * the DDS composer so one operator reads the same phrase everywhere. */
-const ACTIVITY_LABEL: Record<string, string> = {
-  DOMESTIC: "Domestic — placing on the EU market",
-  IMPORT: "Import — release for free circulation",
-  EXPORT: "Export — leaving the EU",
-};
+const ACTIVITY_LABEL: Record<string, string> = ACTIVITY_TYPE_LABEL;
 
 async function fetchOrganization(): Promise<Organization> {
   const res = await authFetch("/api/v1/accounts/organization/");
@@ -58,11 +55,11 @@ export function OperatorIdentityCard() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="text-[11px] font-medium tracking-[0.15em] uppercase text-muted-foreground">
-              Operator Identity
+              Operator identity
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
               The EORI number and TRACES actor ID used to identify your
-              organization in submitted Due Diligence Statements.
+              organisation in submitted Due Diligence Statements.
             </p>
           </div>
           {organization && isAdmin && (
@@ -115,7 +112,7 @@ export function OperatorIdentityCard() {
                 </span>
               ) : (
                 <span className="text-xs text-muted-foreground italic">
-                  No default — chosen per statement
+                  No default, chosen per statement
                 </span>
               )}
             </div>
@@ -125,7 +122,7 @@ export function OperatorIdentityCard() {
                 <span className="font-mono text-xs">{organization.traces_actor_id}</span>
               ) : (
                 <span className="text-xs text-muted-foreground italic">
-                  Not yet assigned — set by TRACES after your first successful submission
+                  Not yet assigned. TRACES sets it after your first successful submission.
                 </span>
               )}
             </div>
