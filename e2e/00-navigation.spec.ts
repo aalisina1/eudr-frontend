@@ -8,7 +8,9 @@ const NAV = [
   { name: "Sourcing", path: /\/sourcing/ }, // renamed from "Supply Chains", #28
   { name: "Submissions", path: /\/submissions/ },
   { name: "Documents", path: /\/documents/ },
-  { name: "Integrations", path: /\/integrations/ },
+  // Integrations left the primary nav in #174: it is organisation
+  // configuration, so it lives in the admin context. Its replacement path is
+  // asserted in 14-administration.spec.ts, and below.
 ];
 
 test.describe("Navigation", () => {
@@ -18,6 +20,17 @@ test.describe("Navigation", () => {
       await page.getByRole("link", { name: item.name, exact: true }).click();
       await expect(page).toHaveURL(item.path);
     }
+  });
+
+  test("Integrations is reachable, from the admin context (#174)", async ({ page }) => {
+    const { CREDENTIALS, login } = await import("./helpers");
+    await login(page, CREDENTIALS.admin);
+    await page.goto("/dashboard");
+
+    await page.getByRole("link", { name: "Admin", exact: true }).click();
+    await page.getByRole("link", { name: "Integrations", exact: true }).click();
+
+    await expect(page).toHaveURL(/\/integrations/);
   });
 });
 

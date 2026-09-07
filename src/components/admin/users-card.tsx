@@ -9,6 +9,7 @@ import { DataTable } from "@/components/data-table";
 import { authFetch } from "@/lib/api/client";
 import { getErrorMessage } from "@/lib/api/errors";
 import { toast } from "sonner";
+import { UserGroupsSheet } from "@/components/admin/user-groups-sheet";
 import type { OrgUser } from "@/lib/api/types";
 
 const ROLE_LABEL: Record<string, string> = {
@@ -41,6 +42,7 @@ function RoleCell({ user }: { user: OrgUser }) {
 export function UsersCard({ currentUserId }: { currentUserId: string | undefined }) {
   const queryClient = useQueryClient();
   const [pending, setPending] = useState<string | null>(null);
+  const [editingGroupsFor, setEditingGroupsFor] = useState<OrgUser | null>(null);
 
   const setActive = useMutation({
     mutationFn: async ({ user, isActive }: { user: OrgUser; isActive: boolean }) => {
@@ -72,7 +74,8 @@ export function UsersCard({ currentUserId }: { currentUserId: string | undefined
       <CardHeader>
         <CardTitle>People</CardTitle>
         <CardDescription>
-          Everyone with access to this organisation, and where that access comes from.
+          Add someone, deactivate them, or change which groups they are in. There is no
+          per-user role here on purpose: a policy attaches to a group.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -128,23 +131,42 @@ export function UsersCard({ currentUserId }: { currentUserId: string | undefined
             {
               key: "actions",
               header: "",
-              render: (user) =>
-                user.id === currentUserId ? (
-                  <span className="text-xs text-muted-foreground">You</span>
-                ) : (
+              render: (user) => (
+                <div className="flex items-center justify-end gap-1">
                   <Button
                     size="sm"
                     variant="ghost"
-                    disabled={pending === user.id}
-                    onClick={() => setActive.mutate({ user, isActive: !user.is_active })}
+                    onClick={() => setEditingGroupsFor(user)}
                   >
-                    {user.is_active ? "Deactivate" : "Reactivate"}
+                    Groups
                   </Button>
-                ),
+                  {user.id === currentUserId ? (
+                    <span className="px-2 text-xs text-muted-foreground">You</span>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={pending === user.id}
+                      onClick={() => setActive.mutate({ user, isActive: !user.is_active })}
+                    >
+                      {user.is_active ? "Deactivate" : "Reactivate"}
+                    </Button>
+                  )}
+                </div>
+              ),
             },
           ]}
         />
       </CardContent>
+
+      {/* Keyed on the user so each opening starts from that person's current
+          membership rather than the previous row's. */}
+      <UserGroupsSheet
+        key={editingGroupsFor?.id ?? "none"}
+        open={editingGroupsFor !== null}
+        onOpenChange={(open) => !open && setEditingGroupsFor(null)}
+        user={editingGroupsFor}
+      />
     </Card>
   );
 }

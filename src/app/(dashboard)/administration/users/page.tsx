@@ -5,14 +5,14 @@ import { InvitationsCard } from "@/components/admin/invitations-card";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { AdministrationHeader } from "@/components/admin/administration-header";
 
-export default function AdministrationPeoplePage() {
+export default function AdministrationUsersPage() {
   const { data: user } = useCurrentUser();
 
   return (
     <>
       <AdministrationHeader
-        title="People"
-        description="Everyone with access to this organisation, and where that access comes from. Every change here is recorded in the audit log."
+        title="Users"
+        description="Everyone who can reach this organisation. Access itself comes from the groups a user belongs to, never from the user, so this is where you add people and put them in the right groups."
       />
       <UsersCard currentUserId={user?.id} />
       <InvitationsCard />

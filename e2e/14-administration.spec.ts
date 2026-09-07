@@ -10,19 +10,48 @@ import { CREDENTIALS, login } from "./helpers";
  * its own sidebar section with a route per topic, shown only to administrators.
  */
 
-const ADMIN_NAV = ["People", "Groups", "Policies", "TRACES"];
+const ADMIN_NAV = ["Users", "Groups", "Policies", "Integrations", "TRACES"];
 
 test.describe("Administration: the nav", () => {
-  test("an administrator gets the section, with a route each", async ({ page }) => {
+  test("Admin sits at the bottom, and opens a context of its own", async ({ page }) => {
     await login(page, CREDENTIALS.admin);
     await page.goto("/dashboard");
 
-    const sidebar = page.getByRole("navigation").or(page.locator("[data-slot=sidebar]")).first();
-    await expect(page.getByText("Administration", { exact: true }).first()).toBeVisible();
+    // Bottom of the sidebar, next to Settings: somewhere you go occasionally,
+    // not a peer of the daily work.
+    const adminEntry = page.getByRole("link", { name: "Admin", exact: true });
+    await expect(adminEntry).toBeVisible();
+    await expect(page.getByText("Sourcing")).toBeVisible();
 
+    await adminEntry.click();
+    await expect(page).toHaveURL(/\/administration\/users/);
+
+    // The sidebar has swapped: admin options in, everyday nav out.
     for (const label of ADMIN_NAV) {
-      await expect(sidebar.getByRole("link", { name: label })).toBeVisible();
+      await expect(page.getByRole("link", { name: label, exact: true })).toBeVisible();
     }
+    await expect(page.getByText("Sourcing")).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /Back to / })).toBeVisible();
+  });
+
+  test("and the way back returns you to the app", async ({ page }) => {
+    await login(page, CREDENTIALS.admin);
+    await page.goto("/administration/groups");
+
+    await page.getByRole("link", { name: /Back to / }).click();
+
+    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page.getByText("Sourcing")).toBeVisible();
+  });
+
+  test("Integrations is part of the admin context, not a flip back to the app", async ({
+    page,
+  }) => {
+    await login(page, CREDENTIALS.admin);
+    await page.goto("/integrations");
+
+    await expect(page.getByRole("link", { name: "Policies", exact: true })).toBeVisible();
+    await expect(page.getByText("Sourcing")).toHaveCount(0);
   });
 
   for (const [who, creds] of [
@@ -35,22 +64,22 @@ test.describe("Administration: the nav", () => {
 
       await expect(page.getByText("Dashboard").first()).toBeVisible();
       // Absent from the DOM, not disabled.
-      await expect(page.getByText("Administration", { exact: true })).toHaveCount(0);
+      await expect(page.getByRole("link", { name: "Admin", exact: true })).toHaveCount(0);
     });
   }
 
-  test("/administration lands on People rather than a bare index", async ({ page }) => {
+  test("/administration lands on Users rather than a bare index", async ({ page }) => {
     await login(page, CREDENTIALS.admin);
     await page.goto("/administration");
 
-    await expect(page).toHaveURL(/\/administration\/people/);
+    await expect(page).toHaveURL(/\/administration\/users/);
   });
 
   test("a non-administrator reaching the URL is told why, not bounced silently", async ({
     page,
   }) => {
     await login(page, CREDENTIALS.viewer);
-    await page.goto("/administration/people");
+    await page.goto("/administration/users");
 
     await expect(page.getByText("Administration is for administrators")).toBeVisible();
     await expect(page.getByRole("link", { name: "Go to your settings" })).toBeVisible();
@@ -62,12 +91,25 @@ test.describe("Administration: the pages", () => {
     await login(page, CREDENTIALS.admin);
   });
 
-  test("People shows where each role comes from", async ({ page }) => {
-    await page.goto("/administration/people");
+  test("Users offers add, deactivate and groups, and no per-user role", async ({ page }) => {
+    await page.goto("/administration/users");
 
-    await expect(page.getByRole("heading", { name: "People" })).toBeVisible();
-    await expect(page.getByText("granted directly").first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Users" })).toBeVisible();
     await expect(page.getByText(/A link works once and expires/)).toBeVisible();
+
+    // Access is changed by moving someone between groups (#174), so every row
+    // offers that, and nothing offers a role.
+    await expect(page.getByRole("button", { name: "Groups" }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: /Deactivate|Reactivate/ }).first()).toBeVisible();
+    await expect(page.getByRole("combobox", { name: /role/i })).toHaveCount(0);
+  });
+
+  test("assigning a user to a group is done from the user", async ({ page }) => {
+    await page.goto("/administration/users");
+
+    await page.getByRole("button", { name: "Groups" }).first().click();
+
+    await expect(page.getByText(/Everything this person can do comes from the groups/)).toBeVisible();
   });
 
   test("Groups offers three roles and never supplier contact", async ({ page }) => {
@@ -86,14 +128,18 @@ test.describe("Administration: the pages", () => {
     await expect(page.getByText(name)).toBeVisible();
   });
 
-  test("Policies states the rules that are actually enforced", async ({ page }) => {
+  test("Policies reads as a catalogue attached to groups, never to people", async ({
+    page,
+  }) => {
     await page.goto("/administration/policies");
 
     await expect(page.getByRole("heading", { name: "Policies" })).toBeVisible();
-    await expect(
-      page.getByText("The organisation always keeps an administrator"),
-    ).toBeVisible();
-    await expect(page.getByText("You cannot demote or deactivate yourself")).toBeVisible();
+    // exact: the Compliance policy lists "Everything Read only grants" too.
+    await expect(page.getByText("Read only", { exact: true })).toBeVisible();
+    await expect(page.getByText("Compliance", { exact: true })).toBeVisible();
+    // Each policy says which groups carry it. That is the whole model on one page.
+    await expect(page.getByText("Carried by").first()).toBeVisible();
+    await expect(page.getByText("Always enforced")).toBeVisible();
   });
 
   test("TRACES config lives here now, not on Settings (#158)", async ({ page }) => {
@@ -131,12 +177,14 @@ test.describe("Settings is personal, and the same for everyone", () => {
 test.describe("Administration: inviting someone", () => {
   test("invite, copy the link, and accept it in a fresh session", async ({ page, browser }) => {
     await login(page, CREDENTIALS.admin);
-    await page.goto("/administration/people");
+    await page.goto("/administration/users");
 
     const email = `e2e-invitee-${Date.now()}@example.com`;
     await page.getByRole("button", { name: "Invite" }).click();
     await page.getByLabel("Email address").fill(email);
-    await page.getByLabel("Role").selectOption("VIEWER");
+    // "Who is this", not a role: a policy attaches to a group (#174).
+    await expect(page.getByLabel("Who is this")).toBeVisible();
+    await expect(page.getByLabel("Role")).toHaveCount(0);
     await page.getByRole("button", { name: "Create invitation" }).click();
 
     const link = page.locator("text=/\\/invite\\//").first();

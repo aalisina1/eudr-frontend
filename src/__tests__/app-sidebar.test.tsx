@@ -1,9 +1,27 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "./helpers";
 import { AppSidebar } from "@/components/app-sidebar";
 import { PRODUCT_NAME, PRODUCT_DESCRIPTOR } from "@/lib/brand";
+
+// #174 made the sidebar route-driven (an admin *context*, not a third section),
+// so these two have to be steerable per test rather than fixed in setup.ts.
+let pathname = "/dashboard";
+vi.mock("next/navigation", () => ({
+  usePathname: () => pathname,
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
+  useParams: () => ({}),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
+let currentRole: string | undefined;
+vi.mock("@/hooks/use-current-user", () => ({
+  useCurrentUser: () => ({
+    data: currentRole ? { id: "u1", email: "a@example.com", role: currentRole } : undefined,
+    isLoading: false,
+  }),
+}));
 
 // The sidebar uses SidebarProvider context. Mock the UI primitives
 // to just render children so we can test navigation items.
@@ -42,6 +60,11 @@ vi.mock("@/components/ui/sidebar", () => ({
 }));
 
 describe("AppSidebar", () => {
+  beforeEach(() => {
+    pathname = "/dashboard";
+    currentRole = undefined;
+  });
+
   it("renders the product name from the single brand definition", () => {
     // Was asserting a hardcoded "EUDR Compliance" subtitle. That subtitle was
     // one of four competing descriptors and is gone by decision; the descriptor
@@ -78,7 +101,9 @@ describe("AppSidebar", () => {
     expect(screen.getByText("Sourcing")).toBeInTheDocument();
     expect(screen.getByText("Submissions")).toBeInTheDocument();
     expect(screen.getByText("Documents")).toBeInTheDocument();
-    expect(screen.getByText("Integrations")).toBeInTheDocument();
+    // Integrations is organisation configuration and moved into the admin
+    // context in #174. Its replacement home is asserted below.
+    expect(screen.queryByText("Integrations")).toBeNull();
   });
 
   it("nav item for /sourcing route is labelled Sourcing, not Supply Chains (#28 rename)", () => {
@@ -117,8 +142,74 @@ describe("AppSidebar", () => {
     const hrefs = links.map((l) => l.getAttribute("href"));
     expect(hrefs).toContain("/dashboard");
     expect(hrefs).toContain("/suppliers");
-    expect(hrefs).toContain("/integrations");
     expect(hrefs).toContain("/settings");
+    // /integrations is reachable from the admin context now (#174), not here.
+    expect(hrefs).not.toContain("/integrations");
+  });
+
+  describe("the admin context (#174)", () => {
+    it("puts Admin at the bottom, for administrators only", () => {
+      currentRole = "ADMIN";
+      renderWithProviders(<AppSidebar />);
+
+      const admin = screen.getByRole("link", { name: /Admin/i });
+      expect(admin).toHaveAttribute("href", "/administration");
+    });
+
+    it.each(["COMPLIANCE_OFFICER", "VIEWER", "SUPPLIER_CONTACT"])(
+      "hides Admin from %s entirely",
+      (role) => {
+        currentRole = role;
+        renderWithProviders(<AppSidebar />);
+
+        // Absent from the DOM, not disabled.
+        expect(screen.queryByText("Admin")).toBeNull();
+      },
+    );
+
+    it("swaps the whole sidebar once you are inside it", () => {
+      currentRole = "ADMIN";
+      pathname = "/administration/users";
+      renderWithProviders(<AppSidebar />);
+
+      // The admin options, including Integrations.
+      for (const label of ["Users", "Groups", "Policies", "Integrations", "TRACES"]) {
+        expect(screen.getByText(label)).toBeInTheDocument();
+      }
+      // And not the everyday nav underneath it.
+      expect(screen.queryByText("Sourcing")).toBeNull();
+      expect(screen.queryByText("Dashboard")).toBeNull();
+    });
+
+    it("offers a way back out", () => {
+      currentRole = "ADMIN";
+      pathname = "/administration/groups";
+      renderWithProviders(<AppSidebar />);
+
+      const back = screen.getByRole("link", { name: new RegExp(`Back to ${PRODUCT_NAME}`, "i") });
+      expect(back).toHaveAttribute("href", "/dashboard");
+    });
+
+    it("treats /integrations as part of the context, so the nav does not flip back", () => {
+      currentRole = "ADMIN";
+      pathname = "/integrations";
+      renderWithProviders(<AppSidebar />);
+
+      expect(screen.getByText("Policies")).toBeInTheDocument();
+      expect(screen.queryByText("Sourcing")).toBeNull();
+    });
+
+    it("leaves a non-admin on /integrations in the ordinary nav", () => {
+      // The route is deliberately ungated: a compliance officer keeps the access
+      // they had, they just lose the nav entry. Sending them into an admin
+      // context they cannot use would be worse than either.
+      currentRole = "COMPLIANCE_OFFICER";
+      pathname = "/integrations";
+      renderWithProviders(<AppSidebar />);
+
+      expect(screen.getByText("Sourcing")).toBeInTheDocument();
+      expect(screen.queryByText("Policies")).toBeNull();
+    });
   });
 
   it("toggles theme label on click", async () => {

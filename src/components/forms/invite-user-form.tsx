@@ -23,16 +23,27 @@ import { getErrorMessage } from "@/lib/api/errors";
 import { toast } from "sonner";
 import type { AccessGroup, InvitationCreated, PaginatedResponse } from "@/lib/api/types";
 
-const ROLES = [
-  { value: "VIEWER", label: "Viewer" },
-  { value: "COMPLIANCE_OFFICER", label: "Compliance officer" },
-  { value: "ADMIN", label: "Administrator" },
-  { value: "SUPPLIER_CONTACT", label: "Supplier contact" },
+/** Who is being invited. Not a role: a policy attaches to a group, and a user
+ * gets theirs by being in one (#174). The two kinds differ in kind, not in
+ * strength — a supplier contact is an external counterparty scoped to its own
+ * data, so it cannot hold a group at all (ADR-0028), while a colleague holds
+ * whatever their groups grant and nothing until then. */
+const KINDS = [
+  {
+    value: "INTERNAL",
+    label: "A colleague",
+    hint: "Access comes from the groups you put them in.",
+  },
+  {
+    value: "SUPPLIER_CONTACT",
+    label: "A supplier contact",
+    hint: "An external counterparty, scoped to their own data. Cannot be in a group.",
+  },
 ] as const;
 
 const inviteSchema = z.object({
   email: z.string().email("Enter a valid email address"),
-  role: z.enum(["VIEWER", "COMPLIANCE_OFFICER", "ADMIN", "SUPPLIER_CONTACT"]),
+  kind: z.enum(["INTERNAL", "SUPPLIER_CONTACT"]),
 });
 
 type InviteFormValues = z.infer<typeof inviteSchema>;
@@ -55,14 +66,14 @@ export function InviteUserForm({ open, onOpenChange }: InviteUserFormProps) {
     formState: { errors },
   } = useForm<InviteFormValues>({
     resolver: zodResolver(inviteSchema),
-    defaultValues: { email: "", role: "VIEWER" },
+    defaultValues: { email: "", kind: "INTERNAL" },
   });
 
   // `watch()` puts this component outside what the React Compiler can handle,
   // and the house pattern is a registered native select anyway. Compose with
   // register's own onChange so the form state and this one never diverge.
-  const { onChange: onRoleFieldChange, ...roleField } = register("role");
-  const [role, setRole] = useState<InviteFormValues["role"]>("VIEWER");
+  const { onChange: onKindFieldChange, ...kindField } = register("kind");
+  const [kind, setKind] = useState<InviteFormValues["kind"]>("INTERNAL");
 
   const { data: groups } = useQuery<PaginatedResponse<AccessGroup>>({
     queryKey: ["access-groups"],
@@ -82,10 +93,16 @@ export function InviteUserForm({ open, onOpenChange }: InviteUserFormProps) {
         headers: { "Content-Type": "application/json" },
         // A supplier contact cannot hold a group (ADR-0028). Derived here
         // rather than cleared in an effect, so there is one rule, not two.
+        // `role` is the baseline the backend stores for someone in no group.
+        // A colleague starts at VIEWER and rises to whatever their groups grant
+        // (`effective_role`, ADR-0028); a supplier contact is an identity and
+        // holds no groups. Neither is a per-user policy: nothing here grants
+        // more than VIEWER directly.
         body: JSON.stringify({
-          ...values,
+          email: values.email,
+          role: values.kind === "SUPPLIER_CONTACT" ? "SUPPLIER_CONTACT" : "VIEWER",
           group_ids:
-            values.role === "SUPPLIER_CONTACT" ? [] : Array.from(selectedGroups),
+            values.kind === "SUPPLIER_CONTACT" ? [] : Array.from(selectedGroups),
         }),
       });
       if (!res.ok) {
@@ -166,25 +183,28 @@ export function InviteUserForm({ open, onOpenChange }: InviteUserFormProps) {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="invite-role">Role</Label>
+                <Label htmlFor="invite-kind">Who is this</Label>
                 <select
-                  id="invite-role"
-                  {...roleField}
+                  id="invite-kind"
+                  {...kindField}
                   onChange={(event) => {
-                    onRoleFieldChange(event);
-                    setRole(event.target.value as InviteFormValues["role"]);
+                    onKindFieldChange(event);
+                    setKind(event.target.value as InviteFormValues["kind"]);
                   }}
                   className="w-full h-9 rounded-lg border border-border/60 bg-secondary/50 px-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
                 >
-                  {ROLES.map((option) => (
+                  {KINDS.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
                   ))}
                 </select>
+                <p className="text-xs text-muted-foreground">
+                  {KINDS.find((option) => option.value === kind)?.hint}
+                </p>
               </div>
 
-              {role === "SUPPLIER_CONTACT" ? (
+              {kind === "SUPPLIER_CONTACT" ? (
                 <p className="rounded-lg border border-border/60 px-3 py-2.5 text-xs text-muted-foreground">
                   A supplier contact is an external counterparty, so they are scoped to
                   their own data rather than placed in a group.
@@ -192,6 +212,10 @@ export function InviteUserForm({ open, onOpenChange }: InviteUserFormProps) {
               ) : (
                 <div className="space-y-2">
                   <Label>Groups</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Everything they can do comes from these. Someone in no group can
+                    sign in and read, nothing more.
+                  </p>
                   {groups?.results.length ? (
                     groups.results.map((group) => (
                       <label

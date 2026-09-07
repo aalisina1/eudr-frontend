@@ -14,6 +14,8 @@ import {
   FolderOpen,
   Cable,
   Settings,
+  ArrowLeft,
+  ShieldCheck,
   UserCog,
   UsersRound,
   ScrollText,
@@ -57,30 +59,44 @@ const navCompliance = [
   { href: "/shipments", label: "Shipments", icon: Ship },
   { href: "/submissions", label: "Submissions", icon: FileText },
   { href: "/documents", label: "Documents", icon: FolderOpen },
-  { href: "/integrations", label: "Integrations", icon: Cable },
 ];
 
-/** Organisation administration (#158). Rendered only for ADMIN — the section is
- * absent from the DOM for everyone else, not disabled, and every route beneath
- * it is gated again by `administration/layout.tsx` and by `IsAdmin` on the
- * backend. This is the signpost, never the lock.
+/** Organisation administration (#174). Administrators only — absent from the
+ * DOM for everyone else, not disabled — and every route beneath it is gated
+ * again by `administration/layout.tsx` and by `IsAdmin` on the backend. The
+ * sidebar is the signpost, never the lock.
  *
- * Kept as a flat group rather than an expanding submenu so it uses the same
- * grammar as Overview and Compliance: the sidebar has no accordion anywhere
- * else, and introducing one for four items would be a new pattern to maintain
- * for no gain. */
-const navAdministration = [
-  { href: "/administration/people", label: "People", icon: UserCog },
+ * Integrations lives here rather than under Compliance: connecting a source
+ * system is organisation configuration, and its write actions were already
+ * admin-only on the backend. Note the *route* stays ungated, so a compliance
+ * officer who has the URL keeps the access they had; what they lose is the nav
+ * entry. */
+const navAdmin = [
+  { href: "/administration/users", label: "Users", icon: UserCog },
   { href: "/administration/groups", label: "Groups", icon: UsersRound },
   { href: "/administration/policies", label: "Policies", icon: ScrollText },
+  { href: "/integrations", label: "Integrations", icon: Cable },
   { href: "/administration/traces", label: "TRACES", icon: PlugZap },
 ];
+
+/** Admin is a *context*, not a section: entering it swaps the sidebar rather
+ * than adding a third group to it. Driven off the route so the mode is never
+ * hidden state — the URL says which one you are in, and reloading keeps it. */
+function isAdminRoute(pathname: string): boolean {
+  return (
+    pathname === "/integrations" ||
+    pathname.startsWith("/integrations/") ||
+    pathname === "/administration" ||
+    pathname.startsWith("/administration/")
+  );
+}
 
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { data: currentUser } = useCurrentUser();
   const isAdmin = currentUser?.role === "ADMIN";
+  const adminContext = isAdmin && isAdminRoute(pathname);
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
@@ -122,62 +138,20 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2">
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/30 text-xs uppercase tracking-[0.15em] font-medium px-3 mb-1">
-            Overview
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navMain.map(({ href, label, icon: Icon }) => {
-                const isActive = pathname === href || pathname.startsWith(href + "/");
-                return (
-                  <SidebarMenuItem key={href}>
-                    <SidebarMenuButton
-                      render={<Link href={href} />}
-                      isActive={isActive}
-                      className="relative rounded-md h-9"
-                    >
-                      {isActive && <ActiveAccentBar />}
-                      <Icon className={cn("size-[15px]", isActive && "text-sidebar-primary")} />
-                      <span className="text-sm">{label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarSeparator className="mx-3 my-1 opacity-50" />
-
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/30 text-xs uppercase tracking-[0.15em] font-medium px-3 mb-1">
-            Compliance
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navCompliance.map(({ href, label, icon: Icon }) => {
-                const isActive = pathname === href || pathname.startsWith(href + "/");
-                return (
-                  <SidebarMenuItem key={href}>
-                    <SidebarMenuButton
-                      render={<Link href={href} />}
-                      isActive={isActive}
-                      className="relative rounded-md h-9"
-                    >
-                      {isActive && <ActiveAccentBar />}
-                      <Icon className={cn("size-[15px]", isActive && "text-sidebar-primary")} />
-                      <span className="text-sm">{label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {isAdmin && (
+        {adminContext ? (
           <>
+            <SidebarMenu className="mb-1">
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  render={<Link href="/dashboard" />}
+                  className="rounded-md h-9 text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
+                >
+                  <ArrowLeft className="size-[15px]" />
+                  <span className="text-sm">Back to {PRODUCT_NAME}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+
             <SidebarSeparator className="mx-3 my-1 opacity-50" />
 
             <SidebarGroup>
@@ -186,7 +160,63 @@ export function AppSidebar() {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {navAdministration.map(({ href, label, icon: Icon }) => {
+                  {navAdmin.map(({ href, label, icon: Icon }) => {
+                    const isActive = pathname === href || pathname.startsWith(href + "/");
+                    return (
+                      <SidebarMenuItem key={href}>
+                        <SidebarMenuButton
+                          render={<Link href={href} />}
+                          isActive={isActive}
+                          className="relative rounded-md h-9"
+                        >
+                          {isActive && <ActiveAccentBar />}
+                          <Icon className={cn("size-[15px]", isActive && "text-sidebar-primary")} />
+                          <span className="text-sm">{label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        ) : (
+          <>
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-sidebar-foreground/30 text-xs uppercase tracking-[0.15em] font-medium px-3 mb-1">
+                Overview
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {navMain.map(({ href, label, icon: Icon }) => {
+                    const isActive = pathname === href || pathname.startsWith(href + "/");
+                    return (
+                      <SidebarMenuItem key={href}>
+                        <SidebarMenuButton
+                          render={<Link href={href} />}
+                          isActive={isActive}
+                          className="relative rounded-md h-9"
+                        >
+                          {isActive && <ActiveAccentBar />}
+                          <Icon className={cn("size-[15px]", isActive && "text-sidebar-primary")} />
+                          <span className="text-sm">{label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarSeparator className="mx-3 my-1 opacity-50" />
+
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-sidebar-foreground/30 text-xs uppercase tracking-[0.15em] font-medium px-3 mb-1">
+                Compliance
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {navCompliance.map(({ href, label, icon: Icon }) => {
                     const isActive = pathname === href || pathname.startsWith(href + "/");
                     return (
                       <SidebarMenuItem key={href}>
@@ -212,6 +242,17 @@ export function AppSidebar() {
       <SidebarFooter className="px-2 pb-4">
         <SidebarSeparator className="mx-3 mb-2 opacity-50" />
         <SidebarMenu>
+          {isAdmin && !adminContext && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={<Link href="/administration" />}
+                className="rounded-md h-9 text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
+              >
+                <ShieldCheck className="size-[15px]" />
+                <span className="text-sm">Admin</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           <SidebarMenuItem>
             <SidebarMenuButton
               render={<Link href="/settings" />}
