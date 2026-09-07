@@ -37,7 +37,7 @@ export default function LoginPage() {
       {/* ── Left: editorial branding panel ── */}
       <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden flex-col justify-between"
         style={{
-          background: "linear-gradient(165deg, #0B1D1C 0%, #143330 40%, #1A6B5A 100%)",
+          background: "var(--hero-gradient)",
         }}
       >
         {/* Topographic line pattern */}

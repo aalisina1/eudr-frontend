@@ -150,8 +150,8 @@ export function TransformationsTab() {
                       variant="secondary"
                       className={`border-0 rounded text-xs px-1.5 py-0 ${
                         t.is_validated
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-amber-100 text-amber-700"
+                          ? "bg-success/10 text-success-foreground"
+                          : "bg-warning/10 text-warning-foreground"
                       }`}
                     >
                       {t.is_validated ? "Validated" : "Draft"}
@@ -456,9 +456,9 @@ function TransformationEditor({
                           ) : (
                             <ChevronRight className="size-3 shrink-0 text-muted-foreground mt-0.5" />
                           )}
-                          <Table2 className="size-3 shrink-0 text-blue-500 mt-0.5" />
+                          <Table2 className="size-3 shrink-0 text-info-foreground mt-0.5" />
                           <span
-                            className="font-mono truncate block cursor-pointer hover:text-blue-600"
+                            className="font-mono truncate block cursor-pointer hover:text-info-foreground"
                             onClick={(e) => {
                               e.stopPropagation();
                               insertText(view.object_name);

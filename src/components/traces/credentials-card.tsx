@@ -50,8 +50,8 @@ const ENV_STYLE: Record<
   string,
   { bg: string; text: string }
 > = {
-  ACCEPTANCE: { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-400" },
-  PRODUCTION: { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-400" },
+  ACCEPTANCE: { bg: "bg-warning/10", text: "text-warning-foreground" },
+  PRODUCTION: { bg: "bg-success/10", text: "text-success-foreground" },
 };
 
 export function CredentialsCard() {
@@ -227,7 +227,7 @@ export function CredentialsCard() {
                       {testState === "testing" ? (
                         <Loader2 className="size-3.5 animate-spin" />
                       ) : testState === "ok" ? (
-                        <CheckCircle2 className="size-3.5 text-emerald-600" />
+                        <CheckCircle2 className="size-3.5 text-success-foreground" />
                       ) : testState === "err" ? (
                         <XCircle className="size-3.5 text-destructive" />
                       ) : (
@@ -259,7 +259,7 @@ export function CredentialsCard() {
 
             {/* Test connection status banner */}
             {testState === "ok" && (
-              <p className="text-xs text-emerald-600 flex items-center gap-1.5 mt-1">
+              <p className="text-xs text-success-foreground flex items-center gap-1.5 mt-1">
                 <CheckCircle2 className="size-3.5" />
                 Credential confirmed. The API is reachable and the credential persisted.
               </p>

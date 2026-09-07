@@ -29,6 +29,7 @@ const eslintConfig = defineConfig([
       // The design tokens (ADR-0027 applied to globals.css; #128). The first
       // prevents a WCAG failure, not a style drift.
       "grovetrace-tokens/no-hex-in-utility": "error",
+      "grovetrace-tokens/no-palette-utility": "error",
       "grovetrace-tokens/no-arbitrary-font-size": "error",
       "grovetrace-tokens/no-arbitrary-shadow": "error",
     },

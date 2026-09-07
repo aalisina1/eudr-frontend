@@ -41,8 +41,8 @@ export default function SettingsPage() {
           ) : user ? (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                  <User className="w-[18px] h-[18px] text-emerald-700 dark:text-emerald-400" />
+                <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                  <User className="w-[18px] h-[18px] text-success-foreground" />
                 </div>
                 <div>
                   <p className="text-sm font-medium">
@@ -63,7 +63,7 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-3 text-sm">
                   <Shield className="w-4 h-4 text-muted-foreground" />
                   <span className="text-muted-foreground w-20">Role</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-medium">
+                  <span className="px-2 py-0.5 rounded-full bg-success/10 text-success-foreground text-xs font-medium">
                     {roleLabels[user.role] ?? user.role}
                   </span>
                 </div>

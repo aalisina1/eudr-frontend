@@ -97,7 +97,7 @@ function StreamRoleField({
   return (
     <div className="space-y-1.5">
       <Label className="text-xs" htmlFor={id}>
-        Stream Role <span className="text-red-600">*</span>
+        Stream Role <span className="text-destructive">*</span>
       </Label>
       <select
         id={id}
@@ -247,7 +247,7 @@ export function MappingsTab() {
                       variant="secondary"
                       className={`border-0 rounded text-xs px-1.5 py-0 ${
                         m.source_type === "TRANSFORMATION"
-                          ? "bg-blue-100 text-blue-700"
+                          ? "bg-info/10 text-info-foreground"
                           : "bg-muted text-muted-foreground"
                       }`}
                     >
@@ -793,7 +793,7 @@ function EditMappingForm({
             <Button
               variant="outline"
               size="sm"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50 gap-1.5"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
               onClick={() => {
                 if (confirm("Delete this mapping configuration?")) {
                   deleteMutation.mutate();
@@ -1108,7 +1108,7 @@ function FieldMappingEditor({
           </span>
           {unmappedCount > 0 && (
             <span>
-              <span className="font-medium text-amber-600">{unmappedCount}</span> unmapped
+              <span className="font-medium text-warning-foreground">{unmappedCount}</span> unmapped
             </span>
           )}
           <span>
@@ -1146,7 +1146,7 @@ function FieldMappingEditor({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="size-6 p-0 text-muted-foreground hover:text-red-600"
+                    className="size-6 p-0 text-muted-foreground hover:text-destructive"
                     onClick={() => deleteFieldMutation.mutate(f.id)}
                   >
                     <Trash2 className="size-3" />
@@ -1193,7 +1193,7 @@ function FieldMappingEditor({
               <div
                 key={row.id}
                 className={`grid grid-cols-[1fr_1fr_auto_1fr_auto] gap-2 px-4 py-2 items-center ${
-                  row.source_path ? "" : "bg-amber-50/50"
+                  row.source_path ? "" : "bg-warning/5"
                 }`}
               >
                 <select
@@ -1240,7 +1240,7 @@ function FieldMappingEditor({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="size-6 p-0 text-muted-foreground hover:text-red-600"
+                  className="size-6 p-0 text-muted-foreground hover:text-destructive"
                   onClick={() => removeRow(row.id)}
                 >
                   <Trash2 className="size-3" />

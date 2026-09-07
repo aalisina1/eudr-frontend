@@ -7,7 +7,7 @@ import plugin from "../../eslint-rules/grovetrace-tokens.mjs";
  *
  * Same bar as eslint-voice-rules.test.ts and ADR-0027: a lint rule that
  * silently matches nothing would leave the project believing the tokens are
- * enforced while screens drift back to hex literals — and the last time that
+ * enforced while screens drift back to hex literals or Tailwind's named palette, and the last time that
  * drift happened it cost a WCAG failure (#125, 2.12:1 in dark mode).
  *
  * The `valid` cases carry the design of each rule. A rule that flags
@@ -51,6 +51,36 @@ ruleTester.run("no-hex-in-utility", plugin.rules["no-hex-in-utility"], {
     // Short hex and 8-digit hex too.
     { code: 'const f = "bg-[#fff]";', errors: [{ messageId: "hexUtility" }] },
     { code: 'const g = "bg-[#34D39980]";', errors: [{ messageId: "hexUtility" }] },
+  ],
+});
+
+ruleTester.run("no-palette-utility", plugin.rules["no-palette-utility"], {
+  valid: [
+    // The tokens, which is the whole point.
+    { code: 'const a = "bg-success/10 text-success-foreground";' },
+    { code: 'const b = <span className="text-primary hover:text-primary/80" />;' },
+    { code: 'const c = "bg-muted text-muted-foreground border-border";' },
+    // Colour keywords that are not the palette.
+    { code: 'const d = "bg-white text-black border-transparent text-current";' },
+    // A word that happens to end in a palette-looking token but is not a colour
+    // utility: a data attribute, a translation key, a test id.
+    { code: 'const e = "data-red-500 tone-amber-100";' },
+    { code: 'const f = { key: "shipments.rag.red-700" };' },
+    // Comments are never visited.
+    { code: "// text-emerald-700 used to live here\nconst g = 1;" },
+  ],
+  invalid: [
+    { code: 'const a = "text-emerald-700";', errors: [{ messageId: "paletteUtility" }] },
+    { code: 'const b = "bg-amber-100 text-amber-700";', errors: [{ messageId: "paletteUtility" }] },
+    // The dark: twin, which is how every one of these hid from the theme.
+    { code: 'const c = "dark:bg-emerald-900/30";', errors: [{ messageId: "paletteUtility" }] },
+    { code: 'const d = "hover:text-red-600";', errors: [{ messageId: "paletteUtility" }] },
+    // The 50 and 950 ends of the scale, and an opacity modifier.
+    { code: 'const e = "bg-emerald-50/50";', errors: [{ messageId: "paletteUtility" }] },
+    { code: 'const f = "border-slate-950";', errors: [{ messageId: "paletteUtility" }] },
+    // In JSX and in a template literal.
+    { code: 'const g = <div className="bg-blue-600 hover:bg-blue-700" />;', errors: [{ messageId: "paletteUtility" }] },
+    { code: "const h = `px-2 ${x} text-blue-500`;", errors: [{ messageId: "paletteUtility" }] },
   ],
 });
 

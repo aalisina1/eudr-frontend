@@ -140,7 +140,7 @@ export function AssignLotsSheet({ open, onOpenChange, consignmentId, currentLots
                     type="button"
                     onClick={() => toggle(removeIds, setRemoveIds, l.id)}
                     className={cn(
-                      "rounded-full border px-2.5 py-0.5 font-mono text-xs transition-colors",
+                      "rounded-md border px-2.5 py-0.5 font-mono text-xs transition-colors",
                       removeIds.has(l.id)
                         ? "border-destructive/40 bg-destructive/10 text-destructive line-through"
                         : "border-border text-muted-foreground"

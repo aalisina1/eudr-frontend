@@ -323,7 +323,7 @@ export default function SourceDetailPage() {
                 deleteMutation.mutate();
               }
             }}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50 gap-1.5"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5"
           >
             <Trash2 className="size-3.5" />
             Delete
@@ -344,14 +344,14 @@ export default function SourceDetailPage() {
                 onClick={() => setActiveStep(step.id)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                   isActive
-                    ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400"
+                    ? "bg-success/10 text-success-foreground"
                     : isPast
-                      ? "text-emerald-600/60 dark:text-emerald-400/60 hover:bg-muted/50"
+                      ? "text-success-foreground/60 hover:bg-muted/50"
                       : "text-muted-foreground hover:bg-muted/50"
                 }`}
               >
                 {isPast ? (
-                  <CheckCircle2 className="size-4 text-emerald-500" />
+                  <CheckCircle2 className="size-4 text-success-foreground" />
                 ) : isActive ? (
                   <StepIcon className="size-4" />
                 ) : (
@@ -521,13 +521,13 @@ function ConfigureStep({
           Test Connection
         </Button>
         {testSuccess && (
-          <span className="text-sm text-emerald-600 flex items-center gap-1.5">
+          <span className="text-sm text-success-foreground flex items-center gap-1.5">
             <CheckCircle2 className="size-4" />
             Connection successful
           </span>
         )}
         {testError && (
-          <span className="text-sm text-red-600 flex items-center gap-1.5">
+          <span className="text-sm text-destructive flex items-center gap-1.5">
             <XCircle className="size-4" />
             {testError}
           </span>
@@ -574,7 +574,7 @@ function DiscoverStep({
       </div>
 
       {discoverError && (
-        <p className="text-sm text-red-600">{discoverError}</p>
+        <p className="text-sm text-destructive">{discoverError}</p>
       )}
 
       {schemas.length > 0 && (
@@ -696,7 +696,7 @@ function SelectStep({
               onClick={() => onToggle(s.id)}
               className={`text-left rounded-xl border p-4 transition-all ${
                 isSelected
-                  ? "border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-900/10"
+                  ? "border-success/50 bg-success/5"
                   : "border-border/50 hover:border-border"
               }`}
             >
@@ -704,7 +704,7 @@ function SelectStep({
                 <div
                   className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
                     isSelected
-                      ? "border-emerald-500 bg-emerald-500"
+                      ? "border-success bg-success"
                       : "border-muted-foreground/30"
                   }`}
                 >
@@ -780,7 +780,7 @@ function RawStep({
         </Button>
       </div>
 
-      {ingestError && <p className="text-sm text-red-600">{ingestError}</p>}
+      {ingestError && <p className="text-sm text-destructive">{ingestError}</p>}
 
       {/* Recent Jobs */}
       {jobs.length > 0 && (
@@ -886,9 +886,9 @@ function RawStep({
 
 function JobStatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    RUNNING: "bg-blue-100 text-blue-700",
-    COMPLETED: "bg-emerald-100 text-emerald-700",
-    FAILED: "bg-red-100 text-red-700",
+    RUNNING: "bg-info/10 text-info-foreground",
+    COMPLETED: "bg-success/10 text-success-foreground",
+    FAILED: "bg-destructive/10 text-destructive",
   };
   return (
     <Badge
