@@ -105,6 +105,9 @@ The research inverted its own brief: a good design system already existed in `gl
 
 Left open from the identity wave, re-homed: #121 → v0.3.3 (it is a flow-legibility item); #120 → unmilestoned.
 
+### Visual direction: Render (v0.3.5, tried 2026-09-06, reverted 2026-09-07)
+Founder: "I like the Render UI." Two PRs copied it, measured off the dashboard: #159 (radius 0, no shadow, mono eyebrows, outlined buttons) and #161 (white/near-black palette, Fraunces retired, Geist). Seen rendered whole, the founder rejected the colour scheme; #164 reverted both (closes #162), and #157 (licensed type) closed unbought. What it taught: a colour decision made from structure-only screenshots does not predict the reaction to the colour. The replacement direction is a spec, decided from rendered candidates before anything merges: vault `10-Specs/ui-direction-grovetrace.md`.
+
 ### Testing
 - 18 Vitest suites: API client, auth, types, utils, DataTable, AppSidebar, cron helpers, integrations (syncs/schedule/source-card), and page-level smoke tests for the major routes.
 
