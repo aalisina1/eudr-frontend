@@ -146,7 +146,7 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-display text-3xl font-light italic">{po.reference_number}</h1>
+              <h1 className="text-display text-3xl">{po.reference_number}</h1>
               <StageBadge stage={po.stage} blocked={po.blocked} />
             </div>
             <p className="mt-2 text-sm text-muted-foreground">

@@ -288,7 +288,7 @@ function DueDiligencePageInner() {
     <div className="space-y-6">
       <header className="flex items-end justify-between gap-6 flex-wrap">
         <div>
-          <h1 className="text-display text-4xl leading-[1.04] italic font-light">Submissions</h1>
+          <h1 className="text-display text-4xl leading-[1.04]">Submissions</h1>
           <p className="mt-2.5 text-base text-muted-foreground">Statements submitted to the EU TRACES registry.</p>
         </div>
         {/* A statement is composed from a purchase order and its lots — that

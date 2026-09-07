@@ -46,7 +46,7 @@ export default function DashboardPage() {
   return (
     <div>
       <header className="mb-[22px]">
-        <h1 className="text-display text-4xl leading-[1.04] font-light italic">{greeting()}</h1>
+        <h1 className="text-display text-4xl leading-[1.04]">{greeting()}</h1>
         <p className="mt-2.5 text-base text-muted-foreground">{formatDateLine()}</p>
       </header>
 

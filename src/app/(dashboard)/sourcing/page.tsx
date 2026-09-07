@@ -210,7 +210,7 @@ export default function SourcingPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-display text-2xl font-light italic mb-0.5">Sourcing</h1>
+          <h1 className="text-display text-2xl mb-0.5">Sourcing</h1>
           <p className="text-sm text-muted-foreground">Purchase orders and the lots fulfilling them</p>
         </div>
         <Button onClick={() => setFormOpen(true)} className="gap-1.5">

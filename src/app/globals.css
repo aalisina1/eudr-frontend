@@ -8,8 +8,13 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-display: var(--font-display);
+  /* Type (#156): Geist Sans for everything, Geist Mono for chips and labels.
+     One family for body and display. Render's Roobert/Neue Montreal split
+     is what #157 would buy; until then the display face IS the sans, at a
+     heavier weight and tighter tracking (see .text-display). To adopt a
+     licensed display face later, point --font-display at its variable. */
+  --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
   /* The type scale (eudr-frontend#126). Three steps below the heading sizes,
@@ -72,25 +77,27 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* ───── Light: warm parchment botanical ───── */
+/* ───── Light: neutral (#156). White ground, near-black text, gray hairlines.
+   the values Render's dashboard measures at. Brand green is --primary and is the
+   one colour, used sparingly: the mark, the active-nav bar, a filled CTA. ───── */
 :root {
-  --background: #F6F3ED;
-  --foreground: #0B1D1C;
+  --background: #FFFFFF;
+  --foreground: #141414;
 
   --card: #FFFFFF;
-  --card-foreground: #0B1D1C;
+  --card-foreground: #141414;
 
   --popover: #FFFFFF;
-  --popover-foreground: #0B1D1C;
+  --popover-foreground: #141414;
 
   --primary: #1A6B5A;
-  --primary-foreground: #F6F3ED;
+  --primary-foreground: #FFFFFF;
 
-  --secondary: #ECE8DE;
-  --secondary-foreground: #2D4A46;
+  --secondary: #FAFAFA;
+  --secondary-foreground: #272727;
 
-  --muted: #ECE8DE;
-  --muted-foreground: #6B7F7C;
+  --muted: #F0F0F0;
+  --muted-foreground: #8F8F8F;
 
   --accent: #C7956D;
   --accent-foreground: #3A1E08;
@@ -114,8 +121,8 @@
   --info: #6366F1;
   --info-foreground: #4F52D9;
 
-  --border: #D6D0C4;
-  --input: #D6D0C4;
+  --border: #E3E3E3;
+  --input: #C7C7C7;
   --ring: #1A6B5A;
 
   --chart-1: #1A6B5A;
@@ -129,14 +136,14 @@
      (dots, avatars) is a literal 9999px and stays round, which is right. */
   --radius: 0;
 
-  --sidebar: #0B1D1C;
-  --sidebar-foreground: #C5CCC9;
-  --sidebar-primary: #34D399;
-  --sidebar-primary-foreground: #0B1D1C;
-  --sidebar-accent: #152E2C;
-  --sidebar-accent-foreground: #E0E7E5;
-  --sidebar-border: #1E3836;
-  --sidebar-ring: #34D399;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #272727;
+  --sidebar-primary: #1A6B5A;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F0F0F0;
+  --sidebar-accent-foreground: #141414;
+  --sidebar-border: #E3E3E3;
+  --sidebar-ring: #1A6B5A;
 
   /* Flat (eudr-frontend#155). The two-layer card shadow ported from the design
      prototype is retired; a 1px --border does the work, as on every Render
@@ -145,25 +152,26 @@
   --shadow-card: none;
 }
 
-/* ───── Dark: deep forest ───── */
+/* ───── Dark: the mirror (#156). Near-black, not black: hairlines need somewhere
+   to sit, and every status token keeps its AA on it (status-token-contrast). ───── */
 .dark {
-  --background: #0A1514;
-  --foreground: #E0E7E5;
+  --background: #0A0A0A;
+  --foreground: #F0F0F0;
 
-  --card: #0F2220;
-  --card-foreground: #E0E7E5;
+  --card: #141414;
+  --card-foreground: #F0F0F0;
 
-  --popover: #0F2220;
-  --popover-foreground: #E0E7E5;
+  --popover: #141414;
+  --popover-foreground: #F0F0F0;
 
   --primary: #34D399;
-  --primary-foreground: #0A1514;
+  --primary-foreground: #0A0A0A;
 
-  --secondary: #152E2C;
-  --secondary-foreground: #C5CCC9;
+  --secondary: #1A1A1A;
+  --secondary-foreground: #D4D4D4;
 
-  --muted: #152E2C;
-  --muted-foreground: #7A918D;
+  --muted: #1F1F1F;
+  --muted-foreground: #8F8F8F;
 
   --accent: #D4A574;
   --accent-foreground: #1A0E04;
@@ -181,8 +189,8 @@
   --info: #6366F1;
   --info-foreground: #8B8DF5;
 
-  --border: #1E3836;
-  --input: #1E3836;
+  --border: #262626;
+  --input: #333333;
   --ring: #34D399;
 
   --chart-1: #34D399;
@@ -191,13 +199,13 @@
   --chart-4: #E8C468;
   --chart-5: #EF6B6B;
 
-  --sidebar: #070F0E;
-  --sidebar-foreground: #9AABA7;
+  --sidebar: #0A0A0A;
+  --sidebar-foreground: #D4D4D4;
   --sidebar-primary: #34D399;
-  --sidebar-primary-foreground: #070F0E;
-  --sidebar-accent: #0F1F1D;
-  --sidebar-accent-foreground: #C5CCC9;
-  --sidebar-border: #152E2C;
+  --sidebar-primary-foreground: #0A0A0A;
+  --sidebar-accent: #1F1F1F;
+  --sidebar-accent-foreground: #F0F0F0;
+  --sidebar-border: #262626;
   --sidebar-ring: #34D399;
 
   /* Dark surfaces need a darker, more opaque shadow to read as elevation
@@ -247,20 +255,15 @@
 ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
 
 /* ───── Utility classes ───── */
-/* Display face. Fraunces' WONK and SOFT axes are the dials that make it
-   read as ours rather than as "a serif"; they are held as tokens so the
-   whole app moves together, and so the roadmap's "modified-OFL Grovetrace
-   Serif" decision can be judged against a tuned baseline (#130). */
-:root {
-  --display-wonk: 1;
-  --display-soft: 40;
-}
+/* Display face (#156, Decision 3): upright, medium, tight. Render's heading
+   measured at Roobert 32px / 500 / -0.32px. The italic serif from #130 was
+   retired for it, a founder decision made against the step-1 screenshots.
+   The family is the sans; weight and tracking are what make it a heading. */
 .text-display {
   font-family: var(--font-display);
-  font-variation-settings:
-    "opsz" 72,
-    "WONK" var(--display-wonk),
-    "SOFT" var(--display-soft);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  font-style: normal;
 }
 
 /* Shared card-elevation idiom — see --shadow-card above. */
