@@ -6,6 +6,7 @@ import { User, Building2, Shield, Mail } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { CredentialsCard } from "@/components/traces/credentials-card";
 import { OperatorIdentityCard } from "@/components/traces/operator-identity-card";
+import { AdministrationSection } from "@/components/admin/administration-section";
 import { PRODUCT_TITLE } from "@/lib/brand";
 
 export default function SettingsPage() {
@@ -86,6 +87,8 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      <AdministrationSection />
 
       {/* TRACES connection */}
       <CredentialsCard />
