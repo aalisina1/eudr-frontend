@@ -285,14 +285,19 @@ test.describe("TRACES panel — submit flow (TRACES T3)", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("Credentials screen (TRACES T4)", () => {
-  test("Settings page shows the TRACES connection card", async ({ page }) => {
+  // #158 moved the TRACES connection off /settings and under Administration:
+  // it is organisation config and IsAdmin-gated, so it never belonged on the
+  // personal settings page. These journeys assert the replacement path.
+  test("Administration › TRACES shows the connection card", async ({ page }) => {
     // Stub credentials to empty so we see the empty state CTA.
     await page.route("**/api/v1/traces/credentials/**", async (route) => {
       await route.fulfill({ json: CREDS_EMPTY });
     });
 
-    await page.goto("/settings");
-    await expect(page).toHaveURL(/\/settings/);
+    // Admin, because #158 gates the whole Administration section on the role.
+    await login(page, CREDENTIALS.admin);
+    await page.goto("/administration/traces");
+    await expect(page).toHaveURL(/\/administration\/traces/);
 
     // The CredentialsCard header is visible.
     await expect(page.getByText("TRACES connection", { exact: false })).toBeVisible({
@@ -310,19 +315,29 @@ test.describe("Credentials screen (TRACES T4)", () => {
   // stubbed). The default suite-wide login (auth.setup.ts) is the compliance
   // officer, so this locks in the eudr-app #70 QA rider: a non-admin must
   // never see a control that would just 403 on click.
-  test('hides the "Add credentials" button for the compliance officer (non-admin, #70)', async ({ page }) => {
+  test("keeps the compliance officer away from credentials entirely (#70, strengthened by #158)", async ({
+    page,
+  }) => {
+    // The original guarantee was "a non-admin must never see a control that
+    // would just 403 on click", with the card itself visible on /settings.
+    // #158 makes that stronger: the whole surface is behind the role now, so a
+    // compliance officer does not reach the card at all — and is told why
+    // rather than shown a blank page.
     await page.route("**/api/v1/traces/credentials/**", async (route) => {
       await route.fulfill({ json: CREDS_EMPTY });
     });
 
-    await page.goto("/settings");
-    await expect(page.getByText("TRACES connection", { exact: false })).toBeVisible({
+    await page.goto("/administration/traces");
+
+    await expect(page.getByText("Administration is for administrators")).toBeVisible({
       timeout: 15_000,
     });
+    // The card's heading, not a text match: the gate's own explanation
+    // mentions "the TRACES connection", so a loose getByText matches the
+    // refusal copy and passes for the wrong reason.
     await expect(
-      page.getByText("No TRACES credentials configured.", { exact: false }),
-    ).toBeVisible({ timeout: 10_000 });
-
+      page.getByRole("heading", { name: /TRACES connection/i }),
+    ).toHaveCount(0);
     await expect(page.getByRole("button", { name: /Add credentials/i })).toHaveCount(0);
   });
 
@@ -340,7 +355,7 @@ test.describe("Credentials screen (TRACES T4)", () => {
         await route.fulfill({ json: CREDS_EMPTY });
       });
 
-      await page.goto("/settings");
+      await page.goto("/administration/traces");
 
       // Wait for the card to load.
       await expect(page.getByText("TRACES connection", { exact: false })).toBeVisible({

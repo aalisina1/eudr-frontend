@@ -4,9 +4,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { User, Building2, Shield, Mail } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { CredentialsCard } from "@/components/traces/credentials-card";
-import { OperatorIdentityCard } from "@/components/traces/operator-identity-card";
-import { AdministrationSection } from "@/components/admin/administration-section";
 import { PRODUCT_TITLE } from "@/lib/brand";
 
 export default function SettingsPage() {
@@ -24,7 +21,7 @@ export default function SettingsPage() {
       <div>
         <h1 className="text-display text-4xl leading-[1.04] italic font-light">Settings</h1>
         <p className="mt-2.5 text-base text-muted-foreground">
-          Your account, TRACES credentials, and operator identity.
+          Your account. Organisation settings live under Administration.
         </p>
       </div>
 
@@ -87,14 +84,6 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
-
-      <AdministrationSection />
-
-      {/* TRACES connection */}
-      <CredentialsCard />
-
-      {/* TRACES Operator identity (EORI + actor ID) */}
-      <OperatorIdentityCard />
 
       {/* App Info */}
       <Card className="border-border/50 shadow-card">

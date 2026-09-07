@@ -92,7 +92,9 @@ describe("ReadinessChecklistCard", () => {
         onAssignPlots={vi.fn()}
       />
     );
-    const btn = screen.getByRole("button", { name: /Complete profile/i });
+    // #158: this blocker is about the ORGANISATION's TRACES identity, so
+    // "Complete profile" was a mislabel pointing at the personal settings page.
+    const btn = screen.getByRole("button", { name: /Set operator identity/i });
     await userEvent.click(btn); // routes via the mocked useRouter — should not throw
     expect(btn).toBeInTheDocument();
   });

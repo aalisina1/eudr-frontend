@@ -243,8 +243,8 @@ function RemediationHint({ submission }: { submission: TracesSubmission }) {
         This is about how your organisation is registered with TRACES, not about
         your lots or plots. Check the Web Service Identifier, EUDR role and
         Authentication Key in{" "}
-        <Link href="/settings" className="text-primary hover:underline">
-          Settings → TRACES
+        <Link href="/administration/traces" className="text-primary hover:underline">
+          Administration → TRACES
         </Link>
         , then resubmit.
       </p>
@@ -266,8 +266,8 @@ function RemediationHint({ submission }: { submission: TracesSubmission }) {
       <p className="text-xs text-muted-foreground">
         No detail was recorded for this failure. Retry it, and if it fails again
         check the TRACES connection in{" "}
-        <Link href="/settings" className="text-primary hover:underline">
-          Settings
+        <Link href="/administration/traces" className="text-primary hover:underline">
+          Administration → TRACES
         </Link>
         .
       </p>
