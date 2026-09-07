@@ -20,7 +20,7 @@ const RAG_CHIPS: { key: keyof ConsignmentSummary; label: string; dot: string }[]
 function RagStrip({ summary }: { summary: ConsignmentSummary }) {
   return (
     <div className="flex flex-wrap items-center gap-4 border-t border-border pt-3 text-sm text-muted-foreground">
-      <span className="font-mono text-xs tracking-[0.08em] text-muted-foreground uppercase">
+      <span className="eyebrow">
         All shipments
       </span>
       {RAG_CHIPS.map((c) => (
@@ -39,7 +39,7 @@ function EnforcementCountdown() {
   const days = daysUntilCalendar(EUDR_ENFORCEMENT_DATE);
   return (
     <div className="border-l border-border pl-4 text-right">
-      <div className="font-mono text-xs tracking-[0.08em] text-muted-foreground uppercase">
+      <div className="eyebrow">
         EUDR enforcement
       </div>
       <div className="text-base font-semibold tabular-nums">{EUDR_ENFORCEMENT_DATE_LABEL}</div>

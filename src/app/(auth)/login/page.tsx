@@ -68,7 +68,7 @@ export default function LoginPage() {
                 {PRODUCT_NAME}
               </span>
               {PRODUCT_DESCRIPTOR && (
-                <span className="text-white/40 text-xs tracking-widest uppercase">
+                <span className="eyebrow text-white/40">
                   {PRODUCT_DESCRIPTOR}
                 </span>
               )}
@@ -77,7 +77,7 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 p-12 flex-1 flex flex-col justify-center max-w-xl">
-          <p className="text-success text-sm font-medium tracking-wider uppercase mb-5">
+          <p className="eyebrow text-success mb-5">
             EU Regulation 2023/1115
           </p>
           <h1 className="text-display text-white text-[clamp(2.5rem,4vw,3.5rem)] font-light leading-[1.1] mb-6 italic">
@@ -117,7 +117,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-medium tracking-wider uppercase text-muted-foreground">
+              <Label htmlFor="email" className="eyebrow">
                 Email
               </Label>
               <Input
@@ -132,7 +132,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-xs font-medium tracking-wider uppercase text-muted-foreground">
+              <Label htmlFor="password" className="eyebrow">
                 Password
               </Label>
               <Input

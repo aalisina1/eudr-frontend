@@ -124,7 +124,10 @@
   --chart-4: #E8C468;
   --chart-5: #C23D3D;
 
-  --radius: 0.875rem;
+  /* Visual direction: Render (eudr-frontend#155). Square. Every derived step
+     (sm..4xl) follows, so Badge's rounded-4xl is square too; rounded-full
+     (dots, avatars) is a literal 9999px and stays round, which is right. */
+  --radius: 0;
 
   --sidebar: #0B1D1C;
   --sidebar-foreground: #C5CCC9;
@@ -135,10 +138,11 @@
   --sidebar-border: #1E3836;
   --sidebar-ring: #34D399;
 
-  /* Recurring layered card-elevation idiom (ported from the Claude Design
-     prototype's CARD_SHADOW constant) — a hairline contact shadow plus a
-     soft, wide ambient falloff. */
-  --shadow-card: 0 1px 2px rgba(11, 29, 28, 0.04), 0 10px 26px -18px rgba(11, 29, 28, 0.14);
+  /* Flat (eudr-frontend#155). The two-layer card shadow ported from the design
+     prototype is retired; a 1px --border does the work, as on every Render
+     surface. Kept as a token so the shadow-card utility and every call site
+     stay valid and the idiom can be turned back on in one line. */
+  --shadow-card: none;
 }
 
 /* ───── Dark: deep forest ───── */
@@ -198,7 +202,7 @@
 
   /* Dark surfaces need a darker, more opaque shadow to read as elevation
      against the deep forest background — the light-mode rgba is too faint. */
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px -16px rgba(0, 0, 0, 0.55);
+  --shadow-card: none;
 }
 
 @layer base {
@@ -211,19 +215,6 @@
   html {
     @apply font-sans;
   }
-}
-
-/* ───── Grain texture overlay ───── */
-.grain::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  opacity: 0.022;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 256px 256px;
 }
 
 /* ───── Leaflet z-index isolation ───── */
@@ -275,4 +266,19 @@
 /* Shared card-elevation idiom — see --shadow-card above. */
 .shadow-card {
   box-shadow: var(--shadow-card);
+}
+
+/* Micro-labels: eyebrows, sidebar section labels, table headers
+   (eudr-frontend#155). Mono, uppercase, tracked, muted — Render's signature,
+   measured at Neue Montreal Mono / +0.65px / #8f8f8f. The newest Grovetrace
+   screen had already gone mono on its own; this makes it the rule. One class
+   so four duplicated TH constants and every ad-hoc tracking value collapse. */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
 }

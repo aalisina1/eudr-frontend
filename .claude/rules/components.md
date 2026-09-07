@@ -11,7 +11,23 @@ paths: ["src/components/**/*.tsx", "src/app/**/*.tsx"]
 - Integrations is four sibling tabs on `/integrations` (Sources, Transformations, Mappings, Syncs) in `src/components/integrations/`. The old step components were deleted; do not reintroduce a pipeline.
 - SQL editor uses `react-simple-code-editor` + `prismjs` for syntax highlighting
 
-## Radius follows nesting depth
+## Radius is 0 (visual direction: Render, eudr-frontend#155)
+
+`--radius: 0`. Every derived step (`rounded-sm` … `rounded-4xl`) resolves to square, so
+the class you pick no longer changes anything and the nesting-depth rule below is moot.
+`rounded-full` is a literal `9999px` and still means "a circle": status dots, avatars.
+Keep using the semantic step that *would* be right (`lg` on controls, `2xl` on cards) so
+that if the founder's Decision 2/3 review brings a radius back, nothing has to be
+re-audited. The rule is kept for that reason.
+
+## Micro-labels are one class
+
+Eyebrows, sidebar section labels and table headers all use `.eyebrow` (mono, uppercase,
+tracked, muted — `globals.css`). Do not compose `font-mono text-xs uppercase tracking-…`
+by hand; four pages had an identical `TH` constant and the dashboard cards a fifth
+variant before this existed.
+
+## Radius follows nesting depth (historical — moot while `--radius: 0`)
 
 Every step derives from `--radius: 0.875rem` (14px), so the scale is sound; what was
 missing was a rule for which step goes where. Derived from what the codebase already
