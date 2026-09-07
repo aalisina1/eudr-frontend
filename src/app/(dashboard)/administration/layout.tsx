@@ -35,7 +35,7 @@ export default function AdministrationLayout({ children }: { children: React.Rea
     return (
       <div className="mx-auto max-w-md space-y-4 py-16 text-center">
         <ShieldAlert className="mx-auto size-8 text-muted-foreground" />
-        <h1 className="text-display text-2xl leading-tight font-light italic">
+        <h1 className="text-display text-2xl leading-tight">
           Administration is for administrators
         </h1>
         <p className="text-sm text-muted-foreground">
