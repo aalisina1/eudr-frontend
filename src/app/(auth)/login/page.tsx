@@ -36,10 +36,9 @@ export default function LoginPage() {
     <div className="min-h-screen flex">
       {/* ── Left: editorial branding panel ── */}
       <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden flex-col justify-between"
-        // #156: the hero panel was a forest gradient. Neutral direction: flat
-        // near-black, the same ground as dark mode, with the mark's green as
-        // the one colour. Inline because it is fixed regardless of theme.
-        style={{ background: "#0A0A0A" }}
+        style={{
+          background: "linear-gradient(165deg, #0B1D1C 0%, #143330 40%, #1A6B5A 100%)",
+        }}
       >
         {/* Topographic line pattern */}
         <svg className="absolute inset-0 w-full h-full opacity-[0.06]" xmlns="http://www.w3.org/2000/svg">
@@ -81,7 +80,7 @@ export default function LoginPage() {
           <p className="eyebrow text-success mb-5">
             EU Regulation 2023/1115
           </p>
-          <h1 className="text-display text-white text-[clamp(2.5rem,4vw,3.5rem)] leading-[1.1] mb-6">
+          <h1 className="text-display text-white text-[clamp(2.5rem,4vw,3.5rem)] font-light leading-[1.1] mb-6 italic">
             Know which shipments will clear, before they land
           </h1>
           <p className="text-white/50 text-lg leading-relaxed max-w-md">
@@ -111,7 +110,7 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-display text-2xl text-foreground">
+            <h2 className="text-display text-2xl font-normal italic text-foreground">
               Sign in
             </h2>
           </div>

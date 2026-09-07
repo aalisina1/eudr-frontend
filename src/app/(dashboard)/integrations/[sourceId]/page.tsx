@@ -301,7 +301,7 @@ export default function SourceDetailPage() {
               <Icon className="size-5" />
             </div>
             <div>
-              <h1 className="text-display text-2xl">
+              <h1 className="text-display text-2xl font-light italic">
                 {source.name}
               </h1>
               <div className="flex items-center gap-2 mt-1">

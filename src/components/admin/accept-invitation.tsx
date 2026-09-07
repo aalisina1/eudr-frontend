@@ -106,7 +106,7 @@ export function AcceptInvitation({ token }: { token: string }) {
           </div>
         ) : previewError ? (
           <div className="space-y-4">
-            <h1 className="text-display text-3xl leading-tight">
+            <h1 className="text-display text-3xl leading-tight font-light italic">
               This link has expired
             </h1>
             <p className="rounded-xl border border-destructive/15 bg-destructive/8 px-4 py-3 text-sm text-destructive">
@@ -119,7 +119,7 @@ export function AcceptInvitation({ token }: { token: string }) {
         ) : (
           <>
             <div className="space-y-2">
-              <h1 className="text-display text-3xl leading-tight">
+              <h1 className="text-display text-3xl leading-tight font-light italic">
                 Join {invitation!.organization_name}
               </h1>
               <p className="text-sm text-muted-foreground">

@@ -1,22 +1,36 @@
 import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
-import { GeistMono } from "geist/font/mono";
+import { DM_Sans, Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/providers/providers";
 import { PRODUCT_TITLE, PRODUCT_DESCRIPTION } from "@/lib/brand";
 
-/**
- * Type (eudr-frontend#156, #157). Geist Sans and Geist Mono (SIL OFL, from
- * the `geist` package) are the open faces closest to the Render direction
- * (a geometric grotesque with a matching mono). They replace DM Sans,
- * Fraunces and JetBrains Mono. `--font-geist-mono` was already the mono
- * variable in globals.css before any of this: it was the original intent.
- *
- * #157, if the founder buys Neue Montreal / Roobert: swap these two imports
- * for `next/font/local` loaders pointing at `src/fonts/*.woff2` with the same
- * `variable` names, and nothing else changes. See the comment in globals.css
- * next to --font-display.
- */
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+// Fraunces is a variable font with two axes beyond optical size that exist
+// specifically to make it look less like a default: WONK swaps in the
+// idiosyncratic alternates (single-storey a, swashier g, angled terminals)
+// and SOFT rounds the terminals. Both were unloaded until #130. The values
+// live in globals.css (--display-wonk, --display-soft), not here.
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+  axes: ["opsz", "SOFT", "WONK"],
+});
+
+// Backs `--font-mono` (see globals.css `@theme inline`: `--font-mono: var(--font-geist-mono)`).
+// Reference numbers, TRACES ids and other "mono chip" text rely on `font-mono`
+// throughout the app; this was previously an undefined CSS var (no font ever
+// loaded it), silently falling back to the body sans font.
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: PRODUCT_TITLE,
@@ -33,7 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}>
+      <body className={`${dmSans.variable} ${fraunces.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>
