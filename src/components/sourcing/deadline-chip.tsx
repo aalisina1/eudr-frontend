@@ -39,7 +39,7 @@ export function DeadlineChip({ etaLabel, days, title, className }: DeadlineChipP
       data-slot="deadline-chip"
       title={title}
       className={cn(
-        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border px-2.5 py-0.5 text-xs font-medium",
         tone,
         className
       )}

@@ -34,18 +34,18 @@ import type {
 } from "@/lib/api/types";
 
 const SYNC_JOB_STATUS_STYLES: Record<string, string> = {
-  PENDING: "bg-amber-100 text-amber-700",
-  RUNNING: "bg-blue-100 text-blue-700",
-  COMPLETED: "bg-emerald-100 text-emerald-700",
-  FAILED: "bg-red-100 text-red-700",
+  PENDING: "bg-warning/10 text-warning-foreground",
+  RUNNING: "bg-info/10 text-info-foreground",
+  COMPLETED: "bg-success/10 text-success-foreground",
+  FAILED: "bg-destructive/10 text-destructive",
 };
 
 const SYNC_RECORD_STATUS_STYLES: Record<string, string> = {
-  PENDING_REVIEW: "bg-amber-100 text-amber-700",
-  SUCCESS: "bg-emerald-100 text-emerald-700",
-  FAILED: "bg-red-100 text-red-700",
+  PENDING_REVIEW: "bg-warning/10 text-warning-foreground",
+  SUCCESS: "bg-success/10 text-success-foreground",
+  FAILED: "bg-destructive/10 text-destructive",
   SKIPPED: "bg-muted text-muted-foreground",
-  REJECTED: "bg-red-100 text-red-700",
+  REJECTED: "bg-destructive/10 text-destructive",
 };
 
 export function SyncsTab() {
@@ -222,7 +222,7 @@ function SyncConfigCard({
               variant="secondary"
               className={`border-0 rounded text-xs px-1.5 py-0 ${
                 config.is_enabled
-                  ? "bg-emerald-100 text-emerald-700"
+                  ? "bg-success/10 text-success-foreground"
                   : "bg-muted text-muted-foreground"
               }`}
             >
@@ -240,7 +240,7 @@ function SyncConfigCard({
             {config.requires_review && (
               <Badge
                 variant="secondary"
-                className="border-0 rounded text-xs px-1.5 py-0 bg-amber-100 text-amber-700"
+                className="border-0 rounded text-xs px-1.5 py-0 bg-warning/10 text-warning-foreground"
               >
                 Review Required
               </Badge>
@@ -535,10 +535,10 @@ function SyncJobsView({
                       <td className="px-4 py-2.5 text-right tabular-nums text-xs">
                         {job.records_processed}
                       </td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-xs text-emerald-600">
+                      <td className="px-4 py-2.5 text-right tabular-nums text-xs text-success-foreground">
                         {job.records_succeeded}
                       </td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-xs text-red-600">
+                      <td className="px-4 py-2.5 text-right tabular-nums text-xs text-destructive">
                         {job.records_failed}
                       </td>
                       <td className="px-4 py-2.5 text-xs text-muted-foreground">
@@ -735,7 +735,7 @@ function SyncRecordsView({
                 variant="outline"
                 onClick={() => bulkMutation.mutate("reject")}
                 disabled={bulkMutation.isPending}
-                className="h-7 text-xs gap-1 text-red-600 hover:text-red-700"
+                className="h-7 text-xs gap-1 text-destructive hover:text-destructive"
               >
                 <XCircle className="size-3" />
                 Reject
@@ -747,7 +747,7 @@ function SyncRecordsView({
               size="sm"
               onClick={() => promoteMutation.mutate()}
               disabled={promoteMutation.isPending}
-              className="h-7 text-xs gap-1 bg-blue-600 hover:bg-blue-700"
+              className="h-7 text-xs gap-1 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {promoteMutation.isPending ? (
                 <Loader2 className="size-3 animate-spin" />
@@ -902,12 +902,12 @@ function RecordRow({
                   {JSON.stringify(expandedRecord.transformed_data, null, 2)}
                 </pre>
                 {expandedRecord.error_message && (
-                  <p className="text-xs text-red-600 mt-2">
+                  <p className="text-xs text-destructive mt-2">
                     {expandedRecord.error_message}
                   </p>
                 )}
                 {expandedRecord.target_object_id && (
-                  <p className="text-xs text-blue-600 mt-2 flex items-center gap-1">
+                  <p className="text-xs text-info-foreground mt-2 flex items-center gap-1">
                     <ArrowUpRight className="size-3" />
                     Promoted: {expandedRecord.target_object_id.slice(0, 8)}...
                   </p>

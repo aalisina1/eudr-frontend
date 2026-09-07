@@ -12,7 +12,8 @@
  * The bypass was not cosmetic. A hex literal cannot flip with the theme, and
  * the NEGLIGIBLE badge's text-[#1A6B5A] measured 2.12:1 on a dark card (#125).
  * The first rule below exists to stop that specific class of defect coming
- * back; the other two keep the type scale (#126) and the elevation idiom real.
+ * back; the palette rule (#166) closes the same hole for Tailwind's named
+ * colours; the other two keep the type scale (#126) and the elevation idiom real.
  *
  * Deliberately NOT gated: the radius rule (#127). Choosing rounded-lg over
  * rounded-xl is a design call, not an error. Naming what cannot be encoded is
@@ -129,8 +130,44 @@ const noArbitraryShadow = {
   },
 };
 
+/**
+ * Tailwind's default palette by name: `text-emerald-700`, `bg-amber-100`,
+ * `dark:bg-emerald-900/30`. The hex rule above stopped literals; these walked
+ * past it, 105 of them in nine files when eudr-frontend#166 looked, and they
+ * are the same defect: `text-emerald-700` is not --primary, is not --success,
+ * and does not move when the brand's green does. Prefix variants (hover:,
+ * dark:, group-hover:) are matched so a dark: override cannot hide one.
+ *
+ * Deliberately not matched: `white`, `black`, `transparent`, `current`, and
+ * the semantic names (primary, success, muted…), which are the tokens.
+ */
+const PALETTE_UTILITY =
+  /\b(?:[a-z-]+:)*(?:bg|text|border|ring|fill|stroke|from|via|to|outline|divide|shadow|accent|caret|decoration|placeholder)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|[1-9]00|950)(?:\/\d+)?\b/;
+
+const noPaletteUtility = {
+  meta: {
+    type: "problem",
+    docs: { description: "No Tailwind default-palette colours; use the semantic tokens." },
+    schema: [],
+    messages: {
+      paletteUtility:
+        "Tailwind palette colour. text-emerald-700 is not --primary and not --success; " +
+        "it stays put when the brand's green moves and it has no -foreground tuned for " +
+        "its tint. Use the token: success/warning/pending/info/destructive for status " +
+        "(bg-success/10 text-success-foreground), primary for the brand, muted for " +
+        "neutrals. Drop the dark: twin; tokens flip on their own.",
+    },
+  },
+  create(context) {
+    return visitStrings(context, (node, value) => {
+      if (PALETTE_UTILITY.test(value)) context.report({ node, messageId: "paletteUtility" });
+    });
+  },
+};
+
 const plugin = {
   rules: {
+    "no-palette-utility": noPaletteUtility,
     "no-hex-in-utility": noHexInUtility,
     "no-arbitrary-font-size": noArbitraryFontSize,
     "no-arbitrary-shadow": noArbitraryShadow,

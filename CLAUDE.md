@@ -39,7 +39,7 @@ umbrella `../CLAUDE.md`, which auto-loads here):
 - **Detail pages**: `/{entity}/[id]/page.tsx`, use `useParams()` + React Query `useQuery`
 - **React Query**: keys `[resourceName, params]`, staleTime 60s, invalidate related queries on mutation success
 - **UI**: shadcn primitives in `src/components/ui/`, lucide-react icons, Tailwind CSS v4
-- **Styling**: Forest/botanical palette, DM Sans (body), Fraunces (italic display headings), dark mode via class toggle
+- **Styling**: the brand tokens (green `#1F6B43`, ink `#1C2420`, page `#FBFAF7`; dark green `#4CAF7D`), DM Sans body, Fraunces italic display headings, 6px radius scale, hairline cards with no shadow, square status chips, dark sidebar panel. Dark mode via class toggle. Spec: vault `10-Specs/ui-direction-grovetrace.md`; the values are held by `brand-tokens.test.ts`
 - **Route groups**: `(auth)` for login, `(dashboard)` for authenticated pages
 
 ## Testing

@@ -167,12 +167,12 @@ export function ScheduleSection({ sourceId }: { sourceId: string }) {
     <Card>
       <CardContent className="p-6 space-y-5">
         <div className="flex items-center gap-2">
-          <CalendarClock className="size-4 text-emerald-600" />
+          <CalendarClock className="size-4 text-success-foreground" />
           <h3 className="text-sm font-medium">Ingestion schedule</h3>
           <span
-            className={`ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+            className={`ml-auto inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${
               enabled
-                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
+                ? "bg-success/10 text-success-foreground"
                 : "bg-muted text-muted-foreground"
             }`}
           >
@@ -227,12 +227,12 @@ export function ScheduleSection({ sourceId }: { sourceId: string }) {
         {/* Validation / preview line */}
         {cron.length > 0 &&
           (cronValid ? (
-            <p className="flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400">
+            <p className="flex items-center gap-1.5 text-xs text-success-foreground">
               <CheckCircle2 className="size-3.5" />
               {description} ({timezone})
             </p>
           ) : (
-            <p className="flex items-center gap-1.5 text-xs text-red-600">
+            <p className="flex items-center gap-1.5 text-xs text-destructive">
               <AlertCircle className="size-3.5" />
               Enter a valid 5-field cron expression (e.g. &quot;0 2 * * *&quot;).
             </p>

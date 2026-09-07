@@ -73,12 +73,12 @@ const RUN_STATUS_META: Record<
   RUNNING: {
     label: "Running",
     icon: RefreshCw,
-    cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400",
+    cls: "bg-warning/10 text-warning-foreground",
   },
   COMPLETED: {
     label: "Completed",
     icon: CheckCircle2,
-    cls: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400",
+    cls: "bg-success/10 text-success-foreground",
   },
   FAILED: {
     label: "Failed",

@@ -192,7 +192,7 @@ export function SourceForm({ open, onOpenChange, source }: SourceFormProps) {
               {...register("name")}
             />
             {errors.name && (
-              <p className="text-xs text-red-600">{errors.name.message}</p>
+              <p className="text-xs text-destructive">{errors.name.message}</p>
             )}
           </div>
 
@@ -375,7 +375,7 @@ export function SourceForm({ open, onOpenChange, source }: SourceFormProps) {
           )}
 
           {mutation.isError && (
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-destructive">
               {(mutation.error as Error).message}
             </p>
           )}
