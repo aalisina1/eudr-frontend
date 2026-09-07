@@ -39,7 +39,7 @@ umbrella `../CLAUDE.md`, which auto-loads here):
 - **Detail pages**: `/{entity}/[id]/page.tsx`, use `useParams()` + React Query `useQuery`
 - **React Query**: keys `[resourceName, params]`, staleTime 60s, invalidate related queries on mutation success
 - **UI**: shadcn primitives in `src/components/ui/`, lucide-react icons, Tailwind CSS v4
-- **Styling**: Forest/botanical palette, DM Sans (body), Fraunces (italic display headings), dark mode via class toggle
+- **Styling**: Neutral palette (white / near-black, gray hairlines, brand green as the one colour), Geist Sans + Geist Mono, `.text-display` = the sans at 500 with tight tracking, `--radius: 0`, no shadows, `.eyebrow` for every mono micro-label. Dark mode via class toggle. Spec: vault `10-Specs/visual-direction-render.md`.
 - **Route groups**: `(auth)` for login, `(dashboard)` for authenticated pages
 
 ## Testing

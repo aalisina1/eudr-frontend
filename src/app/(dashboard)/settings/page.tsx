@@ -19,7 +19,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-display text-4xl leading-[1.04] italic font-light">Settings</h1>
+        <h1 className="text-display text-4xl leading-[1.04]">Settings</h1>
         <p className="mt-2.5 text-base text-muted-foreground">
           Your account. Organisation settings live under Administration.
         </p>

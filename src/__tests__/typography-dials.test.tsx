@@ -20,27 +20,10 @@ import { AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const read = (p: string) => readFileSync(resolve(__dirname, p), "utf8");
 
-describe("Fraunces loads the axes that make it ours", () => {
-  it("layout.tsx requests SOFT and WONK, not just opsz", () => {
-    // A source check rather than a render: RootLayout pulls in next/font at
-    // module load and is not meaningfully renderable under jsdom. The
-    // contract is small enough that reading it is honest.
-    const layout = read("../app/layout.tsx");
-    const axes = layout.match(/axes:\s*\[([^\]]+)\]/)?.[1] ?? "";
-    for (const axis of ["opsz", "SOFT", "WONK"]) {
-      expect(axes, `Fraunces axes must include ${axis}`).toContain(`"${axis}"`);
-    }
-  });
-
-  it(".text-display sets WONK and SOFT from tokens, so the whole app moves together", () => {
-    const css = read("../app/globals.css");
-    const rule = css.match(/\.text-display\s*\{([\s\S]*?)\}/)?.[1] ?? "";
-    expect(rule).toMatch(/"WONK"\s+var\(--display-wonk\)/);
-    expect(rule).toMatch(/"SOFT"\s+var\(--display-soft\)/);
-    expect(css).toMatch(/--display-wonk:\s*1\b/);
-    expect(css).toMatch(/--display-soft:\s*\d+/);
-  });
-});
+// #130 pinned Fraunces' WONK/SOFT axes here. #156 retired Fraunces for an
+// upright sans (visual-direction-render.md, Decision 3), a founder decision,
+// made against the step-1 screenshots, not a tidy-up. Those pins now live in
+// visual-direction.test.tsx as their inverse.
 
 describe("primitives carry the type decisions so call sites do not have to", () => {
   it("every TableCell has tabular figures by default", () => {
@@ -70,7 +53,8 @@ describe("primitives carry the type decisions so call sites do not have to", () 
         cls = src.match(new RegExp(`function ${name}[\\s\\S]*?cn\\(\\s*"([^"]+)"`))?.[1] ?? "";
       }
       expect(cls, `${name} default class`).toContain("text-display");
-      expect(cls, `${name} default class`).toContain("italic");
+      // #156 made the display face upright; `italic` is gone by decision.
+      expect(cls, `${name} default class`).not.toContain("italic");
     }
   });
 });

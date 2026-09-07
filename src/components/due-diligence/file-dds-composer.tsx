@@ -402,7 +402,7 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
       </Button>
 
       <div>
-        <h1 className="text-display text-3xl font-light italic">New due diligence statement</h1>
+        <h1 className="text-display text-3xl">New due diligence statement</h1>
         <p className="mt-2 text-sm text-muted-foreground">Pre-filled from {po.reference_number}</p>
       </div>
 

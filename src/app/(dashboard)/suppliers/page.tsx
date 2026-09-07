@@ -198,7 +198,7 @@ function SuppliersPageInner() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-display text-2xl font-light italic mb-0.5">Suppliers</h1>
+          <h1 className="text-display text-2xl mb-0.5">Suppliers</h1>
           <p className="text-sm text-muted-foreground">
             Who you buy from, and whether their plot data is good enough to file on
           </p>

@@ -60,7 +60,7 @@ function IntegrationsPageInner() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-display text-2xl font-light italic mb-0.5">
+          <h1 className="text-display text-2xl mb-0.5">
             Integrations
           </h1>
           <p className="text-sm text-muted-foreground">

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import { readFileSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { resolve } from "node:path";
 import { TableHead } from "@/components/ui/table";
 import { SidebarGroupLabel, SidebarProvider } from "@/components/ui/sidebar";
@@ -90,5 +91,64 @@ describe("outlined buttons", () => {
   it("destructive keeps its fill: a delete must still read as one", () => {
     const { container } = render(<Button variant="destructive">Delete</Button>);
     expect(container.querySelector("button")?.className).toMatch(/bg-destructive/);
+  });
+});
+
+/**
+ * eudr-frontend#156, the two founder decisions after step 1: neutral ground,
+ * upright display. Both are token swaps. Both are pinned here so a tidy-up
+ * cannot drift them back, and so the reversal, if the founder changes their
+ * mind, is a deliberate edit to this file, not an accident.
+ */
+describe("neutral ground (#156, Decision 2)", () => {
+  it("light is white with near-black text and gray hairlines, as Render measures", () => {
+    expect(root).toMatch(/--background:\s*#FFFFFF;/i);
+    expect(root).toMatch(/--foreground:\s*#141414;/i);
+    expect(root).toMatch(/--muted-foreground:\s*#8F8F8F;/i);
+    expect(root).toMatch(/--border:\s*#E3E3E3;/i);
+    expect(root).not.toMatch(/#F6F3ED|#0B1D1C/i); // the parchment and the forest are gone from the ground
+  });
+
+  it("dark mirrors it: near-black ground, light text, dark hairlines", () => {
+    expect(dark).toMatch(/--background:\s*#0A0A0A;/i);
+    expect(dark).toMatch(/--foreground:\s*#F0F0F0;/i);
+    expect(dark).not.toMatch(/#0A1514|#0F2220/i);
+  });
+
+  it("the sidebar is the page ground, not a dark panel", () => {
+    expect(root).toMatch(/--sidebar:\s*#FFFFFF;/i);
+    expect(dark).toMatch(/--sidebar:\s*#0A0A0A;/i);
+  });
+
+  it("brand green survives as --primary; it is the one colour, used sparingly", () => {
+    expect(root).toMatch(/--primary:\s*#1A6B5A;/i);
+  });
+});
+
+describe("upright display (#156, Decision 3)", () => {
+  it("Fraunces is no longer loaded; Geist Sans and Geist Mono are", () => {
+    const layout = read("../app/layout.tsx");
+    expect(layout).not.toMatch(/Fraunces\(|next\/font\/google/);
+    expect(layout).toMatch(/geist\/font\/sans/);
+    expect(layout).toMatch(/geist\/font\/mono/);
+  });
+
+  it(".text-display is the sans, medium weight, tight tracking, upright", () => {
+    // Render measured: Roobert 32px / 500 / -0.32px, no italic.
+    const rule = css.match(/\.text-display\s*\{([\s\S]*?)\}/)?.[1] ?? "";
+    expect(rule).toMatch(/font-family:\s*var\(--font-display\)/);
+    expect(rule).toMatch(/font-weight:\s*500/);
+    expect(rule).toMatch(/letter-spacing:\s*-0\.0\d+em/);
+    expect(rule).not.toMatch(/WONK|SOFT|opsz|italic/);
+    expect(css).not.toMatch(/--display-wonk|--display-soft/);
+  });
+
+  it("no caller still asks the display face to be italic or light", () => {
+    // 16 page titles and the primitives carried `text-display ... italic font-light`.
+    const hits = execSync(
+      `grep -rlE 'text-display[^"]*(italic|font-light)|(italic|font-light)[^"]*text-display' src --include='*.tsx' | grep -v __tests__ || true`,
+      { cwd: resolve(__dirname, "../.."), encoding: "utf8" }
+    ).trim();
+    expect(hits, hits).toBe("");
   });
 });
