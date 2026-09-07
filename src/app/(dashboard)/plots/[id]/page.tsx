@@ -34,7 +34,7 @@ const STATUS_STYLE: Record<ValidationStatus, { bg: string; text: string; dot: st
   REQUIRES_REVIEW: { bg: "bg-warning/10", text: "text-warning-foreground", dot: "bg-warning", label: "Requires Review", icon: AlertTriangle },
 };
 
-const TH = "text-xs font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
+const TH = "eyebrow h-11";
 
 export default function PlotDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
