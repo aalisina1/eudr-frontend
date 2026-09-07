@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
+import { DetailHeader } from "@/components/detail-header";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, FileText } from "lucide-react";
@@ -134,28 +135,19 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push("/sourcing")}
-          className="-ml-2 gap-1.5 text-muted-foreground"
-        >
-          <ArrowLeft className="size-4" /> All purchase orders
-        </Button>
-
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-display text-3xl font-light italic">{po.reference_number}</h1>
-              <StageBadge stage={po.stage} blocked={po.blocked} />
-            </div>
-            <p className="mt-2 text-sm text-muted-foreground">
+        <DetailHeader
+          back={{ href: "/sourcing", label: "All purchase orders" }}
+          eyebrow="Purchase order"
+          title={po.reference_number}
+          status={<StageBadge stage={po.stage} blocked={po.blocked} />}
+          context={
+            <>
               {supplier?.name ?? "…"} · {supplier?.country_of_origin ?? "—"} ·{" "}
               {product?.commodity_name || product?.description || "—"}
-            </p>
-          </div>
-
-          {ready ? (
+            </>
+          }
+          actions={
+            ready ? (
             // [FOLLOW-UP #26] Routes to the Submissions surface with the PO
             // context in the query string; the File DDS composer itself
             // (reading `?po=` to prefill covered lots) is #26's scope, not
@@ -184,8 +176,9 @@ export default function PoDetailPage({ params }: { params: Promise<{ id: string 
               />
               <TooltipContent>{missingSummary}</TooltipContent>
             </Tooltip>
-          )}
-        </div>
+            )
+          }
+        />
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <CoverageFunnelCard funnel={po.funnel} nextDeadline={po.next_deadline} />

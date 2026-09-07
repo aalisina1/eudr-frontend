@@ -2,7 +2,7 @@
 
 import { CredentialsCard } from "@/components/traces/credentials-card";
 import { OperatorIdentityCard } from "@/components/traces/operator-identity-card";
-import { AdministrationHeader } from "@/components/admin/administration-header";
+import { PageHeader } from "@/components/page-header";
 
 /**
  * TRACES connection and operator identity — moved off `/settings` by #158.
@@ -14,7 +14,7 @@ import { AdministrationHeader } from "@/components/admin/administration-header";
 export default function AdministrationTracesPage() {
   return (
     <>
-      <AdministrationHeader
+      <PageHeader
         title="TRACES"
         description="How this organisation connects to the EU TRACES system, and the identity it files statements under. Both are needed before a statement can be submitted."
       />

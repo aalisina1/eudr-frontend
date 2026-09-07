@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
+import { DetailHeader } from "@/components/detail-header";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Pencil, FolderOpen, Archive, Lock } from "lucide-react";
+import { ArrowLeft, Pencil, Archive, Lock } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { DocumentForm } from "@/components/forms/document-form";
 import type { Document, DocumentType } from "@/lib/api/types";
@@ -108,33 +109,12 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="space-y-6">
-      {/* Back + Actions */}
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => router.push("/documents")} className="gap-1.5">
-          <ArrowLeft className="size-4" /> Documents
-        </Button>
-        <div className="flex gap-2">
-          {!doc.is_archived && (
-            <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)} className="gap-1.5">
-              <Pencil className="size-3.5" /> Edit
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Header Card */}
-      <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
-              <FolderOpen className="size-5 text-info-foreground" />
-            </div>
-            <div>
-              <h1 className="text-xl font-medium">{doc.title}</h1>
-              <p className="text-sm text-muted-foreground">{TYPE_LABEL[doc.document_type] ?? doc.document_type}</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
+      <DetailHeader
+        back={{ href: "/documents", label: "All documents" }}
+        eyebrow="Document"
+        title={doc.title}
+        status={
+          <>
             {doc.is_confidential && (
               <Badge variant="secondary" className="bg-warning/10 text-warning-foreground border-0 font-medium text-xs gap-1.5 px-2.5">
                 <Lock className="size-3" />
@@ -152,9 +132,20 @@ export default function DocumentDetailPage({ params }: { params: Promise<{ id: s
               <span className={`w-1.5 h-1.5 rounded-full ${doc.is_archived ? "bg-muted-foreground" : "bg-success"}`} />
               {doc.is_archived ? "Archived" : "Active"}
             </Badge>
-          </div>
-        </div>
+          </>
+        }
+        context={TYPE_LABEL[doc.document_type] ?? doc.document_type}
+        actions={
+          !doc.is_archived ? (
+            <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)} className="gap-1.5">
+              <Pencil className="size-3.5" /> Edit
+            </Button>
+          ) : null
+        }
+      />
 
+      {/* Record card */}
+      <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
         {doc.description && (
           <p className="text-sm text-muted-foreground mb-4">{doc.description}</p>
         )}

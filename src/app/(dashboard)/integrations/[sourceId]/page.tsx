@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { DetailHeader } from "@/components/detail-header";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,15 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  ArrowLeft,
   CheckCircle2,
   Circle,
-  Database,
-  FileSpreadsheet,
-  Globe,
-  Server,
-  Webhook,
-  Upload,
   Loader2,
   Plug,
   Search,
@@ -38,33 +32,10 @@ import type {
   DataSource,
   DataSourceSchema,
   PaginatedResponse,
-  SourceType,
   IngestJob,
   RawRecord,
   SelectObjectsRequest,
 } from "@/lib/api/types";
-
-// ── Source type metadata ──
-
-const SOURCE_ICONS: Record<SourceType, typeof Database> = {
-  SQL_SERVER: Database,
-  CSV_UPLOAD: FileSpreadsheet,
-  FARMFORCE: Globe,
-  AS400: Server,
-  REST_API: Globe,
-  SFTP: Upload,
-  WEBHOOK: Webhook,
-};
-
-const SOURCE_COLORS: Record<SourceType, string> = {
-  SQL_SERVER: "#3b82f6",
-  CSV_UPLOAD: "#34D399",
-  FARMFORCE: "#f59e0b",
-  AS400: "#8b5cf6",
-  REST_API: "#06b6d4",
-  SFTP: "#C7956D",
-  WEBHOOK: "#ec4899",
-};
 
 // ── Pipeline steps (ingestion only) ──
 
@@ -268,8 +239,6 @@ export default function SourceDetailPage() {
     );
   }
 
-  const Icon = SOURCE_ICONS[source.source_type] ?? Database;
-  const color = SOURCE_COLORS[source.source_type] ?? "#94a3b8";
 
   function toggleSchemaSelection(id: string) {
     setPendingSelection((prev) => {
@@ -282,39 +251,22 @@ export default function SourceDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Back + Header */}
-      <div>
-        <button
-          onClick={() => router.push("/integrations")}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
-        >
-          <ArrowLeft className="size-4" />
-          Back to Integrations
-        </button>
-
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center"
-              style={{ backgroundColor: `${color}12`, color }}
+      <DetailHeader
+        back={{ href: "/integrations", label: "All integrations" }}
+        eyebrow="Data source"
+        title={source.name}
+        status={
+          <>
+            <Badge
+              variant="secondary"
+              className="border-0 text-xs px-2 py-0.5 bg-muted text-muted-foreground"
             >
-              <Icon className="size-5" />
-            </div>
-            <div>
-              <h1 className="text-display text-2xl font-light italic">
-                {source.name}
-              </h1>
-              <div className="flex items-center gap-2 mt-1">
-                <Badge
-                  variant="secondary"
-                  className="border-0 text-xs px-2 py-0.5 bg-muted text-muted-foreground"
-                >
-                  {source.source_type.replace("_", " ")}
-                </Badge>
-                <ConnectionStatusBadge status={source.connection_status} />
-              </div>
-            </div>
-          </div>
+              {source.source_type.replace("_", " ")}
+            </Badge>
+            <ConnectionStatusBadge status={source.connection_status} />
+          </>
+        }
+        actions={
           <Button
             variant="outline"
             size="sm"
@@ -328,8 +280,8 @@ export default function SourceDetailPage() {
             <Trash2 className="size-3.5" />
             Delete
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Pipeline Stepper */}
       <div className="flex items-center gap-1 overflow-x-auto pb-1">

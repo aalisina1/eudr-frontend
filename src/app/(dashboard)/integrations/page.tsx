@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import { PageHeader } from "@/components/page-header";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -57,23 +58,18 @@ function IntegrationsPageInner() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-display text-2xl font-light italic mb-0.5">
-            Integrations
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Connect sources, transform data, configure mappings, and run syncs.
-          </p>
-        </div>
-        {activeTab === "sources" && (
-          <Button onClick={() => setFormOpen(true)} className="gap-1.5">
-            <Plus className="size-4" />
-            New Source
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        title="Integrations"
+        description="Connect sources, transform data, configure mappings, and run syncs."
+        actions={
+          activeTab === "sources" ? (
+            <Button onClick={() => setFormOpen(true)} className="gap-1.5">
+              <Plus className="size-4" />
+              New Source
+            </Button>
+          ) : null
+        }
+      />
 
       {/* Tab Navigation */}
       <div role="tablist" className="flex items-center gap-1 border-b border-border/50">

@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
+import { DetailHeader } from "@/components/detail-header";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -163,30 +164,23 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
 
   return (
     <div className="space-y-6 max-w-6xl">
-      {/* Back */}
-      <Button variant="ghost" size="sm" onClick={() => router.push("/submissions")} className="gap-1.5 -ml-2">
-        <ArrowLeft className="size-4" /> Submissions
-      </Button>
-
-      {/* Eyebrow + display header + status badge row */}
-      <header className="flex items-start justify-between gap-6 flex-wrap">
-        <div>
-          <p className="font-mono text-xs tracking-[0.1em] uppercase text-muted-foreground mb-2.5">
-            Due diligence statement
-          </p>
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-display text-4xl leading-[1.04] italic font-light">{stmt.reference_number}</h1>
-            <Badge variant="secondary" className={`${ss.bg} ${ss.text} border-0 font-medium text-xs gap-1.5 px-2.5`}>
-              <StatusIcon className="size-3" />
-              {ss.label}
-            </Badge>
-          </div>
-          <p className="mt-2.5 text-base text-muted-foreground capitalize">
+      <DetailHeader
+        back={{ href: "/submissions", label: "All submissions" }}
+        eyebrow="Due diligence statement"
+        title={stmt.reference_number}
+        status={
+          <Badge variant="secondary" className={`${ss.bg} ${ss.text} border-0 font-medium text-xs gap-1.5 px-2.5`}>
+            <StatusIcon className="size-3" />
+            {ss.label}
+          </Badge>
+        }
+        context={
+          <span className="capitalize">
             {stmt.statement_type.toLowerCase()} statement · {activityLabel(stmt.activity_type)}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
+          </span>
+        }
+        actions={
+          <>
           {canEdit && (
             <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)} className="gap-1.5">
               <Pencil className="size-3.5" /> Edit
@@ -259,8 +253,9 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
               Delete Draft
             </Button>
           )}
-        </div>
-      </header>
+          </>
+        }
+      />
       {actionMutation.error && (
         <p className="text-xs text-destructive -mt-4">{(actionMutation.error as Error).message}</p>
       )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { PriorityAlertBanner } from "@/components/dashboard/priority-alert-banner";
+import { PageHeader } from "@/components/page-header";
 import { ActionQueueCard } from "@/components/dashboard/action-queue-card";
 import { AwaitingDataCard } from "@/components/dashboard/awaiting-data-card";
 import { RiskConcentrationCard } from "@/components/dashboard/risk-concentration-card";
@@ -45,10 +46,7 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <header className="mb-[22px]">
-        <h1 className="text-display text-4xl leading-[1.04] font-light italic">{greeting()}</h1>
-        <p className="mt-2.5 text-base text-muted-foreground">{formatDateLine()}</p>
-      </header>
+      <PageHeader title={greeting()} description={formatDateLine()} className="mb-[22px]" />
 
       <div className="flex flex-col gap-[18px]">
         <PriorityAlertBanner showCta={showCta} />

@@ -3,14 +3,14 @@
 import { UsersCard } from "@/components/admin/users-card";
 import { InvitationsCard } from "@/components/admin/invitations-card";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { AdministrationHeader } from "@/components/admin/administration-header";
+import { PageHeader } from "@/components/page-header";
 
 export default function AdministrationPeoplePage() {
   const { data: user } = useCurrentUser();
 
   return (
     <>
-      <AdministrationHeader
+      <PageHeader
         title="People"
         description="Everyone with access to this organisation, and where that access comes from. Every change here is recorded in the audit log."
       />

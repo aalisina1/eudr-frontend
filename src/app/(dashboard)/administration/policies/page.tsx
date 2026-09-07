@@ -2,7 +2,7 @@
 
 import { Check } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { AdministrationHeader } from "@/components/admin/administration-header";
+import { PageHeader } from "@/components/page-header";
 
 /**
  * The access rules in force, stated once (#158).
@@ -54,7 +54,7 @@ const POLICIES = [
 export default function AdministrationPoliciesPage() {
   return (
     <>
-      <AdministrationHeader
+      <PageHeader
         title="Policies"
         description="The rules that govern access to this organisation. They are enforced by the platform and are not configurable, so this page is a statement of what is already true rather than a set of switches."
       />
