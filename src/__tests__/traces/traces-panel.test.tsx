@@ -619,7 +619,12 @@ describe("TracesPanel — what the officer is told to do about a failure", () =>
       expect(screen.getByText(/registered with traces/i)).toBeInTheDocument(),
     );
     expect(screen.queryByText(/fix the issue on the underlying/i)).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /settings/i })).toHaveAttribute("href", "/settings");
+    // #158 moved the TRACES connection off /settings, which had been mixing a
+    // personal profile with organisation config. The link must name where the
+    // setting actually lives now, not just point there.
+    expect(
+      screen.getByRole("link", { name: /administration → traces/i }),
+    ).toHaveAttribute("href", "/administration/traces");
   });
 
   it("still points at the lots when the fault really is about the goods", async () => {

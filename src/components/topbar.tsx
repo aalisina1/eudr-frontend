@@ -17,9 +17,11 @@ const CRUMBS: { prefix: string; label: string }[] = [
   { prefix: "/suppliers", label: "Suppliers" },
   { prefix: "/plots", label: "Land plots" },
   { prefix: "/sourcing", label: "Sourcing" },
+  { prefix: "/shipments", label: "Shipments" },
   { prefix: "/submissions", label: "Submissions" },
   { prefix: "/documents", label: "Documents" },
   { prefix: "/integrations", label: "Integrations" },
+  { prefix: "/administration", label: "Administration" },
   { prefix: "/settings", label: "Settings" },
 ];
 

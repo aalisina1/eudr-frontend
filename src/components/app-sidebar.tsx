@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   LayoutDashboard,
   Users,
@@ -13,6 +14,10 @@ import {
   FolderOpen,
   Cable,
   Settings,
+  UserCog,
+  UsersRound,
+  ScrollText,
+  PlugZap,
   LogOut,
   Moon,
   Sun,
@@ -55,9 +60,27 @@ const navCompliance = [
   { href: "/integrations", label: "Integrations", icon: Cable },
 ];
 
+/** Organisation administration (#158). Rendered only for ADMIN — the section is
+ * absent from the DOM for everyone else, not disabled, and every route beneath
+ * it is gated again by `administration/layout.tsx` and by `IsAdmin` on the
+ * backend. This is the signpost, never the lock.
+ *
+ * Kept as a flat group rather than an expanding submenu so it uses the same
+ * grammar as Overview and Compliance: the sidebar has no accordion anywhere
+ * else, and introducing one for four items would be a new pattern to maintain
+ * for no gain. */
+const navAdministration = [
+  { href: "/administration/people", label: "People", icon: UserCog },
+  { href: "/administration/groups", label: "Groups", icon: UsersRound },
+  { href: "/administration/policies", label: "Policies", icon: ScrollText },
+  { href: "/administration/traces", label: "TRACES", icon: PlugZap },
+];
+
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { data: currentUser } = useCurrentUser();
+  const isAdmin = currentUser?.role === "ADMIN";
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
@@ -152,6 +175,38 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {isAdmin && (
+          <>
+            <SidebarSeparator className="mx-3 my-1 opacity-50" />
+
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-sidebar-foreground/30 text-xs uppercase tracking-[0.15em] font-medium px-3 mb-1">
+                Administration
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {navAdministration.map(({ href, label, icon: Icon }) => {
+                    const isActive = pathname === href || pathname.startsWith(href + "/");
+                    return (
+                      <SidebarMenuItem key={href}>
+                        <SidebarMenuButton
+                          render={<Link href={href} />}
+                          isActive={isActive}
+                          className="relative rounded-md h-9"
+                        >
+                          {isActive && <ActiveAccentBar />}
+                          <Icon className={cn("size-[15px]", isActive && "text-sidebar-primary")} />
+                          <span className="text-sm">{label}</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="px-2 pb-4">

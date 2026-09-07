@@ -57,7 +57,13 @@ const BLOCKER_ACTIONS: Partial<Record<ReadinessBlockerCode, BlockerAction>> = {
   PLOTS_PENDING_VALIDATION: { kind: "assign-plots", label: "Review plots" },
   PLOT_NOT_FOUND: { kind: "link", label: "Review sync records", href: "/integrations?tab=syncs" },
   BATCH_NOT_FOUND: { kind: "link", label: "Review sync records", href: "/integrations?tab=syncs" },
-  OPERATOR_IDENTITY_INCOMPLETE: { kind: "link", label: "Complete profile", href: "/settings" },
+  // "Complete profile" was a mislabel: this blocker is about the ORGANISATION's
+  // TRACES identity, not the signed-in person's profile (#158).
+  OPERATOR_IDENTITY_INCOMPLETE: {
+    kind: "link",
+    label: "Set operator identity",
+    href: "/administration/traces",
+  },
   UNIT_MISMATCH: { kind: "edit-lot", label: "Fix unit" },
   OVER_ALLOCATED: { kind: "link", label: "View lots", href: "#lots" },
 };
