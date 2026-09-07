@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useMemo, useState } from "react";
+import { PageHeader } from "@/components/page-header";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -196,18 +197,16 @@ function SuppliersPageInner() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-display text-2xl font-light italic mb-0.5">Suppliers</h1>
-          <p className="text-sm text-muted-foreground">
-            Who you buy from, and whether their plot data is good enough to file on
-          </p>
-        </div>
-        <Button onClick={() => setFormOpen(true)} className="gap-1.5">
-          <Plus className="size-4" />
-          Add Supplier
-        </Button>
-      </div>
+      <PageHeader
+        title="Suppliers"
+        description="Who you buy from, and whether their plot data is good enough to file on"
+        actions={
+          <Button onClick={() => setFormOpen(true)} className="gap-1.5">
+            <Plus className="size-4" />
+            Add Supplier
+          </Button>
+        }
+      />
 
       <DataTable<Supplier>
         queryKey="suppliers"

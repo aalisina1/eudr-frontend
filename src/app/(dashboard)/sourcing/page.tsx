@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { PageHeader } from "@/components/page-header";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Cable, ClipboardList, Plus } from "lucide-react";
@@ -208,16 +209,16 @@ export default function SourcingPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-display text-2xl font-light italic mb-0.5">Sourcing</h1>
-          <p className="text-sm text-muted-foreground">Purchase orders and the lots fulfilling them</p>
-        </div>
-        <Button onClick={() => setFormOpen(true)} className="gap-1.5">
-          <Plus className="size-4" />
-          New purchase order
-        </Button>
-      </div>
+      <PageHeader
+        title="Sourcing"
+        description="Purchase orders and the lots fulfilling them"
+        actions={
+          <Button onClick={() => setFormOpen(true)} className="gap-1.5">
+            <Plus className="size-4" />
+            New purchase order
+          </Button>
+        }
+      />
 
       <CoverageLegend />
 

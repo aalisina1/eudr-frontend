@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useMemo, useState } from "react";
+import { PageHeader } from "@/components/page-header";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueries, useQuery } from "@tanstack/react-query";
@@ -286,21 +287,21 @@ function DueDiligencePageInner() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-end justify-between gap-6 flex-wrap">
-        <div>
-          <h1 className="text-display text-4xl leading-[1.04] italic font-light">Submissions</h1>
-          <p className="mt-2.5 text-base text-muted-foreground">Statements submitted to the EU TRACES registry.</p>
-        </div>
-        {/* A statement is composed from a purchase order and its lots — that
-            is the only path that can produce one TRACES will accept, since
-            `commodities` is mandatory in the XSD. The button that used to sit
-            here opened a form with no lot selection and produced statements
-            that could never be filed (eudr-frontend#104). */}
-        <Link href="/sourcing" className={cn(buttonVariants(), "gap-1.5")}>
-          <Plus className="size-4" />
-          File from a purchase order
-        </Link>
-      </header>
+      {/* A statement is composed from a purchase order and its lots: that
+          is the only path that can produce one TRACES will accept, since
+          `commodities` is mandatory in the XSD. The button that used to sit
+          here opened a form with no lot selection and produced statements
+          that could never be filed (eudr-frontend#104). */}
+      <PageHeader
+        title="Submissions"
+        description="Statements submitted to the EU TRACES registry."
+        actions={
+          <Link href="/sourcing" className={cn(buttonVariants(), "gap-1.5")}>
+            <Plus className="size-4" />
+            File from a purchase order
+          </Link>
+        }
+      />
 
       <DataTable<DueDiligenceStatement>
         queryKey="submissions"

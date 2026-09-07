@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from "react";
+import { PageHeader } from "@/components/page-header";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -105,18 +106,16 @@ function PlotsPageInner() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-display text-2xl font-light italic mb-0.5">Land plots</h1>
-          <p className="text-sm text-muted-foreground">
-            {data ? `${data.count} geo-referenced parcels` : "The land behind every batch you file"}
-          </p>
-        </div>
-        <Button onClick={() => setPlotFormOpen(true)} className="gap-1.5">
-          <Plus className="size-4" />
-          Add Plot
-        </Button>
-      </div>
+      <PageHeader
+        title="Land plots"
+        description={data ? `${data.count} geo-referenced parcels` : "The land behind every batch you file"}
+        actions={
+          <Button onClick={() => setPlotFormOpen(true)} className="gap-1.5">
+            <Plus className="size-4" />
+            Add Plot
+          </Button>
+        }
+      />
 
       {error && (
         <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/8 rounded-xl px-4 py-3 border border-destructive/15">

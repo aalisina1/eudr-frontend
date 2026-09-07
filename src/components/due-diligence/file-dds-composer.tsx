@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { PageHeader } from "@/components/page-header";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -401,10 +402,10 @@ export function FileDdsComposer({ poId, consignmentId }: FileDdsComposerProps) {
         <ArrowLeft className="size-4" /> {po.reference_number}
       </Button>
 
-      <div>
-        <h1 className="text-display text-3xl font-light italic">New due diligence statement</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Pre-filled from {po.reference_number}</p>
-      </div>
+      <PageHeader
+        title="New due diligence statement"
+        description={<>Pre-filled from {po.reference_number}</>}
+      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Left — Covered lots */}

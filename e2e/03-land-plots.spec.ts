@@ -53,7 +53,8 @@ test.describe("Land plots → plot detail → back (#133)", () => {
     await expect(page.getByRole("heading", { name: ref })).toBeVisible({ timeout: 10_000 });
     await expect(page.locator(".leaflet-container")).toBeVisible({ timeout: 15_000 });
 
-    await page.getByRole("button", { name: /Land plots/ }).click();
+    // The back control names the list it returns to ("All land plots", #167).
+    await page.getByRole("button", { name: "All land plots" }).click();
     await expect(page).toHaveURL(/\/plots$/);
     await expect(cards.first()).toBeVisible();
   });

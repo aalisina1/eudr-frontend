@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PageHeader } from "@/components/page-header";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -127,18 +128,16 @@ export default function DocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-display text-2xl font-light italic mb-0.5">Documents</h1>
-          <p className="text-sm text-muted-foreground">
-            Evidence you must keep for five years after a statement is filed
-          </p>
-        </div>
-        <Button onClick={() => setFormOpen(true)} className="gap-1.5">
-          <Plus className="size-4" />
-          Add Document
-        </Button>
-      </div>
+      <PageHeader
+        title="Documents"
+        description="Evidence you must keep for five years after a statement is filed"
+        actions={
+          <Button onClick={() => setFormOpen(true)} className="gap-1.5">
+            <Plus className="size-4" />
+            Add Document
+          </Button>
+        }
+      />
 
       <DataTable<Document>
         queryKey="documents"

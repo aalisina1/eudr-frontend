@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
+import { PageHeader } from "@/components/page-header";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Ship } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -170,14 +171,11 @@ function ShipmentsPageInner() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-display text-4xl leading-[1.04] italic font-light">Shipments</h1>
-          <p className="mt-2.5 text-base text-muted-foreground">
-            Which arriving consignments still lack a ready DDS, and when they land.
-          </p>
-        </div>
-        {/* List ⇄ Calendar toggle (no Tabs primitive exists — minimal segmented control) */}
+      <PageHeader
+        title="Shipments"
+        description="Which arriving consignments still lack a ready DDS, and when they land."
+        actions={
+        /* List / Calendar toggle (no Tabs primitive exists; minimal segmented control) */
         <div className="inline-flex rounded-xl border border-border/60 bg-secondary/40 p-0.5" role="tablist" aria-label="Shipments view">
           <button
             type="button"
@@ -204,7 +202,8 @@ function ShipmentsPageInner() {
             Calendar
           </button>
         </div>
-      </header>
+        }
+      />
 
       {view === "calendar" ? (
         <div className="space-y-4">

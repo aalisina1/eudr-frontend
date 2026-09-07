@@ -1,6 +1,7 @@
 "use client";
 
 import { use } from "react";
+import { DetailHeader } from "@/components/detail-header";
 import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -15,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, MapPin, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
 import { PlotLineageCard } from "@/components/plots/plot-lineage-card";
 import { plotIdentity } from "@/lib/plot-identity";
@@ -77,31 +78,21 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="space-y-6">
-      {/* Back */}
-      <Button variant="ghost" size="sm" onClick={() => router.push("/plots")} className="gap-1.5">
-        <ArrowLeft className="size-4" /> Land plots
-      </Button>
-
-      {/* Header Card */}
-      <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <MapPin className="size-5 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-xl font-medium">
-                {plotIdentity(plot).primary}
-              </h1>
-              <p className="text-sm text-muted-foreground">{plot.area_hectares} hectares</p>
-            </div>
-          </div>
+      <DetailHeader
+        back={{ href: "/plots", label: "All land plots" }}
+        eyebrow="Land plot"
+        title={plotIdentity(plot).primary}
+        status={
           <Badge variant="secondary" className={`${status.bg} ${status.text} border-0 font-medium text-xs gap-1.5 px-2.5`}>
             <StatusIcon className="size-3" />
             {status.label}
           </Badge>
-        </div>
+        }
+        context={`${plot.area_hectares} hectares`}
+      />
 
+      {/* Record card */}
+      <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
           <div>
             <p className="text-muted-foreground text-xs mb-0.5">Country</p>

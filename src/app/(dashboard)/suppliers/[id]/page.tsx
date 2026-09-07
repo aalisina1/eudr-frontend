@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
+import { DetailHeader } from "@/components/detail-header";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -125,35 +126,12 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="space-y-6">
-      {/* Back + Actions */}
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => router.push("/suppliers")} className="gap-1.5">
-          <ArrowLeft className="size-4" /> Suppliers
-        </Button>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)} className="gap-1.5">
-            <Pencil className="size-3.5" /> Edit
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            className="gap-1.5"
-            disabled={deleteMutation.isPending}
-            onClick={() => { if (confirm("Delete this supplier?")) deleteMutation.mutate(); }}
-          >
-            <Trash2 className="size-3.5" /> Delete
-          </Button>
-        </div>
-      </div>
-
-      {/* Header Card */}
-      <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h1 className="text-xl font-medium mb-1">{supplier.name}</h1>
-            <p className="text-sm text-muted-foreground">{supplier.country_of_origin}</p>
-          </div>
-          <div className="flex gap-2">
+      <DetailHeader
+        back={{ href: "/suppliers", label: "All suppliers" }}
+        eyebrow="Supplier"
+        title={supplier.name}
+        status={
+          <>
             <Badge variant="secondary" className={`${kyc.bg} ${kyc.text} border-0 font-medium text-xs gap-1.5 px-2.5`}>
               <span className={`w-1.5 h-1.5 rounded-full ${kyc.dot}`} />
               {kyc.label}
@@ -162,9 +140,29 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
               <span className={`w-1.5 h-1.5 rounded-full ${risk.dot}`} />
               {risk.suffixed}
             </Badge>
-          </div>
-        </div>
+          </>
+        }
+        context={supplier.country_of_origin}
+        actions={
+          <>
+            <Button variant="secondary" size="sm" onClick={() => setEditOpen(true)} className="gap-1.5">
+              <Pencil className="size-3.5" /> Edit
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="gap-1.5"
+              disabled={deleteMutation.isPending}
+              onClick={() => { if (confirm("Delete this supplier?")) deleteMutation.mutate(); }}
+            >
+              <Trash2 className="size-3.5" /> Delete
+            </Button>
+          </>
+        }
+      />
 
+      {/* Record card: the fields that do not fit a one-line context */}
+      <div className="rounded-2xl border border-border/50 bg-card p-6 shadow-card">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
           <div>
             <p className="text-muted-foreground text-xs mb-0.5">External ID</p>

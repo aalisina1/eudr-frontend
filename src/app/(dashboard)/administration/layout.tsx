@@ -35,9 +35,7 @@ export default function AdministrationLayout({ children }: { children: React.Rea
     return (
       <div className="mx-auto max-w-md space-y-4 py-16 text-center">
         <ShieldAlert className="mx-auto size-8 text-muted-foreground" />
-        <h1 className="text-display text-2xl leading-tight font-light italic">
-          Administration is for administrators
-        </h1>
+        <p className="text-lg font-medium">Administration is for administrators</p>
         <p className="text-sm text-muted-foreground">
           Managing people, groups and the TRACES connection is limited to
           administrators of your organisation. Ask one of them if you need a change.

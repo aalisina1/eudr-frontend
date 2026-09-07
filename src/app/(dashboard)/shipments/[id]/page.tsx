@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import { DetailHeader } from "@/components/detail-header";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, FileText, Pencil, Plus } from "lucide-react";
@@ -111,20 +112,37 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="space-y-6">
-      <Button variant="ghost" size="sm" onClick={() => router.push("/shipments")} className="-ml-2 gap-1.5 text-muted-foreground">
-        <ArrowLeft className="size-4" /> All shipments
-      </Button>
-
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-display text-3xl font-light italic">{c.reference}</h1>
-            <RagBadge rag={c.rag} countdownDays={daysUntil(c.countdown_to)} countdownLabel={c.countdown_to ? formatEta(c.countdown_to) : null} />
-          </div>
-          <p className="text-sm text-muted-foreground">
+      <DetailHeader
+        back={{ href: "/shipments", label: "All shipments" }}
+        eyebrow="Shipment"
+        title={c.reference}
+        status={<RagBadge rag={c.rag} countdownDays={daysUntil(c.countdown_to)} countdownLabel={c.countdown_to ? formatEta(c.countdown_to) : null} />}
+        context={
+          <>
             Coverage <span className="font-mono text-foreground">{c.covered_count}/{c.total_count}</span> · {coveragePct(c.covered_count, c.total_count)}%
-          </p>
+          </>
+        }
+        actions={
+          canWrite ? (
+            <>
+            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)} className="gap-1.5">
+              <Pencil className="size-3.5" /> Edit
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setAssignOpen(true)} className="gap-1.5">
+              <Plus className="size-3.5" /> Assign lots
+            </Button>
+            <Button
+              size="sm"
+              disabled={c.lots.length === 0}
+              onClick={() => router.push(`/submissions?consignment=${encodeURIComponent(c.id)}`)}
+              className="gap-1.5"
+            >
+              <FileText className="size-4" /> Compose DDS
+            </Button>
+            </>
+          ) : null
+        }
+      >
           {/* Clearance date vs feed ETA + divergence */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
             <span className="text-muted-foreground">
@@ -148,27 +166,7 @@ export default function ShipmentDetailPage({ params }: { params: Promise<{ id: s
               </Button>
             )}
           </div>
-        </div>
-
-        {canWrite && (
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)} className="gap-1.5">
-              <Pencil className="size-3.5" /> Edit
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setAssignOpen(true)} className="gap-1.5">
-              <Plus className="size-3.5" /> Assign lots
-            </Button>
-            <Button
-              size="sm"
-              disabled={c.lots.length === 0}
-              onClick={() => router.push(`/submissions?consignment=${encodeURIComponent(c.id)}`)}
-              className="gap-1.5"
-            >
-              <FileText className="size-4" /> Compose DDS
-            </Button>
-          </div>
-        )}
-      </div>
+      </DetailHeader>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
