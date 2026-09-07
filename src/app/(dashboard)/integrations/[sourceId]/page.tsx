@@ -475,7 +475,7 @@ function ConfigureStep({
       <Card className="border-border/50">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="eyebrow">
+            <h3 className="text-xs font-medium tracking-[0.12em] uppercase text-muted-foreground">
               Connection configuration
             </h3>
             <Button variant="outline" size="sm" onClick={onEdit} className="gap-1.5">

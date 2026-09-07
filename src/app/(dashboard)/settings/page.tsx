@@ -28,7 +28,7 @@ export default function SettingsPage() {
       {/* Profile Card */}
       <Card className="border-border/50 shadow-card">
         <CardContent className="p-6">
-          <h2 className="eyebrow mb-4">
+          <h2 className="text-xs font-medium tracking-[0.15em] uppercase text-muted-foreground mb-4">
             Profile
           </h2>
 
@@ -88,7 +88,7 @@ export default function SettingsPage() {
       {/* App Info */}
       <Card className="border-border/50 shadow-card">
         <CardContent className="p-6">
-          <h2 className="eyebrow mb-4">
+          <h2 className="text-xs font-medium tracking-[0.15em] uppercase text-muted-foreground mb-4">
             Application
           </h2>
           <div className="grid gap-2 text-sm">

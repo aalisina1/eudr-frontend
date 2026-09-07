@@ -44,7 +44,7 @@ const RISK_COLORS: Record<
   HIGH: { bg: "bg-destructive/10", text: "text-destructive", dot: "bg-destructive", label: "High", suffixed: "High Risk" },
 };
 
-const TH = "eyebrow h-11";
+const TH = "text-xs font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
 
 export default function SupplierDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
