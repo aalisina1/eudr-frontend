@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { ArrowLeft, MapPin, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { authFetch } from "@/lib/api/client";
+import { PlotLineageCard } from "@/components/plots/plot-lineage-card";
 import { plotIdentity } from "@/lib/plot-identity";
 import type { LandPlot, ValidationStatus } from "@/lib/api/types";
 import { formatDate } from "@/lib/format";
@@ -133,6 +134,9 @@ export default function PlotDetailPage({ params }: { params: Promise<{ id: strin
       <div className="rounded-2xl overflow-hidden border border-border/50 shadow-card" style={{ height: 400 }}>
         <LandPlotMap plots={[plot]} selectedPlotId={plot.id} />
       </div>
+
+      {/* #134: the chain outward from this plot. */}
+      <PlotLineageCard plotId={id} />
 
       {/* Validation results */}
       <div>

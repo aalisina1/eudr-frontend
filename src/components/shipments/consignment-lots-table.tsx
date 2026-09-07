@@ -17,7 +17,7 @@ import { UNIT_LABELS } from "@/lib/readiness-format";
 import type { ConsignmentLot } from "@/lib/api/types";
 import { formatNumber } from "@/lib/format";
 
-const COLUMN_COUNT = 5;
+const COLUMN_COUNT = 7;
 
 /** Covering-DDS cell — mirrors po-lots-table's `DdsCell`: link when covered,
  * muted "Not covered" otherwise. */
@@ -89,6 +89,8 @@ export function ConsignmentLotsTable({ lots, canWrite, onCompletePlots }: Consig
             <TableRow>
               <TableHead>Lot ref</TableHead>
               <TableHead className="text-right">Quantity</TableHead>
+              <TableHead>Purchase order</TableHead>
+              <TableHead>Plots</TableHead>
               <TableHead>Stage</TableHead>
               <TableHead>DDS</TableHead>
               <TableHead />
@@ -111,6 +113,19 @@ export function ConsignmentLotsTable({ lots, canWrite, onCompletePlots }: Consig
                     </TableCell>
                     <TableCell className="text-right font-mono">
                       {formatNumber(Math.round(Number(lot.quantity)))} {unitLabel}
+                    </TableCell>
+                    {/* #134: the order this lot fulfils and the plots it traces to. */}
+                    <TableCell>
+                      {lot.po_id ? (
+                        <Link href={`/sourcing/${lot.po_id}`} className="font-mono text-sm text-primary hover:underline">
+                          {lot.po_reference || lot.po_id}
+                        </Link>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">No order</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {(lot.plot_ids?.length ?? 0) === 1 ? "1 plot" : `${lot.plot_ids?.length ?? 0} plots`}
                     </TableCell>
                     <TableCell><StageBadge stage={lot.stage} /></TableCell>
                     <TableCell><DdsCell lot={lot} /></TableCell>

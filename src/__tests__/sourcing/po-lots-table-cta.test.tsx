@@ -77,3 +77,26 @@ describe("PoLotsTable per-row Edit (#132)", () => {
     expect(screen.queryByRole("button", { name: /^Edit$/i })).toBeNull();
   });
 });
+
+/** eudr-frontend#134: from an order, reach the shipment each lot group is on. */
+describe("PoLotsTable shipment group links (#134)", () => {
+  it("the group header links to the shipment when the backend supplies its id", () => {
+    render(
+      <PoLotsTable
+        allocatedLabel="x"
+        lots={[
+          lot({ id: "a", shipment_reference: "MSCU-1", consignment_id: "c-1" }),
+          lot({ id: "b", shipment_reference: null }),
+        ]}
+      />
+    );
+    expect(screen.getByRole("link", { name: "MSCU-1" })).toHaveAttribute("href", "/shipments/c-1");
+  });
+
+  it("renders the reference as text, not a dead link, when only the reference is known", () => {
+    // Pre-#225 backends send shipment_reference without consignment_id.
+    render(<PoLotsTable allocatedLabel="x" lots={[lot({ id: "a", shipment_reference: "MSCU-2" }), lot({ id: "b" })]} />);
+    expect(screen.getByText("MSCU-2")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "MSCU-2" })).toBeNull();
+  });
+});

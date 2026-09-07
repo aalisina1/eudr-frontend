@@ -314,6 +314,9 @@ export interface LotReadiness {
    * automatically the day the backend adds them (same additive-serializer
    * pattern as `next_deadline`) — do not invent client-side values in the
    * meantime; today's live lots table renders as a single ungrouped list. */
+  /** eudr-app#225 (frontend #134): the id behind `shipment_reference`, so a
+   * lot row can link to the shipment carrying it. Null when unassigned. */
+  consignment_id?: string | null;
   shipment_reference?: string | null;
   expected_clearance_date?: string | null;
 }
@@ -452,6 +455,11 @@ export interface ConsignmentLot {
   covered: boolean;
   covering_dds_id: string | null;
   covering_dds_reference: string;
+  /** eudr-app#225 (frontend #134): the order this lot fulfils, resolved
+   * server-side from the chain link, and the plots it carries. */
+  po_id?: string | null;
+  po_reference?: string;
+  plot_ids?: string[];
 }
 
 /** One entry of `ConsignmentDetail.events` (ShipmentEventSerializer). */
@@ -1040,4 +1048,28 @@ export interface MappingConfigWriteRequest {
   source_object?: string | null;
   /** `TRANSFORMATION` only. */
   transformation?: string | null;
+}
+
+// ── Plot lineage (eudr-app#225, frontend #134) ─────────────────────────────
+
+/** One lot that uses a plot, with the rest of its chain resolved server-side:
+ * the order it fulfils (chain-link child, ADR-0013/0019), the shipment
+ * carrying it (`Batch.consignment`, ADR-0021) and the filed statement
+ * covering it (SUBMITTED only, ADR-0017). Nulls where a hop is absent. */
+export interface PlotLineageLot {
+  id: string;
+  reference_number: string;
+  quantity: string;
+  unit: BatchUnit;
+  po_id: string | null;
+  po_reference: string;
+  consignment_id: string | null;
+  consignment_reference: string;
+  covering_dds_id: string | null;
+  covering_dds_reference: string;
+}
+
+/** `GET /api/v1/geolocation/plots/{id}/lineage/` */
+export interface PlotLineage {
+  lots: PlotLineageLot[];
 }
