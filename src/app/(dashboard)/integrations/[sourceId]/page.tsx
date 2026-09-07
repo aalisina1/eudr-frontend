@@ -301,7 +301,7 @@ export default function SourceDetailPage() {
               <Icon className="size-5" />
             </div>
             <div>
-              <h1 className="text-display text-2xl">
+              <h1 className="text-display text-2xl font-light italic">
                 {source.name}
               </h1>
               <div className="flex items-center gap-2 mt-1">
@@ -475,7 +475,7 @@ function ConfigureStep({
       <Card className="border-border/50">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="eyebrow">
+            <h3 className="text-xs font-medium tracking-[0.12em] uppercase text-muted-foreground">
               Connection configuration
             </h3>
             <Button variant="outline" size="sm" onClick={onEdit} className="gap-1.5">

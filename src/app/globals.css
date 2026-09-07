@@ -8,13 +8,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* Type (#156): Geist Sans for everything, Geist Mono for chips and labels.
-     One family for body and display. Render's Roobert/Neue Montreal split
-     is what #157 would buy; until then the display face IS the sans, at a
-     heavier weight and tighter tracking (see .text-display). To adopt a
-     licensed display face later, point --font-display at its variable. */
-  --font-sans: var(--font-geist-sans);
-  --font-display: var(--font-geist-sans);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
   --font-mono: var(--font-geist-mono);
 
   /* The type scale (eudr-frontend#126). Three steps below the heading sizes,
@@ -77,27 +72,25 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* ───── Light: neutral (#156). White ground, near-black text, gray hairlines.
-   the values Render's dashboard measures at. Brand green is --primary and is the
-   one colour, used sparingly: the mark, the active-nav bar, a filled CTA. ───── */
+/* ───── Light: warm parchment botanical ───── */
 :root {
-  --background: #FFFFFF;
-  --foreground: #141414;
+  --background: #F6F3ED;
+  --foreground: #0B1D1C;
 
   --card: #FFFFFF;
-  --card-foreground: #141414;
+  --card-foreground: #0B1D1C;
 
   --popover: #FFFFFF;
-  --popover-foreground: #141414;
+  --popover-foreground: #0B1D1C;
 
   --primary: #1A6B5A;
-  --primary-foreground: #FFFFFF;
+  --primary-foreground: #F6F3ED;
 
-  --secondary: #FAFAFA;
-  --secondary-foreground: #272727;
+  --secondary: #ECE8DE;
+  --secondary-foreground: #2D4A46;
 
-  --muted: #F0F0F0;
-  --muted-foreground: #8F8F8F;
+  --muted: #ECE8DE;
+  --muted-foreground: #6B7F7C;
 
   --accent: #C7956D;
   --accent-foreground: #3A1E08;
@@ -121,8 +114,8 @@
   --info: #6366F1;
   --info-foreground: #4F52D9;
 
-  --border: #E3E3E3;
-  --input: #C7C7C7;
+  --border: #D6D0C4;
+  --input: #D6D0C4;
   --ring: #1A6B5A;
 
   --chart-1: #1A6B5A;
@@ -131,47 +124,42 @@
   --chart-4: #E8C468;
   --chart-5: #C23D3D;
 
-  /* Visual direction: Render (eudr-frontend#155). Square. Every derived step
-     (sm..4xl) follows, so Badge's rounded-4xl is square too; rounded-full
-     (dots, avatars) is a literal 9999px and stays round, which is right. */
-  --radius: 0;
+  --radius: 0.875rem;
 
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #272727;
-  --sidebar-primary: #1A6B5A;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F0F0F0;
-  --sidebar-accent-foreground: #141414;
-  --sidebar-border: #E3E3E3;
-  --sidebar-ring: #1A6B5A;
+  --sidebar: #0B1D1C;
+  --sidebar-foreground: #C5CCC9;
+  --sidebar-primary: #34D399;
+  --sidebar-primary-foreground: #0B1D1C;
+  --sidebar-accent: #152E2C;
+  --sidebar-accent-foreground: #E0E7E5;
+  --sidebar-border: #1E3836;
+  --sidebar-ring: #34D399;
 
-  /* Flat (eudr-frontend#155). The two-layer card shadow ported from the design
-     prototype is retired; a 1px --border does the work, as on every Render
-     surface. Kept as a token so the shadow-card utility and every call site
-     stay valid and the idiom can be turned back on in one line. */
-  --shadow-card: none;
+  /* Recurring layered card-elevation idiom (ported from the Claude Design
+     prototype's CARD_SHADOW constant) — a hairline contact shadow plus a
+     soft, wide ambient falloff. */
+  --shadow-card: 0 1px 2px rgba(11, 29, 28, 0.04), 0 10px 26px -18px rgba(11, 29, 28, 0.14);
 }
 
-/* ───── Dark: the mirror (#156). Near-black, not black: hairlines need somewhere
-   to sit, and every status token keeps its AA on it (status-token-contrast). ───── */
+/* ───── Dark: deep forest ───── */
 .dark {
-  --background: #0A0A0A;
-  --foreground: #F0F0F0;
+  --background: #0A1514;
+  --foreground: #E0E7E5;
 
-  --card: #141414;
-  --card-foreground: #F0F0F0;
+  --card: #0F2220;
+  --card-foreground: #E0E7E5;
 
-  --popover: #141414;
-  --popover-foreground: #F0F0F0;
+  --popover: #0F2220;
+  --popover-foreground: #E0E7E5;
 
   --primary: #34D399;
-  --primary-foreground: #0A0A0A;
+  --primary-foreground: #0A1514;
 
-  --secondary: #1A1A1A;
-  --secondary-foreground: #D4D4D4;
+  --secondary: #152E2C;
+  --secondary-foreground: #C5CCC9;
 
-  --muted: #1F1F1F;
-  --muted-foreground: #8F8F8F;
+  --muted: #152E2C;
+  --muted-foreground: #7A918D;
 
   --accent: #D4A574;
   --accent-foreground: #1A0E04;
@@ -189,8 +177,8 @@
   --info: #6366F1;
   --info-foreground: #8B8DF5;
 
-  --border: #262626;
-  --input: #333333;
+  --border: #1E3836;
+  --input: #1E3836;
   --ring: #34D399;
 
   --chart-1: #34D399;
@@ -199,18 +187,18 @@
   --chart-4: #E8C468;
   --chart-5: #EF6B6B;
 
-  --sidebar: #0A0A0A;
-  --sidebar-foreground: #D4D4D4;
+  --sidebar: #070F0E;
+  --sidebar-foreground: #9AABA7;
   --sidebar-primary: #34D399;
-  --sidebar-primary-foreground: #0A0A0A;
-  --sidebar-accent: #1F1F1F;
-  --sidebar-accent-foreground: #F0F0F0;
-  --sidebar-border: #262626;
+  --sidebar-primary-foreground: #070F0E;
+  --sidebar-accent: #0F1F1D;
+  --sidebar-accent-foreground: #C5CCC9;
+  --sidebar-border: #152E2C;
   --sidebar-ring: #34D399;
 
   /* Dark surfaces need a darker, more opaque shadow to read as elevation
      against the deep forest background — the light-mode rgba is too faint. */
-  --shadow-card: none;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px -16px rgba(0, 0, 0, 0.55);
 }
 
 @layer base {
@@ -223,6 +211,19 @@
   html {
     @apply font-sans;
   }
+}
+
+/* ───── Grain texture overlay ───── */
+.grain::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.022;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
 }
 
 /* ───── Leaflet z-index isolation ───── */
@@ -255,33 +256,23 @@
 ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
 
 /* ───── Utility classes ───── */
-/* Display face (#156, Decision 3): upright, medium, tight. Render's heading
-   measured at Roobert 32px / 500 / -0.32px. The italic serif from #130 was
-   retired for it, a founder decision made against the step-1 screenshots.
-   The family is the sans; weight and tracking are what make it a heading. */
+/* Display face. Fraunces' WONK and SOFT axes are the dials that make it
+   read as ours rather than as "a serif"; they are held as tokens so the
+   whole app moves together, and so the roadmap's "modified-OFL Grovetrace
+   Serif" decision can be judged against a tuned baseline (#130). */
+:root {
+  --display-wonk: 1;
+  --display-soft: 40;
+}
 .text-display {
   font-family: var(--font-display);
-  font-weight: 500;
-  letter-spacing: -0.015em;
-  font-style: normal;
+  font-variation-settings:
+    "opsz" 72,
+    "WONK" var(--display-wonk),
+    "SOFT" var(--display-soft);
 }
 
 /* Shared card-elevation idiom — see --shadow-card above. */
 .shadow-card {
   box-shadow: var(--shadow-card);
-}
-
-/* Micro-labels: eyebrows, sidebar section labels, table headers
-   (eudr-frontend#155). Mono, uppercase, tracked, muted — Render's signature,
-   measured at Neue Montreal Mono / +0.65px / #8f8f8f. The newest Grovetrace
-   screen had already gone mono on its own; this makes it the rule. One class
-   so four duplicated TH constants and every ad-hoc tracking value collapse. */
-.eyebrow {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  line-height: var(--text-xs--line-height);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--muted-foreground);
 }

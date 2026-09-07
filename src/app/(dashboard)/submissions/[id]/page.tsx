@@ -24,7 +24,7 @@ import { CoveredLotsCard } from "@/components/due-diligence/covered-lots-card";
 import { useLatestTracesSubmission } from "@/hooks/use-latest-traces-submission";
 import { formatDate } from "@/lib/format";
 
-const TH = "eyebrow h-11";
+const TH = "text-xs font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
 
 const ACTIVITY_LABEL: Record<ActivityType, string> = {
   DOMESTIC: "Domestic production",
@@ -48,7 +48,7 @@ function activityLabel(activityType: DueDiligenceStatement["activity_type"]): st
 function MetaRow({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
   return (
     <>
-      <span className="eyebrow self-center">
+      <span className="self-center font-mono text-xs tracking-[0.08em] uppercase text-muted-foreground">
         {label}
       </span>
       <span className={mono ? "font-mono text-sm" : "text-sm"}>{value}</span>
@@ -171,11 +171,11 @@ export default function DDSDetailPage({ params }: { params: Promise<{ id: string
       {/* Eyebrow + display header + status badge row */}
       <header className="flex items-start justify-between gap-6 flex-wrap">
         <div>
-          <p className="eyebrow mb-2.5">
+          <p className="font-mono text-xs tracking-[0.1em] uppercase text-muted-foreground mb-2.5">
             Due diligence statement
           </p>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-display text-4xl leading-[1.04]">{stmt.reference_number}</h1>
+            <h1 className="text-display text-4xl leading-[1.04] italic font-light">{stmt.reference_number}</h1>
             <Badge variant="secondary" className={`${ss.bg} ${ss.text} border-0 font-medium text-xs gap-1.5 px-2.5`}>
               <StatusIcon className="size-3" />
               {ss.label}

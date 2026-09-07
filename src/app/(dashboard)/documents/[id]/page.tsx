@@ -39,7 +39,7 @@ function formatBytes(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const TH = "eyebrow h-11";
+const TH = "text-xs font-medium tracking-[0.12em] uppercase text-muted-foreground/70 h-11";
 
 export default function DocumentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);

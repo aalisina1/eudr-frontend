@@ -10,11 +10,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // eudr-frontend#155: outlined, transparent, hairline — every Render
-        // action is, even primary ones. The former filled style survives as
-        // `filled` for the one or two places a CTA must dominate the screen.
-        default: "border-foreground/20 bg-transparent text-foreground hover:bg-foreground/5 [a]:hover:bg-foreground/5",
-        filled: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
+        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
